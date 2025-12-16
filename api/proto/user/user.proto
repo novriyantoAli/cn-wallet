@@ -4,7 +4,7 @@ package user;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "vibe-ddd-golang/api/proto/user";
+option go_package = "github.com/novriyantoAli/cn-wallet/api/proto/user";
 
 // User service definition
 service UserService {
@@ -22,25 +22,23 @@ service UserService {
   
   // Delete a user
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
-  
-  // Update user password
-  rpc UpdateUserPassword(UpdateUserPasswordRequest) returns (UpdateUserPasswordResponse);
 }
 
 // User message
 message User {
   uint32 id = 1;
-  string name = 2;
-  string email = 3;
-  google.protobuf.Timestamp created_at = 4;
-  google.protobuf.Timestamp updated_at = 5;
+  string email = 2;
+  string full_name = 3;
+  string level = 4;
+  bool is_active = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 }
 
 // Create user request
 message CreateUserRequest {
-  string name = 1;
-  string email = 2;
-  string password = 3;
+  string email = 1;
+  string full_name = 2;
 }
 
 // Create user response
@@ -75,8 +73,9 @@ message ListUsersResponse {
 // Update user request
 message UpdateUserRequest {
   uint32 id = 1;
-  string name = 2;
-  string email = 3;
+  string full_name = 2;
+  string level = 3;
+  bool is_active = 4;
 }
 
 // Update user response
@@ -91,17 +90,5 @@ message DeleteUserRequest {
 
 // Delete user response
 message DeleteUserResponse {
-  bool success = 1;
-}
-
-// Update user password request
-message UpdateUserPasswordRequest {
-  uint32 id = 1;
-  string old_password = 2;
-  string new_password = 3;
-}
-
-// Update user password response
-message UpdateUserPasswordResponse {
   bool success = 1;
 }

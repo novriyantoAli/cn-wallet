@@ -42,7 +42,7 @@ func (h *PaymentHandler) CreatePayment(ctx *gin.Context) {
 		return
 	}
 
-	payment, err := h.service.CreatePayment(&req)
+	payment, err := h.service.CreatePayment(ctx.Request.Context(), &req)
 	if err != nil {
 		h.logger.Error("Failed to create payment", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create payment"})
@@ -71,7 +71,7 @@ func (h *PaymentHandler) GetPayment(ctx *gin.Context) {
 		return
 	}
 
-	payment, err := h.service.GetPaymentByID(uint(id))
+	payment, err := h.service.GetPaymentByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		h.logger.Error("Failed to get payment", zap.Error(err))
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Payment not found"})
@@ -104,7 +104,7 @@ func (h *PaymentHandler) GetPayments(ctx *gin.Context) {
 		return
 	}
 
-	payments, err := h.service.GetPayments(&filter)
+	payments, err := h.service.GetPayments(ctx.Request.Context(), &filter)
 	if err != nil {
 		h.logger.Error("Failed to get payments", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get payments"})
@@ -141,7 +141,7 @@ func (h *PaymentHandler) UpdatePayment(ctx *gin.Context) {
 		return
 	}
 
-	payment, err := h.service.UpdatePayment(uint(id), &req)
+	payment, err := h.service.UpdatePayment(ctx.Request.Context(), uint(id), &req)
 	if err != nil {
 		h.logger.Error("Failed to update payment", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update payment"})
@@ -170,7 +170,7 @@ func (h *PaymentHandler) DeletePayment(ctx *gin.Context) {
 		return
 	}
 
-	err = h.service.DeletePayment(uint(id))
+	err = h.service.DeletePayment(ctx.Request.Context(), uint(id))
 	if err != nil {
 		h.logger.Error("Failed to delete payment", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete payment"})
@@ -215,7 +215,7 @@ func (h *PaymentHandler) GetPaymentsByUser(ctx *gin.Context) {
 		return
 	}
 
-	payments, err := h.service.GetPaymentsByUser(uint(userID))
+	payments, err := h.service.GetPaymentsByUser(ctx.Request.Context(), uint(userID))
 	if err != nil {
 		h.logger.Error("Failed to get payments by user", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get payments"})

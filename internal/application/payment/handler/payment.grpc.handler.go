@@ -38,7 +38,7 @@ func (h *PaymentGrpcHandler) CreatePayment(
 		UserID:      uint(req.UserId),
 	}
 
-	paymentResponse, err := h.paymentService.CreatePayment(createReq)
+	paymentResponse, err := h.paymentService.CreatePayment(ctx, createReq)
 	if err != nil {
 		h.logger.Error("Failed to create payment via gRPC", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create payment: %v", err)
@@ -53,7 +53,7 @@ func (h *PaymentGrpcHandler) GetPayment(
 	ctx context.Context,
 	req *payment.GetPaymentRequest,
 ) (*payment.GetPaymentResponse, error) {
-	paymentResponse, err := h.paymentService.GetPaymentByID(uint(req.Id))
+	paymentResponse, err := h.paymentService.GetPaymentByID(ctx, uint(req.Id))
 	if err != nil {
 		h.logger.Error("Failed to get payment via gRPC", zap.Uint32("id", req.Id), zap.Error(err))
 		return nil, status.Errorf(codes.NotFound, "payment not found: %v", err)
@@ -93,7 +93,7 @@ func (h *PaymentGrpcHandler) ListPayments(
 		filter.UserID = uint(req.UserId)
 	}
 
-	listResponse, err := h.paymentService.GetPayments(filter)
+	listResponse, err := h.paymentService.GetPayments(ctx, filter)
 	if err != nil {
 		h.logger.Error("Failed to list payments via gRPC", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to list payments: %v", err)
@@ -125,7 +125,7 @@ func (h *PaymentGrpcHandler) UpdatePayment(
 		updateReq.Status = h.protoStatusToString(req.Status)
 	}
 
-	paymentResponse, err := h.paymentService.UpdatePayment(uint(req.Id), updateReq)
+	paymentResponse, err := h.paymentService.UpdatePayment(ctx, uint(req.Id), updateReq)
 	if err != nil {
 		h.logger.Error("Failed to update payment via gRPC", zap.Uint32("id", req.Id), zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to update payment: %v", err)
@@ -140,7 +140,7 @@ func (h *PaymentGrpcHandler) DeletePayment(
 	ctx context.Context,
 	req *payment.DeletePaymentRequest,
 ) (*payment.DeletePaymentResponse, error) {
-	err := h.paymentService.DeletePayment(uint(req.Id))
+	err := h.paymentService.DeletePayment(ctx, uint(req.Id))
 	if err != nil {
 		h.logger.Error("Failed to delete payment via gRPC", zap.Uint32("id", req.Id), zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to delete payment: %v", err)
@@ -171,7 +171,7 @@ func (h *PaymentGrpcHandler) GetUserPayments(
 		UserID:   uint(req.UserId),
 	}
 
-	listResponse, err := h.paymentService.GetPayments(filter)
+	listResponse, err := h.paymentService.GetPayments(ctx, filter)
 	if err != nil {
 		h.logger.Error("Failed to get user payments via gRPC", zap.Uint32("user_id", req.UserId), zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to get user payments: %v", err)

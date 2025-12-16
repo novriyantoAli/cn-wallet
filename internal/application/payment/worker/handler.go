@@ -61,7 +61,7 @@ func (w *PaymentWorker) HandleCheckPaymentStatus(ctx context.Context, task *asyn
 		zap.Uint("payment_id", payload.PaymentID))
 
 	// Get payment from database
-	payment, err := w.paymentService.GetPaymentByID(payload.PaymentID)
+	payment, err := w.paymentService.GetPaymentByID(ctx, payload.PaymentID)
 	if err != nil {
 		w.logger.Error("Failed to get payment",
 			zap.Uint("payment_id", payload.PaymentID),
@@ -90,7 +90,7 @@ func (w *PaymentWorker) HandleCheckPaymentStatus(ctx context.Context, task *asyn
 			Description: fmt.Sprintf("Status updated by worker at %s", time.Now().Format(time.RFC3339)),
 		}
 
-		_, err := w.paymentService.UpdatePayment(payload.PaymentID, updateReq)
+		_, err := w.paymentService.UpdatePayment(ctx, payload.PaymentID, updateReq)
 		if err != nil {
 			w.logger.Error("Failed to update payment status",
 				zap.Uint("payment_id", payload.PaymentID),
@@ -131,7 +131,7 @@ func (w *PaymentWorker) HandleProcessPayment(ctx context.Context, task *asynq.Ta
 		zap.Uint("payment_id", payload.PaymentID))
 
 	// Get payment from database
-	payment, err := w.paymentService.GetPaymentByID(payload.PaymentID)
+	payment, err := w.paymentService.GetPaymentByID(ctx, payload.PaymentID)
 	if err != nil {
 		w.logger.Error("Failed to get payment for processing",
 			zap.Uint("payment_id", payload.PaymentID),
@@ -155,7 +155,7 @@ func (w *PaymentWorker) HandleProcessPayment(ctx context.Context, task *asynq.Ta
 		Description: fmt.Sprintf("Payment processed by worker at %s", time.Now().Format(time.RFC3339)),
 	}
 
-	_, err = w.paymentService.UpdatePayment(payload.PaymentID, updateReq)
+	_, err = w.paymentService.UpdatePayment(ctx, payload.PaymentID, updateReq)
 	if err != nil {
 		w.logger.Error("Failed to update payment after processing",
 			zap.Uint("payment_id", payload.PaymentID),

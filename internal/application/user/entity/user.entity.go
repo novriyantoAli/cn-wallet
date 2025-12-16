@@ -9,9 +9,7 @@ import (
 type User struct {
 	ID        uint           `json:"id" gorm:"primaryKey"`
 	Email     string         `json:"email" gorm:"uniqueIndex;type:varchar(255);not null"`
-	FullName  string         `json:"full_name" gorm:"not null"`
-	PinHash   string         `json:"-" gorm:"not null"` // 6-digit Security PIN (Bcrypt)
-	Balance   float64        `json:"balance" gorm:"not null;default:0.00"`
+	FullName  string         `json:"full_name" gorm:"type:varchar(255);not null"`
 	Level     string         `json:"level" gorm:"type:varchar(20);default:'user';check:level IN ('user','agent','admin')"`
 	IsActive  bool           `json:"is_active" gorm:"default:true"`
 	CreatedAt time.Time      `json:"created_at" gorm:"autoCreateTime:milli"`

@@ -43,7 +43,7 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := h.service.CreateUser(&req)
+	user, err := h.service.CreateUser(ctx.Request.Context(), &req)
 	if err != nil {
 		h.logger.Error("Failed to create user", zap.Error(err))
 		if err.Error() == "email already exists" {
@@ -76,7 +76,7 @@ func (h *UserHandler) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetUserByID(uint(id))
+	user, err := h.service.GetUserByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		h.logger.Error("Failed to get user", zap.Error(err))
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -108,7 +108,7 @@ func (h *UserHandler) GetUsers(ctx *gin.Context) {
 		return
 	}
 
-	users, err := h.service.GetUsers(&filter)
+	users, err := h.service.GetUsers(ctx.Request.Context(), &filter)
 	if err != nil {
 		h.logger.Error("Failed to get users", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get users"})
@@ -147,7 +147,7 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := h.service.UpdateUser(uint(id), &req)
+	user, err := h.service.UpdateUser(ctx.Request.Context(), uint(id), &req)
 	if err != nil {
 		h.logger.Error("Failed to update user", zap.Error(err))
 		if err.Error() == "user not found" {
@@ -163,53 +163,6 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"data": user})
-}
-
-// UpdateUserPassword godoc
-// @Summary Update user password
-// @Description Update a user's password by ID
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param id path int true "User ID"
-// @Param password body dto.UpdateUserPasswordRequest true "Password update request"
-// @Success 200 {object} map[string]interface{} "Password updated successfully"
-// @Failure 400 {object} map[string]interface{} "Invalid request"
-// @Failure 401 {object} map[string]interface{} "Current password is incorrect"
-// @Failure 404 {object} map[string]interface{} "User not found"
-// @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /users/{id}/password [put]
-func (h *UserHandler) UpdateUserPassword(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	var req dto.UpdateUserPasswordRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Invalid request body", zap.Error(err))
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	err = h.service.UpdateUserPassword(uint(id), &req)
-	if err != nil {
-		h.logger.Error("Failed to update user password", zap.Error(err))
-		if err.Error() == "user not found" {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		if err.Error() == "current password is incorrect" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 
 // DeleteUser godoc
@@ -232,7 +185,7 @@ func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	err = h.service.DeleteUser(uint(id))
+	err = h.service.DeleteUser(ctx.Request.Context(), uint(id))
 	if err != nil {
 		h.logger.Error("Failed to delete user", zap.Error(err))
 		if err.Error() == "user not found" {
@@ -254,6 +207,5 @@ func (h *UserHandler) RegisterRoutes(api *gin.RouterGroup) {
 		users.GET("/:id", h.GetUser)
 		users.PUT("/:id", h.UpdateUser)
 		users.DELETE("/:id", h.DeleteUser)
-		users.PUT("/:id/password", h.UpdateUserPassword)
 	}
 }

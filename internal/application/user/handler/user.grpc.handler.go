@@ -31,14 +31,11 @@ func (h *UserGrpcHandler) CreateUser(
 	req *user.CreateUserRequest,
 ) (*user.CreateUserResponse, error) {
 	createReq := &dto.CreateUserRequest{
-		Email:       req.Email,
-		PhoneNumber: req.PhoneNumber,
-		FullName:    req.FullName,
-		Password:    req.Password,
-		PIN:         req.Pin,
+		Email:    req.Email,
+		FullName: req.FullName,
 	}
 
-	userResponse, err := h.userService.CreateUser(createReq)
+	userResponse, err := h.userService.CreateUser(ctx, createReq)
 	if err != nil {
 		h.logger.Error("Failed to create user via gRPC", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
@@ -50,7 +47,7 @@ func (h *UserGrpcHandler) CreateUser(
 }
 
 func (h *UserGrpcHandler) GetUser(ctx context.Context, req *user.GetUserRequest) (*user.GetUserResponse, error) {
-	userResponse, err := h.userService.GetUserByID(uint(req.Id))
+	userResponse, err := h.userService.GetUserByID(ctx, uint(req.Id))
 	if err != nil {
 		h.logger.Error("Failed to get user via gRPC", zap.Uint32("id", req.Id), zap.Error(err))
 		return nil, status.Errorf(codes.NotFound, "user not found: %v", err)
@@ -77,7 +74,7 @@ func (h *UserGrpcHandler) ListUsers(ctx context.Context, req *user.ListUsersRequ
 		PageSize: pageSize,
 	}
 
-	listResponse, err := h.userService.GetUsers(filter)
+	listResponse, err := h.userService.GetUsers(ctx, filter)
 	if err != nil {
 		h.logger.Error("Failed to list users via gRPC", zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
@@ -101,13 +98,12 @@ func (h *UserGrpcHandler) UpdateUser(
 	req *user.UpdateUserRequest,
 ) (*user.UpdateUserResponse, error) {
 	updateReq := &dto.UpdateUserRequest{
-		PhoneNumber: req.PhoneNumber,
-		FullName:    req.FullName,
-		Level:       req.Level,
-		IsActive:    req.IsActive,
+		FullName: req.FullName,
+		Level:    req.Level,
+		IsActive: req.IsActive,
 	}
 
-	userResponse, err := h.userService.UpdateUser(uint(req.Id), updateReq)
+	userResponse, err := h.userService.UpdateUser(ctx, uint(req.Id), updateReq)
 	if err != nil {
 		h.logger.Error("Failed to update user via gRPC", zap.Uint32("id", req.Id), zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
@@ -122,7 +118,7 @@ func (h *UserGrpcHandler) DeleteUser(
 	ctx context.Context,
 	req *user.DeleteUserRequest,
 ) (*user.DeleteUserResponse, error) {
-	err := h.userService.DeleteUser(uint(req.Id))
+	err := h.userService.DeleteUser(ctx, uint(req.Id))
 	if err != nil {
 		h.logger.Error("Failed to delete user via gRPC", zap.Uint32("id", req.Id), zap.Error(err))
 		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
@@ -133,36 +129,14 @@ func (h *UserGrpcHandler) DeleteUser(
 	}, nil
 }
 
-func (h *UserGrpcHandler) UpdateUserPassword(
-	ctx context.Context,
-	req *user.UpdateUserPasswordRequest,
-) (*user.UpdateUserPasswordResponse, error) {
-	updateReq := &dto.UpdateUserPasswordRequest{
-		CurrentPassword: req.OldPassword,
-		NewPassword:     req.NewPassword,
-	}
-
-	err := h.userService.UpdateUserPassword(uint(req.Id), updateReq)
-	if err != nil {
-		h.logger.Error("Failed to update user password via gRPC", zap.Uint32("id", req.Id), zap.Error(err))
-		return nil, status.Errorf(codes.Internal, "failed to update password: %v", err)
-	}
-
-	return &user.UpdateUserPasswordResponse{
-		Success: true,
-	}, nil
-}
-
 func (h *UserGrpcHandler) toProtoUser(u *dto.UserResponse) *user.User {
 	return &user.User{
-		Id:          uint32(u.ID),
-		Email:       u.Email,
-		PhoneNumber: u.PhoneNumber,
-		FullName:    u.FullName,
-		Balance:     u.Balance,
-		Level:       u.Level,
-		IsActive:    u.IsActive,
-		CreatedAt:   timestamppb.New(u.CreatedAt),
-		UpdatedAt:   timestamppb.New(u.UpdatedAt),
+		Id:        uint32(u.ID),
+		Email:     u.Email,
+		FullName:  u.FullName,
+		Level:     u.Level,
+		IsActive:  u.IsActive,
+		CreatedAt: timestamppb.New(u.CreatedAt),
+		UpdatedAt: timestamppb.New(u.UpdatedAt),
 	}
 }

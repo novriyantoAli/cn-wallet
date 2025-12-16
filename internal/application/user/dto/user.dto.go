@@ -3,40 +3,24 @@ package dto
 import "time"
 
 type CreateUserRequest struct {
-	Email       string `json:"email" binding:"required,email"`
-	PhoneNumber string `json:"phone_number" binding:"omitempty,e164"`
-	FullName    string `json:"full_name" binding:"required"`
-	Password    string `json:"password" binding:"omitempty,min=8"`
-	PIN         string `json:"pin" binding:"required,len=6,numeric"`
+	Email    string `json:"email" binding:"required,email"`
+	FullName string `json:"full_name" binding:"required"`
 }
 
 type UpdateUserRequest struct {
-	PhoneNumber string `json:"phone_number" binding:"omitempty,e164"`
-	FullName    string `json:"full_name" binding:"omitempty"`
-	Level       string `json:"level" binding:"omitempty,oneof=user agent admin"`
-	IsActive    bool   `json:"is_active"`
-}
-
-type UpdateUserPasswordRequest struct {
-	CurrentPassword string `json:"current_password" binding:"required"`
-	NewPassword     string `json:"new_password" binding:"required,min=8"`
-}
-
-type UpdateUserPINRequest struct {
-	PIN    string `json:"pin" binding:"required,len=6,numeric"`
-	NewPIN string `json:"new_pin" binding:"required,len=6,numeric"`
+	FullName string `json:"full_name" binding:"omitempty"`
+	Level    string `json:"level" binding:"omitempty,oneof=user agent admin"`
+	IsActive bool   `json:"is_active"`
 }
 
 type UserResponse struct {
-	ID          uint      `json:"id"`
-	Email       string    `json:"email"`
-	PhoneNumber string    `json:"phone_number"`
-	FullName    string    `json:"full_name"`
-	Balance     string    `json:"balance"`
-	Level       string    `json:"level"`
-	IsActive    bool      `json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID        uint      `json:"id"`
+	Email     string    `json:"email"`
+	FullName  string    `json:"full_name"`
+	Level     string    `json:"level"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type UserListResponse struct {
