@@ -5,6 +5,9 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
+	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
+	"github.com/shopspring/decimal"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -167,6 +170,128 @@ func (m *MockUserService) UpdateUserPassword(id uint, req *userDto.UpdateUserPas
 
 func (m *MockUserService) UpdateUserPIN(id uint, req *userDto.UpdateUserPINRequest) error {
 	args := m.Called(id, req)
+	return args.Error(0)
+}
+
+// MockWalletRepository is a mock implementation of WalletRepository
+type MockWalletRepository struct {
+	mock.Mock
+}
+
+func (m *MockWalletRepository) Create(wallet *walletEntity.Wallet) error {
+	args := m.Called(wallet)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) GetByID(id uint) (*walletEntity.Wallet, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletEntity.Wallet), args.Error(1)
+}
+
+func (m *MockWalletRepository) GetByUserID(userID uint) (*walletEntity.Wallet, error) {
+	args := m.Called(userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletEntity.Wallet), args.Error(1)
+}
+
+func (m *MockWalletRepository) GetAll(filter *walletDto.WalletFilter) ([]walletEntity.Wallet, int64, error) {
+	args := m.Called(filter)
+	var wallets []walletEntity.Wallet
+	if args.Get(0) != nil {
+		wallets = args.Get(0).([]walletEntity.Wallet)
+	}
+
+	var count int64
+	if args.Get(1) != nil {
+		count = args.Get(1).(int64)
+	}
+	return wallets, count, args.Error(2)
+}
+
+func (m *MockWalletRepository) Update(wallet *walletEntity.Wallet) error {
+	args := m.Called(wallet)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) Delete(id uint) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) AddBalance(id uint, amount decimal.Decimal) error {
+	args := m.Called(id, amount)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) SubtractBalance(id uint, amount decimal.Decimal) error {
+	args := m.Called(id, amount)
+	return args.Error(0)
+}
+
+// MockWalletService is a mock implementation of WalletService
+type MockWalletService struct {
+	mock.Mock
+}
+
+func (m *MockWalletService) CreateWallet(req *walletDto.CreateWalletRequest) (*walletDto.WalletResponse, error) {
+	args := m.Called(req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.WalletResponse), args.Error(1)
+}
+
+func (m *MockWalletService) GetWalletByID(id uint) (*walletDto.WalletResponse, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.WalletResponse), args.Error(1)
+}
+
+func (m *MockWalletService) GetWalletByUserID(userID uint) (*walletDto.WalletResponse, error) {
+	args := m.Called(userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.WalletResponse), args.Error(1)
+}
+
+func (m *MockWalletService) GetWallets(filter *walletDto.WalletFilter) (*walletDto.WalletListResponse, error) {
+	args := m.Called(filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.WalletListResponse), args.Error(1)
+}
+
+func (m *MockWalletService) UpdateWalletPIN(id uint, req *walletDto.UpdateWalletPINRequest) error {
+	args := m.Called(id, req)
+	return args.Error(0)
+}
+
+func (m *MockWalletService) AddBalance(id uint, amount decimal.Decimal) error {
+	args := m.Called(id, amount)
+	return args.Error(0)
+}
+
+func (m *MockWalletService) WithdrawBalance(id uint, amount decimal.Decimal, pin string) error {
+	args := m.Called(id, amount, pin)
+	return args.Error(0)
+}
+
+func (m *MockWalletService) TransferBalance(fromID, toUserID uint, amount decimal.Decimal, pin string) error {
+	args := m.Called(fromID, toUserID, amount, pin)
+	return args.Error(0)
+}
+
+func (m *MockWalletService) Delete(id uint) error {
+	args := m.Called(id)
 	return args.Error(0)
 }
 

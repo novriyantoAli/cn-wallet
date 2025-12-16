@@ -8,6 +8,8 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
+	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 	"github.com/shopspring/decimal"
 )
 
@@ -84,5 +86,52 @@ func CreatePaymentFilterFixture() *dto.PaymentFilter {
 		UserID:   1,
 		Page:     1,
 		PageSize: 10,
+	}
+}
+
+// Wallet fixtures
+func CreateWalletFixture() *walletEntity.Wallet {
+	return &walletEntity.Wallet{
+		ID:        1,
+		UserID:    1,
+		Balance:   decimal.RequireFromString("5000.00"),
+		PinHash:   "$2a$10$example.pin.hashed",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+}
+
+func CreateWalletRequestFixture() *walletDto.CreateWalletRequest {
+	return &walletDto.CreateWalletRequest{
+		UserID: 1,
+		PIN:    "123456",
+	}
+}
+
+func CreateUpdateWalletPINRequestFixture() *walletDto.UpdateWalletPINRequest {
+	return &walletDto.UpdateWalletPINRequest{
+		CurrentPIN: "123456",
+		NewPIN:     "654321",
+	}
+}
+
+func CreateAddBalanceRequestFixture() *walletDto.AddBalanceRequest {
+	return &walletDto.AddBalanceRequest{
+		Amount: "1000.50",
+	}
+}
+
+func CreateWithdrawBalanceRequestFixture() *walletDto.WithdrawBalanceRequest {
+	return &walletDto.WithdrawBalanceRequest{
+		Amount: "500.00",
+		PIN:    "123456",
+	}
+}
+
+func CreateTransferBalanceRequestFixture() *walletDto.TransferBalanceRequest {
+	return &walletDto.TransferBalanceRequest{
+		ToUserID: 2,
+		Amount:   "250.00",
+		PIN:      "123456",
 	}
 }
