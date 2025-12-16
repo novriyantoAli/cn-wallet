@@ -8,7 +8,7 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
-	"gorm.io/datatypes"
+	"github.com/shopspring/decimal"
 )
 
 // User fixtures
@@ -20,7 +20,7 @@ func CreateUserFixture() *userEntity.User {
 		FullName:     sql.NullString{String: "John Doe", Valid: true},
 		PasswordHash: sql.NullString{String: "$2a$10$example.hashed.password", Valid: true},
 		PinHash:      "$2a$10$example.pin.hashed",
-		Balance:      datatypes.Decimal("1000.00"),
+		Balance:      decimal.RequireFromString("1000.00"),
 		Level:        "user",
 		IsActive:     true,
 		CreatedAt:    time.Now(),

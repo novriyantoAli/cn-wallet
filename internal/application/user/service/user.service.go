@@ -8,10 +8,10 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/repository"
+	"github.com/shopspring/decimal"
 
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -70,7 +70,7 @@ func (s *userService) CreateUser(req *dto.CreateUserRequest) (*dto.UserResponse,
 		FullName:     sql.NullString{String: req.FullName, Valid: req.FullName != ""},
 		PasswordHash: passwordHash,
 		PinHash:      string(hashedPIN),
-		Balance:      datatypes.Decimal("0.00"),
+		Balance:      decimal.RequireFromString("0.00"),
 		Level:        "user",
 		IsActive:     true,
 		CreatedAt:    time.Now(),
