@@ -31,9 +31,11 @@ func (h *UserGrpcHandler) CreateUser(
 	req *user.CreateUserRequest,
 ) (*user.CreateUserResponse, error) {
 	createReq := &dto.CreateUserRequest{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
+		Email:       req.Email,
+		PhoneNumber: req.PhoneNumber,
+		FullName:    req.FullName,
+		Password:    req.Password,
+		PIN:         req.Pin,
 	}
 
 	userResponse, err := h.userService.CreateUser(createReq)
@@ -99,8 +101,10 @@ func (h *UserGrpcHandler) UpdateUser(
 	req *user.UpdateUserRequest,
 ) (*user.UpdateUserResponse, error) {
 	updateReq := &dto.UpdateUserRequest{
-		Name:  req.Name,
-		Email: req.Email,
+		PhoneNumber: req.PhoneNumber,
+		FullName:    req.FullName,
+		Level:       req.Level,
+		IsActive:    req.IsActive,
 	}
 
 	userResponse, err := h.userService.UpdateUser(uint(req.Id), updateReq)
@@ -151,10 +155,14 @@ func (h *UserGrpcHandler) UpdateUserPassword(
 
 func (h *UserGrpcHandler) toProtoUser(u *dto.UserResponse) *user.User {
 	return &user.User{
-		Id:        uint32(u.ID),
-		Name:      u.Name,
-		Email:     u.Email,
-		CreatedAt: timestamppb.New(u.CreatedAt),
-		UpdatedAt: timestamppb.New(u.UpdatedAt),
+		Id:          uint32(u.ID),
+		Email:       u.Email,
+		PhoneNumber: u.PhoneNumber,
+		FullName:    u.FullName,
+		Balance:     u.Balance,
+		Level:       u.Level,
+		IsActive:    u.IsActive,
+		CreatedAt:   timestamppb.New(u.CreatedAt),
+		UpdatedAt:   timestamppb.New(u.UpdatedAt),
 	}
 }

@@ -165,6 +165,11 @@ func (m *MockUserService) UpdateUserPassword(id uint, req *userDto.UpdateUserPas
 	return args.Error(0)
 }
 
+func (m *MockUserService) UpdateUserPIN(id uint, req *userDto.UpdateUserPINRequest) error {
+	args := m.Called(id, req)
+	return args.Error(0)
+}
+
 func (m *MockUserService) DeleteUser(id uint) error {
 	args := m.Called(id)
 	return args.Error(0)

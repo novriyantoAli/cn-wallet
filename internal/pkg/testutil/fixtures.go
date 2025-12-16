@@ -1,38 +1,49 @@
 package testutil
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
+	"gorm.io/datatypes"
 )
 
 // User fixtures
 func CreateUserFixture() *userEntity.User {
 	return &userEntity.User{
-		ID:        1,
-		Name:      "John Doe",
-		Email:     "john@example.com",
-		Password:  "$2a$10$example.hashed.password",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:           1,
+		Email:        "john@example.com",
+		PhoneNumber:  sql.NullString{String: "+1234567890", Valid: true},
+		FullName:     sql.NullString{String: "John Doe", Valid: true},
+		PasswordHash: sql.NullString{String: "$2a$10$example.hashed.password", Valid: true},
+		PinHash:      "$2a$10$example.pin.hashed",
+		Balance:      datatypes.Decimal("1000.00"),
+		Level:        "user",
+		IsActive:     true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 }
 
 func CreateUserRequestFixture() *userDto.CreateUserRequest {
 	return &userDto.CreateUserRequest{
-		Name:     "John Doe",
-		Email:    "john@example.com",
-		Password: "password123",
+		Email:       "john@example.com",
+		PhoneNumber: "+1234567890",
+		FullName:    "John Doe",
+		Password:    "password123",
+		PIN:         "123456",
 	}
 }
 
 func CreateUpdateUserRequestFixture() *userDto.UpdateUserRequest {
 	return &userDto.UpdateUserRequest{
-		Name:  "John Updated",
-		Email: "john.updated@example.com",
+		PhoneNumber: "+1987654321",
+		FullName:    "John Updated",
+		Level:       "user",
+		IsActive:    true,
 	}
 }
 
