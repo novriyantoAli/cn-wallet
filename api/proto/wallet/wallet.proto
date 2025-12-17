@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package wallet;
+
+option go_package = "github.com/novriyantoAli/cn-wallet/api/proto/wallet";
+
+import "google/protobuf/timestamp.proto";
+
+message Wallet {
+  uint32 id = 1;
+  uint32 user_id = 2;
+  double balance = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message CreateWalletRequest {
+  uint32 user_id = 1;
+  string pin = 2;
+}
+
+message SetPINRequest {
+  uint32 user_id = 1;
+  string current_pin = 2;
+  string new_pin = 3;
+}
+
+message VerifyPINRequest {
+  uint32 user_id = 1;
+  string pin = 2;
+}
+
+message UpdateBalanceRequest {
+  uint32 user_id = 1;
+  double amount = 2;
+  string description = 3;
+}
+
+message GetWalletRequest {
+  uint32 user_id = 1;
+}
+
+message WalletResponse {
+  Wallet data = 1;
+  string message = 2;
+}
+
+message DeleteWalletRequest {
+  uint32 user_id = 1;
+}
+
+service WalletService {
+  rpc CreateWallet(CreateWalletRequest) returns (WalletResponse);
+  rpc GetWallet(GetWalletRequest) returns (WalletResponse);
+  rpc SetPIN(SetPINRequest) returns (WalletResponse);
+  rpc VerifyPIN(VerifyPINRequest) returns (WalletResponse);
+  rpc AddBalance(UpdateBalanceRequest) returns (WalletResponse);
+  rpc DeductBalance(UpdateBalanceRequest) returns (WalletResponse);
+  rpc DeleteWallet(DeleteWalletRequest) returns (WalletResponse);
+}

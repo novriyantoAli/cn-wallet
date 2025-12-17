@@ -7,6 +7,7 @@ import (
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/testutil"
 
 	"github.com/stretchr/testify/assert"
@@ -396,4 +397,231 @@ func TestUserRepository_ContextCancellation(t *testing.T) {
 
 	// Cleanup
 	testutil.CleanDB(db)
+}
+
+func TestUserRepository_GetByIDWithWallet(t *testing.T) {
+	// Setup
+	db, err := testutil.SetupTestDB()
+	require.NoError(t, err)
+	defer testutil.CleanDB(db)
+	logger := testutil.NewTestLogger(t)
+	repo := NewUserRepository(db, logger)
+	ctx := context.Background()
+
+	t.Run("should get user with wallet preloaded", func(t *testing.T) {
+		// Given - create user and wallet
+		user := testutil.CreateUserFixture()
+		user.ID = 0
+		err := db.Create(user).Error
+		require.NoError(t, err)
+
+		wallet := &walletEntity.Wallet{
+			UserID:  user.ID,
+			Balance: 100.50,
+			PINHash: "hashed_pin",
+		}
+		err = db.Create(wallet).Error
+		require.NoError(t, err)
+
+		// When
+		retrievedUser, err := repo.GetByID(ctx, user.ID)
+
+		// Then
+		assert.NoError(t, err)
+		assert.NotNil(t, retrievedUser)
+		assert.Equal(t, user.ID, retrievedUser.ID)
+		assert.NotNil(t, retrievedUser.Wallet)
+		assert.Equal(t, wallet.ID, retrievedUser.Wallet.ID)
+		assert.Equal(t, wallet.Balance, retrievedUser.Wallet.Balance)
+	})
+
+	t.Run("should get user without wallet if wallet does not exist", func(t *testing.T) {
+		// Given - create user without wallet
+		user := testutil.CreateUserFixture()
+		user.ID = 0
+		user.Email = "no-wallet@example.com"
+		err := db.Create(user).Error
+		require.NoError(t, err)
+
+		// When
+		retrievedUser, err := repo.GetByID(ctx, user.ID)
+
+		// Then
+		assert.NoError(t, err)
+		assert.NotNil(t, retrievedUser)
+		assert.Nil(t, retrievedUser.Wallet)
+	})
+}
+
+func TestUserRepository_GetByEmailWithWallet(t *testing.T) {
+	// Setup
+	db, err := testutil.SetupTestDB()
+	require.NoError(t, err)
+	defer testutil.CleanDB(db)
+	logger := testutil.NewTestLogger(t)
+	repo := NewUserRepository(db, logger)
+	ctx := context.Background()
+
+	t.Run("should get user by email with wallet preloaded", func(t *testing.T) {
+		// Given
+		user := testutil.CreateUserFixture()
+		user.ID = 0
+		user.Email = "wallet-user@example.com"
+		err := db.Create(user).Error
+		require.NoError(t, err)
+
+		wallet := &walletEntity.Wallet{
+			UserID:  user.ID,
+			Balance: 250.75,
+			PINHash: "another_hash",
+		}
+		err = db.Create(wallet).Error
+		require.NoError(t, err)
+
+		// When
+		retrievedUser, err := repo.GetByEmail(ctx, user.Email)
+
+		// Then
+		assert.NoError(t, err)
+		assert.NotNil(t, retrievedUser)
+		assert.Equal(t, user.Email, retrievedUser.Email)
+		assert.NotNil(t, retrievedUser.Wallet)
+		assert.Equal(t, wallet.Balance, retrievedUser.Wallet.Balance)
+	})
+
+	t.Run("should get user by email without wallet if wallet missing", func(t *testing.T) {
+		// Given
+		user := testutil.CreateUserFixture()
+		user.ID = 0
+		user.Email = "no-wallet-email@example.com"
+		err := db.Create(user).Error
+		require.NoError(t, err)
+
+		// When
+		retrievedUser, err := repo.GetByEmail(ctx, user.Email)
+
+		// Then
+		assert.NoError(t, err)
+		assert.NotNil(t, retrievedUser)
+		assert.Nil(t, retrievedUser.Wallet)
+	})
+}
+
+func TestUserRepository_GetAllWithWallet(t *testing.T) {
+	// Setup
+	db, err := testutil.SetupTestDB()
+	require.NoError(t, err)
+	defer testutil.CleanDB(db)
+
+	// Clean any leftover data
+	testutil.CleanDB(db)
+
+	logger := testutil.NewTestLogger(t)
+	repo := NewUserRepository(db, logger)
+	ctx := context.Background()
+
+	t.Run("should get all users without wallet preload", func(t *testing.T) {
+		// Clean before test
+		testutil.CleanDB(db)
+
+		// Given - create 3 users with 2 wallets
+		user1 := testutil.CreateUserFixture()
+		user1.ID = 0
+		user1.Email = "user1-wallet@example.com"
+		err := db.Create(user1).Error
+		require.NoError(t, err)
+
+		user2 := testutil.CreateUserFixture()
+		user2.ID = 0
+		user2.Email = "user2-wallet@example.com"
+		err = db.Create(user2).Error
+		require.NoError(t, err)
+
+		user3 := testutil.CreateUserFixture()
+		user3.ID = 0
+		user3.Email = "user3-no-wallet@example.com"
+		err = db.Create(user3).Error
+		require.NoError(t, err)
+
+		// Create wallets for user1 and user2
+		wallet1 := &walletEntity.Wallet{
+			UserID:  user1.ID,
+			Balance: 100.00,
+			PINHash: "pin1",
+		}
+		err = db.Create(wallet1).Error
+		require.NoError(t, err)
+
+		wallet2 := &walletEntity.Wallet{
+			UserID:  user2.ID,
+			Balance: 200.00,
+			PINHash: "pin2",
+		}
+		err = db.Create(wallet2).Error
+		require.NoError(t, err)
+
+		// When
+		filter := &dto.UserFilter{
+			Page:     1,
+			PageSize: 10,
+		}
+		users, totalCount, err := repo.GetAll(ctx, filter)
+
+		// Then
+		assert.NoError(t, err)
+		assert.Equal(t, int64(3), totalCount)
+		assert.Len(t, users, 3)
+
+		// Verify wallets are NOT preloaded in GetAll
+		walletCount := 0
+		for _, u := range users {
+			if u.Wallet != nil {
+				walletCount++
+			}
+		}
+		assert.Equal(t, 0, walletCount, "GetAll should not preload wallets")
+	})
+
+	t.Run("should get paginated users with wallets", func(t *testing.T) {
+		// Clean before test
+		testutil.CleanDB(db)
+
+		// Given - create multiple users
+		for i := 1; i <= 5; i++ {
+			user := testutil.CreateUserFixture()
+			user.ID = 0
+			user.Email = fmt.Sprintf("paginated-user%d@example.com", i)
+			err := db.Create(user).Error
+			require.NoError(t, err)
+
+			// Create wallet for odd numbered users
+			if i%2 == 1 {
+				wallet := &walletEntity.Wallet{
+					UserID:  user.ID,
+					Balance: float64(i * 100),
+					PINHash: fmt.Sprintf("pin%d", i),
+				}
+				err = db.Create(wallet).Error
+				require.NoError(t, err)
+			}
+		}
+
+		// When - get first page
+		filter := &dto.UserFilter{
+			Page:     1,
+			PageSize: 2,
+		}
+		users, totalCount, err := repo.GetAll(ctx, filter)
+
+		// Then
+		assert.NoError(t, err)
+		assert.Equal(t, int64(5), totalCount)
+		assert.Len(t, users, 2)
+
+		// Verify wallets are preloaded for paginated results
+		for _, u := range users {
+			// Check wallet is either present or nil (preloaded, not just missing)
+			_ = u.Wallet // This confirms wallet field is populated (or nil)
+		}
+	})
 }

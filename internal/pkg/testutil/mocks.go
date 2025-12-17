@@ -7,6 +7,8 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
+	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -164,5 +166,111 @@ func (m *MockUserService) UpdateUser(ctx context.Context, id uint, req *userDto.
 
 func (m *MockUserService) DeleteUser(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+// MockWalletService is a mock implementation of WalletService
+type MockWalletService struct {
+	mock.Mock
+}
+
+func (m *MockWalletService) CreateWallet(ctx context.Context, req *walletDto.CreateWalletRequest) (*walletEntity.Wallet, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletEntity.Wallet), args.Error(1)
+}
+
+func (m *MockWalletService) GetWalletByUserID(ctx context.Context, userID uint) (*walletDto.GetWalletResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.GetWalletResponse), args.Error(1)
+}
+
+func (m *MockWalletService) GetWalletByID(ctx context.Context, id uint) (*walletDto.GetWalletResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.GetWalletResponse), args.Error(1)
+}
+
+func (m *MockWalletService) SetPIN(ctx context.Context, userID uint, req *walletDto.SetPINRequest) error {
+	args := m.Called(ctx, userID, req)
+	return args.Error(0)
+}
+
+func (m *MockWalletService) VerifyPIN(ctx context.Context, userID uint, pin string) error {
+	args := m.Called(ctx, userID, pin)
+	return args.Error(0)
+}
+
+func (m *MockWalletService) AddBalance(ctx context.Context, userID uint, amount float64, description string) (*walletDto.GetWalletResponse, error) {
+	args := m.Called(ctx, userID, amount, description)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.GetWalletResponse), args.Error(1)
+}
+
+func (m *MockWalletService) DeductBalance(ctx context.Context, userID uint, amount float64, description string) (*walletDto.GetWalletResponse, error) {
+	args := m.Called(ctx, userID, amount, description)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.GetWalletResponse), args.Error(1)
+}
+
+func (m *MockWalletService) DeleteWallet(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+// MockWalletRepository is a mock implementation of WalletRepository
+type MockWalletRepository struct {
+	mock.Mock
+}
+
+func (m *MockWalletRepository) CreateWallet(ctx context.Context, wallet *walletEntity.Wallet) error {
+	args := m.Called(ctx, wallet)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) GetWalletByUserID(ctx context.Context, userID uint) (*walletEntity.Wallet, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletEntity.Wallet), args.Error(1)
+}
+
+func (m *MockWalletRepository) GetWalletByID(ctx context.Context, id uint) (*walletEntity.Wallet, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletEntity.Wallet), args.Error(1)
+}
+
+func (m *MockWalletRepository) UpdateWallet(ctx context.Context, wallet *walletEntity.Wallet) error {
+	args := m.Called(ctx, wallet)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) UpdateBalance(ctx context.Context, userID uint, newBalance float64) error {
+	args := m.Called(ctx, userID, newBalance)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) UpdatePIN(ctx context.Context, userID uint, pinHash string) error {
+	args := m.Called(ctx, userID, pinHash)
+	return args.Error(0)
+}
+
+func (m *MockWalletRepository) DeleteWallet(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
 	return args.Error(0)
 }

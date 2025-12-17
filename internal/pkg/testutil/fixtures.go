@@ -7,6 +7,8 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
+	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 )
 
 // User fixtures
@@ -74,5 +76,34 @@ func CreatePaymentFilterFixture() *dto.PaymentFilter {
 		UserID:   1,
 		Page:     1,
 		PageSize: 10,
+	}
+}
+
+// Wallet fixtures
+func CreateWalletFixture() *walletEntity.Wallet {
+	return &walletEntity.Wallet{
+		ID:        1,
+		UserID:    1,
+		Balance:   1000.00,
+		PINHash:   "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", // SHA256 of "123456"
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+}
+
+func CreateWalletRequestFixture() *walletDto.CreateWalletRequest {
+	return &walletDto.CreateWalletRequest{
+		UserID: 1,
+		PIN:    "123456",
+	}
+}
+
+func CreateWalletResponseFixture() *walletDto.GetWalletResponse {
+	return &walletDto.GetWalletResponse{
+		ID:        1,
+		UserID:    1,
+		Balance:   1000.00,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 }

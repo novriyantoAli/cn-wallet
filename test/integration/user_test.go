@@ -29,6 +29,7 @@ func setupUserIntegration(t *testing.T) (*gin.Engine, func()) {
 
 	// Create real instances (no mocks)
 	userRepo := repository.NewUserRepository(db, logger)
+
 	userService := service.NewUserService(userRepo, logger)
 	userHandler := handler.NewUserHandler(userService, logger)
 

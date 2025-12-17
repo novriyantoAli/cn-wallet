@@ -3,6 +3,7 @@ package migration
 import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -27,6 +28,7 @@ func (s *Server) RunMigrations() error {
 	err := s.db.AutoMigrate(
 		&userEntity.User{},
 		&entity.Payment{},
+		&walletEntity.Wallet{},
 	)
 	if err != nil {
 		s.logger.Error("Failed to run database migrations", zap.Error(err))
@@ -53,6 +55,7 @@ func (s *Server) DropTables() error {
 	err := s.db.Migrator().DropTable(
 		&userEntity.User{},
 		&entity.Payment{},
+		&walletEntity.Wallet{},
 	)
 	if err != nil {
 		s.logger.Error("Failed to drop database tables", zap.Error(err))

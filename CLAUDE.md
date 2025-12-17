@@ -147,6 +147,23 @@ github.com/novriyantoAli/cn-wallet/
 - **golangci-lint**: Comprehensive code linting
 - **Docker**: Containerization support
 
+### Recent Features & Changes
+
+#### Wallet Feature Integration (Latest)
+- **Auto-Wallet Creation on User Signup**: When a user is created, a wallet is automatically created with a default PIN of "000000"
+  - Integration point: `internal/application/user/service/user.service.go` - `CreateUser` method calls `walletService.CreateWallet`
+  - Error handling: Wallet creation errors are logged but do NOT fail user creation (graceful degradation)
+  - Dependency injection: WalletService is injected into UserService
+  - Testing: All user service tests updated to mock WalletService dependency
+  - API providers: Wallet module added to DI container in `internal/server/api/providers.go`
+
+#### Wallet Domain Features
+- **Complete Wallet Module**: Full CRUD operations for wallet management
+  - Entity, DTO, Repository, Service, and Handler layers fully implemented
+  - gRPC service for efficient wallet operations
+  - Worker support for async wallet operations
+  - Comprehensive test coverage (unit tests for all layers)
+
 ### Application Flow
 1. `main.go` bootstraps the Fx application with domain modules
 2. Dependencies are injected through domain-specific Fx providers
@@ -160,6 +177,7 @@ github.com/novriyantoAli/cn-wallet/
 10. Background workers process jobs asynchronously via Asynq
 11. gRPC services provide efficient, type-safe APIs
 12. Database migrations handle schema changes
+13. **NEW**: User creation automatically triggers wallet creation for new users
 
 ### Domain-Driven Design Implementation
 

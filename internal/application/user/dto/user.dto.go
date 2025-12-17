@@ -13,14 +13,22 @@ type UpdateUserRequest struct {
 	IsActive bool   `json:"is_active"`
 }
 
-type UserResponse struct {
+type WalletInfo struct {
 	ID        uint      `json:"id"`
-	Email     string    `json:"email"`
-	FullName  string    `json:"full_name"`
-	Level     string    `json:"level"`
-	IsActive  bool      `json:"is_active"`
+	Balance   float64   `json:"balance"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type UserResponse struct {
+	ID        uint        `json:"id"`
+	Email     string      `json:"email"`
+	FullName  string      `json:"full_name"`
+	Level     string      `json:"level"`
+	IsActive  bool        `json:"is_active"`
+	Wallet    *WalletInfo `json:"wallet,omitempty"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
 }
 
 type UserListResponse struct {

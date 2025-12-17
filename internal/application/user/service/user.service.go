@@ -8,6 +8,7 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/repository"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -44,11 +45,20 @@ func (s *userService) CreateUser(ctx context.Context, req *dto.CreateUserRequest
 		return nil, errors.New("email already exists")
 	}
 
+	// Create wallet entity for the new user
+	wallet := &walletEntity.Wallet{
+		Balance:   0,
+		PINHash:   "000000", // Default PIN (not hashed for now)
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
 	user := &entity.User{
 		Email:     req.Email,
 		FullName:  req.FullName,
 		Level:     "user",
 		IsActive:  true,
+		Wallet:    wallet, // Attach wallet to user entity
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -152,12 +162,23 @@ func (s *userService) DeleteUser(ctx context.Context, id uint) error {
 }
 
 func (s *userService) entityToResponse(user *entity.User) *dto.UserResponse {
+	var walletInfo *dto.WalletInfo
+	if user.Wallet != nil {
+		walletInfo = &dto.WalletInfo{
+			ID:        user.Wallet.ID,
+			Balance:   user.Wallet.Balance,
+			CreatedAt: user.Wallet.CreatedAt,
+			UpdatedAt: user.Wallet.UpdatedAt,
+		}
+	}
+
 	return &dto.UserResponse{
 		ID:        user.ID,
 		Email:     user.Email,
 		FullName:  user.FullName,
 		Level:     user.Level,
 		IsActive:  user.IsActive,
+		Wallet:    walletInfo,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}

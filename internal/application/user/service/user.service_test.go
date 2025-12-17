@@ -14,14 +14,25 @@ import (
 	"gorm.io/gorm"
 )
 
+func setupUserServiceWithMocks() (UserService, *testutil.MockUserRepository) {
+	mockRepo := &testutil.MockUserRepository{}
+	logger := testutil.NewSilentLogger()
+	service := NewUserService(mockRepo, logger)
+	return service, mockRepo
+}
+
+func setupUserService(mockRepo *testutil.MockUserRepository) UserService {
+	logger := testutil.NewSilentLogger()
+	service := NewUserService(mockRepo, logger)
+	return service
+}
+
 func TestUserService_CreateUser(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("should create user successfully", func(t *testing.T) {
 		// Setup
-		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service, mockRepo := setupUserServiceWithMocks()
 
 		req := &dto.CreateUserRequest{
 			Email:    "test@example.com",
@@ -30,9 +41,15 @@ func TestUserService_CreateUser(t *testing.T) {
 
 		// Mock expectations
 		mockRepo.On("EmailExists", ctx, req.Email).Return(false, nil)
-		mockRepo.On("Create", ctx, mock.AnythingOfType("*entity.User")).Return(nil).Run(func(args mock.Arguments) {
+		mockRepo.On("Create", ctx, mock.MatchedBy(func(u *entity.User) bool {
+			return u.Email == req.Email && u.Wallet != nil && u.Wallet.Balance == 0 && u.Wallet.PINHash == "000000"
+		})).Return(nil).Run(func(args mock.Arguments) {
 			user := args.Get(1).(*entity.User)
 			user.ID = 1
+			if user.Wallet != nil {
+				user.Wallet.UserID = user.ID
+				user.Wallet.ID = 1
+			}
 		})
 
 		// When
@@ -44,14 +61,15 @@ func TestUserService_CreateUser(t *testing.T) {
 		assert.Equal(t, uint(1), response.ID)
 		assert.Equal(t, req.FullName, response.FullName)
 		assert.Equal(t, req.Email, response.Email)
+		assert.NotNil(t, response.Wallet)
+		assert.Equal(t, float64(0), response.Wallet.Balance)
 		mockRepo.AssertExpectations(t)
 	})
 
 	t.Run("should return error when email already exists", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		req := &dto.CreateUserRequest{
 			Email:    "existing@example.com",
@@ -74,8 +92,7 @@ func TestUserService_CreateUser(t *testing.T) {
 	t.Run("should return error when repository fails", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		req := &dto.CreateUserRequest{
 			Email:    "test@example.com",
@@ -102,8 +119,7 @@ func TestUserService_GetUserByID(t *testing.T) {
 	t.Run("should get user by ID successfully", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		user := &entity.User{
 			ID:       1,
@@ -131,8 +147,7 @@ func TestUserService_GetUserByID(t *testing.T) {
 	t.Run("should return error when user not found", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		// Mock expectations
 		mockRepo.On("GetByID", ctx, uint(999)).Return(nil, gorm.ErrRecordNotFound)
@@ -153,8 +168,7 @@ func TestUserService_GetUserByEmail(t *testing.T) {
 	t.Run("should get user by email successfully", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		user := &entity.User{
 			ID:       1,
@@ -180,8 +194,7 @@ func TestUserService_GetUserByEmail(t *testing.T) {
 	t.Run("should return error when email not found", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		// Mock expectations
 		mockRepo.On("GetByEmail", ctx, "nonexistent@example.com").Return(nil, gorm.ErrRecordNotFound)
@@ -202,8 +215,7 @@ func TestUserService_GetUsers(t *testing.T) {
 	t.Run("should get users with pagination", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		users := []entity.User{
 			{
@@ -244,8 +256,7 @@ func TestUserService_GetUsers(t *testing.T) {
 	t.Run("should return error when repository fails", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		filter := &dto.UserFilter{
 			Page:     1,
@@ -271,8 +282,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 	t.Run("should update user successfully", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		existingUser := &entity.User{
 			ID:       1,
@@ -307,8 +317,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 	t.Run("should return error when user not found", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		updateReq := &dto.UpdateUserRequest{
 			FullName: "Updated User",
@@ -333,8 +342,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 	t.Run("should delete user successfully", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		user := &entity.User{
 			ID:       1,
@@ -359,8 +367,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 	t.Run("should return error when user not found", func(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockUserRepository{}
-		logger := testutil.NewSilentLogger()
-		service := NewUserService(mockRepo, logger)
+		service := setupUserService(mockRepo)
 
 		// Mock expectations
 		mockRepo.On("GetByID", ctx, uint(999)).Return(nil, gorm.ErrRecordNotFound)

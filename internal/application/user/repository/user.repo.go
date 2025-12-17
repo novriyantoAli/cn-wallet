@@ -42,7 +42,7 @@ func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 func (r *userRepository) GetByID(ctx context.Context, id uint) (*entity.User, error) {
 	var user entity.User
 	db := database.GetDB(ctx, r.db)
-	err := db.First(&user, id).Error
+	err := db.Preload("Wallet").First(&user, id).Error
 	if err != nil {
 		r.logger.Error("Failed to get user by ID", zap.Uint("id", id), zap.Error(err))
 		return nil, err
@@ -53,7 +53,7 @@ func (r *userRepository) GetByID(ctx context.Context, id uint) (*entity.User, er
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	var user entity.User
 	db := database.GetDB(ctx, r.db)
-	err := db.Where("email = ?", email).First(&user).Error
+	err := db.Preload("Wallet").Where("email = ?", email).First(&user).Error
 	if err != nil {
 		r.logger.Error("Failed to get user by email", zap.String("email", email), zap.Error(err))
 		return nil, err
