@@ -5,6 +5,10 @@ import (
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
+	productDto "github.com/novriyantoAli/cn-wallet/internal/application/product/dto"
+	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
+	providerDto "github.com/novriyantoAli/cn-wallet/internal/application/provider/dto"
+	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
@@ -273,4 +277,114 @@ func (m *MockWalletRepository) UpdatePIN(ctx context.Context, userID uint, pinHa
 func (m *MockWalletRepository) DeleteWallet(ctx context.Context, userID uint) error {
 	args := m.Called(ctx, userID)
 	return args.Error(0)
+}
+
+// MockProductRepository is a mock implementation of ProductRepository
+type MockProductRepository struct {
+	mock.Mock
+}
+
+func (m *MockProductRepository) Create(ctx context.Context, product *productEntity.Product) error {
+	args := m.Called(ctx, product)
+	return args.Error(0)
+}
+
+func (m *MockProductRepository) GetByID(ctx context.Context, id uint) (*productEntity.Product, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*productEntity.Product), args.Error(1)
+}
+
+func (m *MockProductRepository) GetByCode(ctx context.Context, code string) (*productEntity.Product, error) {
+	args := m.Called(ctx, code)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*productEntity.Product), args.Error(1)
+}
+
+func (m *MockProductRepository) GetAll(ctx context.Context, filter *productDto.ProductFilter) ([]productEntity.Product, int64, error) {
+	args := m.Called(ctx, filter)
+	var products []productEntity.Product
+	if args.Get(0) != nil {
+		products = args.Get(0).([]productEntity.Product)
+	}
+
+	var count int64
+	if args.Get(1) != nil {
+		count = args.Get(1).(int64)
+	}
+	return products, count, args.Error(2)
+}
+
+func (m *MockProductRepository) Update(ctx context.Context, product *productEntity.Product) error {
+	args := m.Called(ctx, product)
+	return args.Error(0)
+}
+
+func (m *MockProductRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockProductRepository) CodeExists(ctx context.Context, code string) (bool, error) {
+	args := m.Called(ctx, code)
+	return args.Bool(0), args.Error(1)
+}
+
+// MockProviderRepository is a mock implementation of ProviderRepository
+type MockProviderRepository struct {
+	mock.Mock
+}
+
+func (m *MockProviderRepository) Create(ctx context.Context, provider *providerEntity.Provider) error {
+	args := m.Called(ctx, provider)
+	return args.Error(0)
+}
+
+func (m *MockProviderRepository) GetByID(ctx context.Context, id uint) (*providerEntity.Provider, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*providerEntity.Provider), args.Error(1)
+}
+
+func (m *MockProviderRepository) GetByCode(ctx context.Context, code string) (*providerEntity.Provider, error) {
+	args := m.Called(ctx, code)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*providerEntity.Provider), args.Error(1)
+}
+
+func (m *MockProviderRepository) GetAll(ctx context.Context, filter *providerDto.ProviderFilter) ([]providerEntity.Provider, int64, error) {
+	args := m.Called(ctx, filter)
+	var providers []providerEntity.Provider
+	if args.Get(0) != nil {
+		providers = args.Get(0).([]providerEntity.Provider)
+	}
+
+	var count int64
+	if args.Get(1) != nil {
+		count = args.Get(1).(int64)
+	}
+	return providers, count, args.Error(2)
+}
+
+func (m *MockProviderRepository) Update(ctx context.Context, provider *providerEntity.Provider) error {
+	args := m.Called(ctx, provider)
+	return args.Error(0)
+}
+
+func (m *MockProviderRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockProviderRepository) CodeExists(ctx context.Context, code string) (bool, error) {
+	args := m.Called(ctx, code)
+	return args.Bool(0), args.Error(1)
 }

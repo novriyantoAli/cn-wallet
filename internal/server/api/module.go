@@ -8,6 +8,7 @@ import (
 
 	oauthHandler "github.com/novriyantoAli/cn-wallet/internal/application/oauth/handler"
 	paymentHandler "github.com/novriyantoAli/cn-wallet/internal/application/payment/handler"
+	providerHandler "github.com/novriyantoAli/cn-wallet/internal/application/provider/handler"
 	userHandler "github.com/novriyantoAli/cn-wallet/internal/application/user/handler"
 	"github.com/novriyantoAli/cn-wallet/internal/middleware"
 
@@ -15,23 +16,26 @@ import (
 )
 
 type Server struct {
-	oauthHandler   *oauthHandler.OAuthHandler
-	userHandler    *userHandler.UserHandler
-	paymentHandler *paymentHandler.PaymentHandler
-	logger         *zap.Logger
+	oauthHandler    *oauthHandler.OAuthHandler
+	userHandler     *userHandler.UserHandler
+	paymentHandler  *paymentHandler.PaymentHandler
+	providerHandler providerHandler.ProviderHandler
+	logger          *zap.Logger
 }
 
 func NewServer(
 	oauthHandler *oauthHandler.OAuthHandler,
 	userHandler *userHandler.UserHandler,
 	paymentHandler *paymentHandler.PaymentHandler,
+	providerHandler providerHandler.ProviderHandler,
 	logger *zap.Logger,
 ) *Server {
 	return &Server{
-		oauthHandler:   oauthHandler,
-		userHandler:    userHandler,
-		paymentHandler: paymentHandler,
-		logger:         logger,
+		oauthHandler:    oauthHandler,
+		userHandler:     userHandler,
+		paymentHandler:  paymentHandler,
+		providerHandler: providerHandler,
+		logger:          logger,
 	}
 }
 
@@ -54,6 +58,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.oauthHandler.RegisterRoutes(router)
 		s.userHandler.RegisterRoutes(api)
 		s.paymentHandler.RegisterRoutes(api)
+		s.providerHandler.RegisterRoutes(api)
 	}
 }
 

@@ -2,6 +2,8 @@ package testutil
 
 import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
+	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
+	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 
@@ -24,6 +26,8 @@ func SetupTestDB() (*gorm.DB, error) {
 		&userEntity.User{},
 		&entity.Payment{},
 		&walletEntity.Wallet{},
+		&providerEntity.Provider{},
+		&productEntity.Product{},
 	)
 	if err != nil {
 		return nil, err
@@ -34,11 +38,17 @@ func SetupTestDB() (*gorm.DB, error) {
 
 // CleanDB cleans all data from test database
 func CleanDB(db *gorm.DB) error {
-	// Delete in reverse order of dependencies
+	// Delete in reverse order of dependencies (Product before Provider)
+	if err := db.Exec("DELETE FROM products").Error; err != nil {
+		return err
+	}
 	if err := db.Exec("DELETE FROM wallets").Error; err != nil {
 		return err
 	}
 	if err := db.Exec("DELETE FROM payments").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("DELETE FROM providers").Error; err != nil {
 		return err
 	}
 	if err := db.Exec("DELETE FROM users").Error; err != nil {

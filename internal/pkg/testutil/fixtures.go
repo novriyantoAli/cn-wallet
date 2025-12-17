@@ -5,6 +5,10 @@ import (
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
+	productDto "github.com/novriyantoAli/cn-wallet/internal/application/product/dto"
+	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
+	providerDto "github.com/novriyantoAli/cn-wallet/internal/application/provider/dto"
+	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
@@ -105,5 +109,80 @@ func CreateWalletResponseFixture() *walletDto.GetWalletResponse {
 		Balance:   1000.00,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+	}
+}
+
+// Provider fixtures
+func CreateProviderFixture() *providerEntity.Provider {
+	return &providerEntity.Provider{
+		ID:        1,
+		Name:      "Telkomsel",
+		Code:      "TSEL",
+		Logo:      "https://example.com/logo.png",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+}
+
+func CreateProviderRequestFixture() *providerDto.CreateProviderRequest {
+	return &providerDto.CreateProviderRequest{
+		Name: "Indosat",
+		Code: "ISAT",
+		Logo: "https://example.com/isat-logo.png",
+	}
+}
+
+func CreateUpdateProviderRequestFixture() *providerDto.UpdateProviderRequest {
+	return &providerDto.UpdateProviderRequest{
+		Name: "Telkomsel Updated",
+		Code: "TSEL",
+		Logo: "https://example.com/updated-logo.png",
+	}
+}
+
+func CreateProviderFilterFixture() *providerDto.ProviderFilter {
+	return &providerDto.ProviderFilter{
+		Page:     1,
+		PageSize: 10,
+	}
+}
+
+// Product fixtures
+func CreateProductFixture() *productEntity.Product {
+	return &productEntity.Product{
+		ID:         1,
+		ProviderID: 1,
+		Name:       "Pulsa 10K",
+		Code:       "PULSA10K",
+		Price:      10000.00,
+		Type:       "PULSA",
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+}
+
+func CreateProductRequestFixture() *productDto.CreateProductRequest {
+	return &productDto.CreateProductRequest{
+		ProviderID: 1,
+		Name:       "Paket Data 5GB",
+		Code:       "DATA5GB",
+		Price:      50000.00,
+		Type:       "DATA",
+	}
+}
+
+func CreateUpdateProductRequestFixture() *productDto.UpdateProductRequest {
+	return &productDto.UpdateProductRequest{
+		Name:  "Paket Data 10GB",
+		Price: 75000.00,
+		Type:  "DATA",
+	}
+}
+
+func CreateProductFilterFixture() *productDto.ProductFilter {
+	return &productDto.ProductFilter{
+		ProviderID: 1,
+		Page:       1,
+		PageSize:   10,
 	}
 }
