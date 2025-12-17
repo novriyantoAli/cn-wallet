@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -22,45 +23,45 @@ type MockPaymentService struct {
 	mock.Mock
 }
 
-func (m *MockPaymentService) CreatePayment(req *dto.CreatePaymentRequest) (*dto.PaymentResponse, error) {
-	args := m.Called(req)
+func (m *MockPaymentService) CreatePayment(ctx context.Context, req *dto.CreatePaymentRequest) (*dto.PaymentResponse, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) GetPaymentByID(id uint) (*dto.PaymentResponse, error) {
-	args := m.Called(id)
+func (m *MockPaymentService) GetPaymentByID(ctx context.Context, id uint) (*dto.PaymentResponse, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) GetPayments(filter *dto.PaymentFilter) (*dto.PaymentListResponse, error) {
-	args := m.Called(filter)
+func (m *MockPaymentService) GetPayments(ctx context.Context, filter *dto.PaymentFilter) (*dto.PaymentListResponse, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentListResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) UpdatePayment(id uint, req *dto.UpdatePaymentRequest) (*dto.PaymentResponse, error) {
-	args := m.Called(id, req)
+func (m *MockPaymentService) UpdatePayment(ctx context.Context, id uint, req *dto.UpdatePaymentRequest) (*dto.PaymentResponse, error) {
+	args := m.Called(ctx, id, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) DeletePayment(id uint) error {
-	args := m.Called(id)
+func (m *MockPaymentService) DeletePayment(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-func (m *MockPaymentService) GetPaymentsByUser(userID uint) ([]dto.PaymentResponse, error) {
-	args := m.Called(userID)
+func (m *MockPaymentService) GetPaymentsByUser(ctx context.Context, userID uint) ([]dto.PaymentResponse, error) {
+	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -92,7 +93,9 @@ func TestPaymentHandler_CreatePayment(t *testing.T) {
 			UpdatedAt:   time.Now(),
 		}
 
-		mockService.On("CreatePayment", mock.AnythingOfType("*dto.CreatePaymentRequest")).Return(response, nil)
+		mockService.On("CreatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), req).Return(response, nil)
 
 		reqBody, _ := json.Marshal(req)
 		w := httptest.NewRecorder()
@@ -138,7 +141,9 @@ func TestPaymentHandler_CreatePayment(t *testing.T) {
 		handler, mockService := setupPaymentHandler()
 
 		req := testutil.CreatePaymentRequestFixture()
-		mockService.On("CreatePayment", mock.AnythingOfType("*dto.CreatePaymentRequest")).Return(nil, errors.New("service error"))
+		mockService.On("CreatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), req).Return(nil, errors.New("service error"))
 
 		reqBody, _ := json.Marshal(req)
 		w := httptest.NewRecorder()
@@ -172,7 +177,9 @@ func TestPaymentHandler_GetPayment(t *testing.T) {
 			UpdatedAt:   time.Now(),
 		}
 
-		mockService.On("GetPaymentByID", paymentID).Return(response, nil)
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(response, nil)
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -220,7 +227,9 @@ func TestPaymentHandler_GetPayment(t *testing.T) {
 		handler, mockService := setupPaymentHandler()
 
 		paymentID := uint(999)
-		mockService.On("GetPaymentByID", paymentID).Return(nil, errors.New("payment not found"))
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(nil, errors.New("payment not found"))
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -253,7 +262,11 @@ func TestPaymentHandler_GetPayments(t *testing.T) {
 			PageSize:   10,
 		}
 
-		mockService.On("GetPayments", mock.AnythingOfType("*dto.PaymentFilter")).Return(response, nil)
+		mockService.On("GetPayments", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), mock.MatchedBy(func(f *dto.PaymentFilter) bool {
+			return f != nil
+		})).Return(response, nil)
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -292,7 +305,11 @@ func TestPaymentHandler_GetPayments(t *testing.T) {
 		// Setup
 		handler, mockService := setupPaymentHandler()
 
-		mockService.On("GetPayments", mock.AnythingOfType("*dto.PaymentFilter")).Return(nil, errors.New("database error"))
+		mockService.On("GetPayments", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), mock.MatchedBy(func(f *dto.PaymentFilter) bool {
+			return f != nil
+		})).Return(nil, errors.New("database error"))
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -325,7 +342,9 @@ func TestPaymentHandler_UpdatePayment(t *testing.T) {
 			UpdatedAt:   time.Now(),
 		}
 
-		mockService.On("UpdatePayment", paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(response, nil)
+		mockService.On("UpdatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID, req).Return(response, nil)
 
 		reqBody, _ := json.Marshal(req)
 		w := httptest.NewRecorder()
@@ -399,7 +418,9 @@ func TestPaymentHandler_UpdatePayment(t *testing.T) {
 
 		paymentID := uint(1)
 		req := testutil.CreateUpdatePaymentRequestFixture()
-		mockService.On("UpdatePayment", paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(nil, errors.New("service error"))
+		mockService.On("UpdatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID, req).Return(nil, errors.New("service error"))
 
 		reqBody, _ := json.Marshal(req)
 		w := httptest.NewRecorder()
@@ -425,7 +446,9 @@ func TestPaymentHandler_DeletePayment(t *testing.T) {
 		handler, mockService := setupPaymentHandler()
 
 		paymentID := uint(1)
-		mockService.On("DeletePayment", paymentID).Return(nil)
+		mockService.On("DeletePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(nil)
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -471,7 +494,9 @@ func TestPaymentHandler_DeletePayment(t *testing.T) {
 		handler, mockService := setupPaymentHandler()
 
 		paymentID := uint(1)
-		mockService.On("DeletePayment", paymentID).Return(errors.New("service error"))
+		mockService.On("DeletePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(errors.New("service error"))
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -500,7 +525,9 @@ func TestPaymentHandler_GetPaymentsByUser(t *testing.T) {
 			{ID: 2, Amount: 200.75, Currency: "EUR", Status: "completed", UserID: userID},
 		}
 
-		mockService.On("GetPaymentsByUser", userID).Return(response, nil)
+		mockService.On("GetPaymentsByUser", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), userID).Return(response, nil)
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -547,7 +574,9 @@ func TestPaymentHandler_GetPaymentsByUser(t *testing.T) {
 		handler, mockService := setupPaymentHandler()
 
 		userID := uint(1)
-		mockService.On("GetPaymentsByUser", userID).Return(nil, errors.New("service error"))
+		mockService.On("GetPaymentsByUser", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), userID).Return(nil, errors.New("service error"))
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)

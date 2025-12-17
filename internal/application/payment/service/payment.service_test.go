@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -23,22 +24,27 @@ func TestPaymentService_CreatePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		req := testutil.CreatePaymentRequestFixture()
 		userResponse := &userDto.UserResponse{
-			ID:    req.UserID,
-			Name:  "John Doe",
-			Email: "john@example.com",
+			ID:       req.UserID,
+			FullName: "John Doe",
+			Email:    "john@example.com",
 		}
 
 		// Mock expectations
-		mockUserService.On("GetUserByID", req.UserID).Return(userResponse, nil)
-		mockRepo.On("Create", mock.AnythingOfType("*entity.Payment")).Return(nil).Run(func(args mock.Arguments) {
-			payment := args.Get(0).(*entity.Payment)
+		mockUserService.On("GetUserByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), req.UserID).Return(userResponse, nil)
+		mockRepo.On("Create", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), mock.AnythingOfType("*entity.Payment")).Return(nil).Run(func(args mock.Arguments) {
+			payment := args.Get(1).(*entity.Payment)
 			payment.ID = 1
 		})
 
 		// When
-		response, err := service.CreatePayment(req)
+		response, err := service.CreatePayment(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -60,13 +66,16 @@ func TestPaymentService_CreatePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		req := testutil.CreatePaymentRequestFixture()
 
 		// Mock expectations
-		mockUserService.On("GetUserByID", req.UserID).Return(nil, errors.New("user not found"))
+		mockUserService.On("GetUserByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), req.UserID).Return(nil, errors.New("user not found"))
 
 		// When
-		response, err := service.CreatePayment(req)
+		response, err := service.CreatePayment(ctx, req)
 
 		// Then
 		assert.Error(t, err)
@@ -83,19 +92,24 @@ func TestPaymentService_CreatePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		req := testutil.CreatePaymentRequestFixture()
 		userResponse := &userDto.UserResponse{
-			ID:    req.UserID,
-			Name:  "John Doe",
-			Email: "john@example.com",
+			ID:       req.UserID,
+			FullName: "John Doe",
+			Email:    "john@example.com",
 		}
 
 		// Mock expectations
-		mockUserService.On("GetUserByID", req.UserID).Return(userResponse, nil)
-		mockRepo.On("Create", mock.AnythingOfType("*entity.Payment")).Return(errors.New("create failed"))
+		mockUserService.On("GetUserByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), req.UserID).Return(userResponse, nil)
+		mockRepo.On("Create", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), mock.AnythingOfType("*entity.Payment")).Return(errors.New("create failed"))
 
 		// When
-		response, err := service.CreatePayment(req)
+		response, err := service.CreatePayment(ctx, req)
 
 		// Then
 		assert.Error(t, err)
@@ -114,15 +128,18 @@ func TestPaymentService_GetPaymentByID(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(1)
 		payment := testutil.CreatePaymentFixture()
 		payment.ID = paymentID
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(payment, nil)
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(payment, nil)
 
 		// When
-		response, err := service.GetPaymentByID(paymentID)
+		response, err := service.GetPaymentByID(ctx, paymentID)
 
 		// Then
 		assert.NoError(t, err)
@@ -141,13 +158,16 @@ func TestPaymentService_GetPaymentByID(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(999)
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(nil, gorm.ErrRecordNotFound)
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(nil, gorm.ErrRecordNotFound)
 
 		// When
-		response, err := service.GetPaymentByID(paymentID)
+		response, err := service.GetPaymentByID(ctx, paymentID)
 
 		// Then
 		assert.Error(t, err)
@@ -163,13 +183,16 @@ func TestPaymentService_GetPaymentByID(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(1)
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(nil, errors.New("database error"))
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(nil, errors.New("database error"))
 
 		// When
-		response, err := service.GetPaymentByID(paymentID)
+		response, err := service.GetPaymentByID(ctx, paymentID)
 
 		// Then
 		assert.Error(t, err)
@@ -187,6 +210,7 @@ func TestPaymentService_GetPayments(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		filter := &dto.PaymentFilter{
 			Page:     1,
 			PageSize: 10,
@@ -201,10 +225,12 @@ func TestPaymentService_GetPayments(t *testing.T) {
 		payments[1].Amount = 200.00
 
 		// Mock expectations
-		mockRepo.On("GetAll", filter).Return(payments, int64(2), nil)
+		mockRepo.On("GetAll", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), filter).Return(payments, int64(2), nil)
 
 		// When
-		response, err := service.GetPayments(filter)
+		response, err := service.GetPayments(ctx, filter)
 
 		// Then
 		assert.NoError(t, err)
@@ -223,6 +249,7 @@ func TestPaymentService_GetPayments(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		filter := &dto.PaymentFilter{
 			Page:     0,
 			PageSize: 0,
@@ -234,10 +261,12 @@ func TestPaymentService_GetPayments(t *testing.T) {
 		}
 
 		// Mock expectations
-		mockRepo.On("GetAll", expectedFilter).Return([]entity.Payment{}, int64(0), nil)
+		mockRepo.On("GetAll", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), expectedFilter).Return([]entity.Payment{}, int64(0), nil)
 
 		// When
-		response, err := service.GetPayments(filter)
+		response, err := service.GetPayments(ctx, filter)
 
 		// Then
 		assert.NoError(t, err)
@@ -254,16 +283,19 @@ func TestPaymentService_GetPayments(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		filter := &dto.PaymentFilter{
 			Page:     1,
 			PageSize: 10,
 		}
 
 		// Mock expectations
-		mockRepo.On("GetAll", filter).Return(nil, int64(0), errors.New("database error"))
+		mockRepo.On("GetAll", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), filter).Return(nil, int64(0), errors.New("database error"))
 
 		// When
-		response, err := service.GetPayments(filter)
+		response, err := service.GetPayments(ctx, filter)
 
 		// Then
 		assert.Error(t, err)
@@ -281,6 +313,7 @@ func TestPaymentService_UpdatePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(1)
 		existingPayment := testutil.CreatePaymentFixture()
 		existingPayment.ID = paymentID
@@ -291,11 +324,15 @@ func TestPaymentService_UpdatePayment(t *testing.T) {
 		req.Description = "Updated description"
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(existingPayment, nil)
-		mockRepo.On("Update", mock.AnythingOfType("*entity.Payment")).Return(nil)
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(existingPayment, nil)
+		mockRepo.On("Update", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), mock.AnythingOfType("*entity.Payment")).Return(nil)
 
 		// When
-		response, err := service.UpdatePayment(paymentID, req)
+		response, err := service.UpdatePayment(ctx, paymentID, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -313,14 +350,17 @@ func TestPaymentService_UpdatePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(999)
 		req := testutil.CreateUpdatePaymentRequestFixture()
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(nil, gorm.ErrRecordNotFound)
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(nil, gorm.ErrRecordNotFound)
 
 		// When
-		response, err := service.UpdatePayment(paymentID, req)
+		response, err := service.UpdatePayment(ctx, paymentID, req)
 
 		// Then
 		assert.Error(t, err)
@@ -336,6 +376,7 @@ func TestPaymentService_UpdatePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(1)
 		existingPayment := testutil.CreatePaymentFixture()
 		existingPayment.ID = paymentID
@@ -344,10 +385,12 @@ func TestPaymentService_UpdatePayment(t *testing.T) {
 		req.Status = "invalid_status"
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(existingPayment, nil)
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(existingPayment, nil)
 
 		// When
-		response, err := service.UpdatePayment(paymentID, req)
+		response, err := service.UpdatePayment(ctx, paymentID, req)
 
 		// Then
 		assert.Error(t, err)
@@ -363,6 +406,7 @@ func TestPaymentService_UpdatePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(1)
 		existingPayment := testutil.CreatePaymentFixture()
 		existingPayment.ID = paymentID
@@ -371,11 +415,15 @@ func TestPaymentService_UpdatePayment(t *testing.T) {
 		req.Status = entity.PaymentStatusCompleted.String()
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(existingPayment, nil)
-		mockRepo.On("Update", mock.AnythingOfType("*entity.Payment")).Return(errors.New("update failed"))
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(existingPayment, nil)
+		mockRepo.On("Update", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), mock.AnythingOfType("*entity.Payment")).Return(errors.New("update failed"))
 
 		// When
-		response, err := service.UpdatePayment(paymentID, req)
+		response, err := service.UpdatePayment(ctx, paymentID, req)
 
 		// Then
 		assert.Error(t, err)
@@ -393,16 +441,21 @@ func TestPaymentService_DeletePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(1)
 		payment := testutil.CreatePaymentFixture()
 		payment.ID = paymentID
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(payment, nil)
-		mockRepo.On("Delete", paymentID).Return(nil)
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(payment, nil)
+		mockRepo.On("Delete", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(nil)
 
 		// When
-		err := service.DeletePayment(paymentID)
+		err := service.DeletePayment(ctx, paymentID)
 
 		// Then
 		assert.NoError(t, err)
@@ -416,13 +469,16 @@ func TestPaymentService_DeletePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(999)
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(nil, gorm.ErrRecordNotFound)
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(nil, gorm.ErrRecordNotFound)
 
 		// When
-		err := service.DeletePayment(paymentID)
+		err := service.DeletePayment(ctx, paymentID)
 
 		// Then
 		assert.Error(t, err)
@@ -437,16 +493,21 @@ func TestPaymentService_DeletePayment(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		paymentID := uint(1)
 		payment := testutil.CreatePaymentFixture()
 		payment.ID = paymentID
 
 		// Mock expectations
-		mockRepo.On("GetByID", paymentID).Return(payment, nil)
-		mockRepo.On("Delete", paymentID).Return(errors.New("delete failed"))
+		mockRepo.On("GetByID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(payment, nil)
+		mockRepo.On("Delete", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), paymentID).Return(errors.New("delete failed"))
 
 		// When
-		err := service.DeletePayment(paymentID)
+		err := service.DeletePayment(ctx, paymentID)
 
 		// Then
 		assert.Error(t, err)
@@ -463,6 +524,7 @@ func TestPaymentService_GetPaymentsByUser(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		userID := uint(1)
 		payments := []entity.Payment{
 			*testutil.CreatePaymentFixture(),
@@ -475,10 +537,12 @@ func TestPaymentService_GetPaymentsByUser(t *testing.T) {
 		payments[1].Amount = 200.00
 
 		// Mock expectations
-		mockRepo.On("GetByUserID", userID).Return(payments, nil)
+		mockRepo.On("GetByUserID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), userID).Return(payments, nil)
 
 		// When
-		response, err := service.GetPaymentsByUser(userID)
+		response, err := service.GetPaymentsByUser(ctx, userID)
 
 		// Then
 		assert.NoError(t, err)
@@ -498,13 +562,16 @@ func TestPaymentService_GetPaymentsByUser(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		userID := uint(1)
 
 		// Mock expectations
-		mockRepo.On("GetByUserID", userID).Return([]entity.Payment{}, nil)
+		mockRepo.On("GetByUserID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), userID).Return([]entity.Payment{}, nil)
 
 		// When
-		response, err := service.GetPaymentsByUser(userID)
+		response, err := service.GetPaymentsByUser(ctx, userID)
 
 		// Then
 		assert.NoError(t, err)
@@ -520,13 +587,16 @@ func TestPaymentService_GetPaymentsByUser(t *testing.T) {
 		logger := testutil.NewSilentLogger()
 		service := NewPaymentService(mockRepo, mockUserService, logger)
 
+		ctx := context.Background()
 		userID := uint(1)
 
 		// Mock expectations
-		mockRepo.On("GetByUserID", userID).Return(nil, errors.New("database error"))
+		mockRepo.On("GetByUserID", mock.MatchedBy(func(c context.Context) bool {
+			return true
+		}), userID).Return(nil, errors.New("database error"))
 
 		// When
-		response, err := service.GetPaymentsByUser(userID)
+		response, err := service.GetPaymentsByUser(ctx, userID)
 
 		// Then
 		assert.Error(t, err)

@@ -66,7 +66,10 @@ func (r *paymentRepository) GetAll(ctx context.Context, filter *dto.PaymentFilte
 		query = query.Where("user_id = ?", filter.UserID)
 	}
 
-	query.Count(&totalCount)
+	if err := query.Count(&totalCount).Error; err != nil {
+		r.logger.Error("Failed to count payments", zap.Error(err))
+		return nil, 0, err
+	}
 
 	if filter.Page > 0 && filter.PageSize > 0 {
 		offset := (filter.Page - 1) * filter.PageSize

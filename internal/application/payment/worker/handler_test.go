@@ -21,45 +21,45 @@ type MockPaymentService struct {
 	mock.Mock
 }
 
-func (m *MockPaymentService) CreatePayment(req *dto.CreatePaymentRequest) (*dto.PaymentResponse, error) {
-	args := m.Called(req)
+func (m *MockPaymentService) CreatePayment(ctx context.Context, req *dto.CreatePaymentRequest) (*dto.PaymentResponse, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) GetPaymentByID(id uint) (*dto.PaymentResponse, error) {
-	args := m.Called(id)
+func (m *MockPaymentService) GetPaymentByID(ctx context.Context, id uint) (*dto.PaymentResponse, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) GetPayments(filter *dto.PaymentFilter) (*dto.PaymentListResponse, error) {
-	args := m.Called(filter)
+func (m *MockPaymentService) GetPayments(ctx context.Context, filter *dto.PaymentFilter) (*dto.PaymentListResponse, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentListResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) UpdatePayment(id uint, req *dto.UpdatePaymentRequest) (*dto.PaymentResponse, error) {
-	args := m.Called(id, req)
+func (m *MockPaymentService) UpdatePayment(ctx context.Context, id uint, req *dto.UpdatePaymentRequest) (*dto.PaymentResponse, error) {
+	args := m.Called(ctx, id, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.PaymentResponse), args.Error(1)
 }
 
-func (m *MockPaymentService) DeletePayment(id uint) error {
-	args := m.Called(id)
+func (m *MockPaymentService) DeletePayment(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-func (m *MockPaymentService) GetPaymentsByUser(userID uint) ([]dto.PaymentResponse, error) {
-	args := m.Called(userID)
+func (m *MockPaymentService) GetPaymentsByUser(ctx context.Context, userID uint) ([]dto.PaymentResponse, error) {
+	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -125,8 +125,12 @@ func TestPaymentWorker_HandleCheckPaymentStatus(t *testing.T) {
 			UpdatedAt: time.Now(),
 		}
 
-		mockService.On("GetPaymentByID", paymentID).Return(payment, nil)
-		mockService.On("UpdatePayment", paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(updatedPayment, nil)
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(payment, nil)
+		mockService.On("UpdatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(updatedPayment, nil)
 
 		// When
 		err := worker.HandleCheckPaymentStatus(context.Background(), task)
@@ -137,7 +141,7 @@ func TestPaymentWorker_HandleCheckPaymentStatus(t *testing.T) {
 
 		// Verify the update request has the correct status
 		updateCall := mockService.Calls[1]
-		updateReq := updateCall.Arguments[1].(*dto.UpdatePaymentRequest)
+		updateReq := updateCall.Arguments[2].(*dto.UpdatePaymentRequest)
 		assert.Equal(t, entity.PaymentStatusCompleted.String(), updateReq.Status)
 		assert.Contains(t, updateReq.Description, "Status updated by worker")
 	})
@@ -158,7 +162,9 @@ func TestPaymentWorker_HandleCheckPaymentStatus(t *testing.T) {
 			UpdatedAt: time.Now().Add(-1 * time.Hour),
 		}
 
-		mockService.On("GetPaymentByID", paymentID).Return(payment, nil)
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(payment, nil)
 
 		// When
 		err := worker.HandleCheckPaymentStatus(context.Background(), task)
@@ -187,7 +193,9 @@ func TestPaymentWorker_HandleCheckPaymentStatus(t *testing.T) {
 
 		taskInfo := &asynq.TaskInfo{ID: "task-123"}
 
-		mockService.On("GetPaymentByID", paymentID).Return(payment, nil)
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(payment, nil)
 		mockClient.On("Enqueue", mock.AnythingOfType("*asynq.Task"), mock.AnythingOfType("[]asynq.Option")).Return(taskInfo, nil)
 
 		// When
@@ -224,7 +232,9 @@ func TestPaymentWorker_HandleCheckPaymentStatus(t *testing.T) {
 		payloadBytes, _ := json.Marshal(payload)
 		task := asynq.NewTask(TypeCheckPaymentStatus, payloadBytes)
 
-		mockService.On("GetPaymentByID", paymentID).Return(nil, errors.New("payment not found"))
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(nil, errors.New("payment not found"))
 
 		// When
 		err := worker.HandleCheckPaymentStatus(context.Background(), task)
@@ -251,8 +261,12 @@ func TestPaymentWorker_HandleCheckPaymentStatus(t *testing.T) {
 			UpdatedAt: time.Now().Add(-3 * time.Minute),
 		}
 
-		mockService.On("GetPaymentByID", paymentID).Return(payment, nil)
-		mockService.On("UpdatePayment", paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(nil, errors.New("update failed"))
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(payment, nil)
+		mockService.On("UpdatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(nil, errors.New("update failed"))
 
 		// When
 		err := worker.HandleCheckPaymentStatus(context.Background(), task)
@@ -294,8 +308,12 @@ func TestPaymentWorker_HandleProcessPayment(t *testing.T) {
 			UpdatedAt: time.Now(),
 		}
 
-		mockService.On("GetPaymentByID", paymentID).Return(payment, nil)
-		mockService.On("UpdatePayment", paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(processedPayment, nil)
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(payment, nil)
+		mockService.On("UpdatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(processedPayment, nil)
 
 		// When
 		err := worker.HandleProcessPayment(context.Background(), task)
@@ -306,7 +324,7 @@ func TestPaymentWorker_HandleProcessPayment(t *testing.T) {
 
 		// Verify the update request
 		updateCall := mockService.Calls[1]
-		updateReq := updateCall.Arguments[1].(*dto.UpdatePaymentRequest)
+		updateReq := updateCall.Arguments[2].(*dto.UpdatePaymentRequest)
 		// Status could be completed or failed based on simulation
 		assert.True(t, updateReq.Status == entity.PaymentStatusCompleted.String() || updateReq.Status == entity.PaymentStatusFailed.String())
 		assert.Contains(t, updateReq.Description, "Payment processed by worker")
@@ -336,7 +354,9 @@ func TestPaymentWorker_HandleProcessPayment(t *testing.T) {
 		payloadBytes, _ := json.Marshal(payload)
 		task := asynq.NewTask(TypeProcessPayment, payloadBytes)
 
-		mockService.On("GetPaymentByID", paymentID).Return(nil, errors.New("payment not found"))
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(nil, errors.New("payment not found"))
 
 		// When
 		err := worker.HandleProcessPayment(context.Background(), task)
@@ -363,8 +383,12 @@ func TestPaymentWorker_HandleProcessPayment(t *testing.T) {
 			UpdatedAt: time.Now(),
 		}
 
-		mockService.On("GetPaymentByID", paymentID).Return(payment, nil)
-		mockService.On("UpdatePayment", paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(nil, errors.New("update failed"))
+		mockService.On("GetPaymentByID", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID).Return(payment, nil)
+		mockService.On("UpdatePayment", mock.MatchedBy(func(c context.Context) bool {
+			return c != nil
+		}), paymentID, mock.AnythingOfType("*dto.UpdatePaymentRequest")).Return(nil, errors.New("update failed"))
 
 		// When
 		err := worker.HandleProcessPayment(context.Background(), task)

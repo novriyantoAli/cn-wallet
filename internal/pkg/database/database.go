@@ -3,8 +3,6 @@ package database
 import (
 	"fmt"
 
-	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
-	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/config"
 
 	"go.uber.org/zap"
@@ -33,15 +31,6 @@ func NewDatabase(cfg *config.Config, log *zap.Logger) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(
-		&userEntity.User{},
-		&entity.Payment{},
-	)
-	if err != nil {
-		log.Error("Failed to migrate database", zap.Error(err))
-		return nil, err
-	}
-
-	log.Info("Database connected and migrated successfully")
+	log.Info("Database connected successfully")
 	return db, nil
 }

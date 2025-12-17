@@ -6,6 +6,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 
+	oauthHandler "github.com/novriyantoAli/cn-wallet/internal/application/oauth/handler"
 	paymentHandler "github.com/novriyantoAli/cn-wallet/internal/application/payment/handler"
 	userHandler "github.com/novriyantoAli/cn-wallet/internal/application/user/handler"
 	"github.com/novriyantoAli/cn-wallet/internal/middleware"
@@ -14,17 +15,20 @@ import (
 )
 
 type Server struct {
+	oauthHandler   *oauthHandler.OAuthHandler
 	userHandler    *userHandler.UserHandler
 	paymentHandler *paymentHandler.PaymentHandler
 	logger         *zap.Logger
 }
 
 func NewServer(
+	oauthHandler *oauthHandler.OAuthHandler,
 	userHandler *userHandler.UserHandler,
 	paymentHandler *paymentHandler.PaymentHandler,
 	logger *zap.Logger,
 ) *Server {
 	return &Server{
+		oauthHandler:   oauthHandler,
 		userHandler:    userHandler,
 		paymentHandler: paymentHandler,
 		logger:         logger,
@@ -47,6 +51,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 	api := router.Group("/api/v1")
 	{
 		s.registerHealthRoutes(api)
+		s.oauthHandler.RegisterRoutes(router)
 		s.userHandler.RegisterRoutes(api)
 		s.paymentHandler.RegisterRoutes(api)
 	}

@@ -9,7 +9,9 @@ import (
 
 	"github.com/novriyantoAli/cn-wallet/internal/config"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/database"
+	"github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/logger"
+	"github.com/novriyantoAli/cn-wallet/internal/pkg/redis"
 	"github.com/novriyantoAli/cn-wallet/internal/server/api"
 
 	"go.uber.org/fx"
@@ -44,6 +46,8 @@ func main() {
 			config.NewConfig,
 			logger.NewLogger,
 			database.NewDatabase,
+			redis.NewRedisClient,
+			jwt.NewJWTManagerWithRedis,
 		),
 		api.Module,
 		fx.Invoke(Run),

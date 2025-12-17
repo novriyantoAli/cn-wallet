@@ -50,9 +50,8 @@ func TestUserIntegration_CreateAndGetUser(t *testing.T) {
 
 	// Test data
 	createReq := &dto.CreateUserRequest{
-		Name:     "John Doe",
+		FullName: "John Doe",
 		Email:    "john@example.com",
-		Password: "password123",
 	}
 
 	// Step 1: Create user
@@ -71,7 +70,7 @@ func TestUserIntegration_CreateAndGetUser(t *testing.T) {
 
 	data := createResp["data"].(map[string]interface{})
 	userID := int(data["id"].(float64))
-	assert.Equal(t, createReq.Name, data["name"])
+	assert.Equal(t, createReq.FullName, data["full_name"])
 	assert.Equal(t, createReq.Email, data["email"])
 
 	// Step 2: Get the created user
@@ -88,7 +87,7 @@ func TestUserIntegration_CreateAndGetUser(t *testing.T) {
 
 	userData := getResp["data"].(map[string]interface{})
 	assert.Equal(t, float64(userID), userData["id"])
-	assert.Equal(t, createReq.Name, userData["name"])
+	assert.Equal(t, createReq.FullName, userData["full_name"])
 	assert.Equal(t, createReq.Email, userData["email"])
 }
 
@@ -98,9 +97,8 @@ func TestUserIntegration_CreateDuplicateEmail(t *testing.T) {
 
 	// Test data
 	createReq := &dto.CreateUserRequest{
-		Name:     "John Doe",
+		FullName: "John Doe",
 		Email:    "duplicate@example.com",
-		Password: "password123",
 	}
 
 	// Step 1: Create first user
@@ -132,9 +130,9 @@ func TestUserIntegration_GetUsers(t *testing.T) {
 
 	// Create multiple users
 	users := []dto.CreateUserRequest{
-		{Name: "User 1", Email: "user1@example.com", Password: "password1"},
-		{Name: "User 2", Email: "user2@example.com", Password: "password2"},
-		{Name: "User 3", Email: "user3@example.com", Password: "password3"},
+		{FullName: "User 1", Email: "user1@example.com"},
+		{FullName: "User 2", Email: "user2@example.com"},
+		{FullName: "User 3", Email: "user3@example.com"},
 	}
 
 	// Create users
@@ -172,9 +170,8 @@ func TestUserIntegration_UpdateUser(t *testing.T) {
 
 	// Create user
 	createReq := &dto.CreateUserRequest{
-		Name:     "Original Name",
+		FullName: "Original Name",
 		Email:    "original@example.com",
-		Password: "password123",
 	}
 
 	reqBody, _ := json.Marshal(createReq)
@@ -194,8 +191,7 @@ func TestUserIntegration_UpdateUser(t *testing.T) {
 
 	// Update user
 	updateReq := &dto.UpdateUserRequest{
-		Name:  "Updated Name",
-		Email: "updated@example.com",
+		FullName: "Updated Name",
 	}
 
 	updateBody, _ := json.Marshal(updateReq)
@@ -212,8 +208,7 @@ func TestUserIntegration_UpdateUser(t *testing.T) {
 	require.NoError(t, err)
 
 	updatedData := updateResp["data"].(map[string]interface{})
-	assert.Equal(t, updateReq.Name, updatedData["name"])
-	assert.Equal(t, updateReq.Email, updatedData["email"])
+	assert.Equal(t, updateReq.FullName, updatedData["full_name"])
 }
 
 func TestUserIntegration_DeleteUser(t *testing.T) {
@@ -222,9 +217,8 @@ func TestUserIntegration_DeleteUser(t *testing.T) {
 
 	// Create user
 	createReq := &dto.CreateUserRequest{
-		Name:     "To Be Deleted",
+		FullName: "To Be Deleted",
 		Email:    "delete@example.com",
-		Password: "password123",
 	}
 
 	reqBody, _ := json.Marshal(createReq)

@@ -96,7 +96,7 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserReques
 }
 
 // UserServiceServer is the server API for UserService service.
-// All implementations should embed UnimplementedUserServiceServer
+// All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
 	// Create a new user
@@ -109,9 +109,10 @@ type UserServiceServer interface {
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	// Delete a user
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	mustEmbedUnimplementedUserServiceServer()
 }
 
-// UnimplementedUserServiceServer should be embedded to have forward compatible implementations.
+// UnimplementedUserServiceServer must be embedded to have forward compatible implementations.
 type UnimplementedUserServiceServer struct {
 }
 
@@ -130,6 +131,7 @@ func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserReq
 func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
+func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
 // UnsafeUserServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to UserServiceServer will

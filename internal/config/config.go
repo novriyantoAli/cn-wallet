@@ -17,6 +17,7 @@ type Config struct {
 	Logger   LoggerConfig   `mapstructure:"logger"`
 	Redis    RedisConfig    `mapstructure:"redis"`
 	Worker   WorkerConfig   `mapstructure:"worker"`
+	JWT      JWTConfig      `mapstructure:"jwt"`
 }
 
 type ServerConfig struct {
@@ -56,6 +57,11 @@ type WorkerConfig struct {
 	RetryDelay           time.Duration `mapstructure:"retry_delay"`
 }
 
+type JWTConfig struct {
+	SecretKey string        `mapstructure:"secret_key"`
+	Expiry    time.Duration `mapstructure:"expiry"`
+}
+
 func NewConfig() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -88,6 +94,9 @@ func NewConfig() (*Config, error) {
 	viper.SetDefault("worker.payment_check_interval", "5m")
 	viper.SetDefault("worker.retry_max_attempts", 3)
 	viper.SetDefault("worker.retry_delay", "30s")
+
+	viper.SetDefault("jwt.secret_key", "your-secret-key-change-in-production")
+	viper.SetDefault("jwt.expiry", "24h")
 
 	viper.AutomaticEnv()
 
