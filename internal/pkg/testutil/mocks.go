@@ -388,3 +388,53 @@ func (m *MockProviderRepository) CodeExists(ctx context.Context, code string) (b
 	args := m.Called(ctx, code)
 	return args.Bool(0), args.Error(1)
 }
+
+// MockProductService is a mock implementation of ProductService
+type MockProductService struct {
+	mock.Mock
+}
+
+func (m *MockProductService) CreateProduct(ctx context.Context, req *productDto.CreateProductRequest) (*productDto.ProductResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*productDto.ProductResponse), args.Error(1)
+}
+
+func (m *MockProductService) GetProductByID(ctx context.Context, id uint) (*productDto.ProductResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*productDto.ProductResponse), args.Error(1)
+}
+
+func (m *MockProductService) GetProductByCode(ctx context.Context, code string) (*productDto.ProductResponse, error) {
+	args := m.Called(ctx, code)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*productDto.ProductResponse), args.Error(1)
+}
+
+func (m *MockProductService) GetAllProducts(ctx context.Context, filter *productDto.ProductFilter) (*productDto.ProductListResponse, error) {
+	args := m.Called(ctx, filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*productDto.ProductListResponse), args.Error(1)
+}
+
+func (m *MockProductService) UpdateProduct(ctx context.Context, id uint, req *productDto.UpdateProductRequest) (*productDto.ProductResponse, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*productDto.ProductResponse), args.Error(1)
+}
+
+func (m *MockProductService) DeleteProduct(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
