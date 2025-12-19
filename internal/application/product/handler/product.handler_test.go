@@ -127,6 +127,28 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		mockService.AssertExpectations(t)
 	})
+
+	t.Run("should return internal server error when service fails", func(t *testing.T) {
+		handler, mockService := setupProductHandler()
+
+		req := testutil.CreateProductRequestFixture()
+		mockService.On("CreateProduct", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), mock.MatchedBy(func(r *dto.CreateProductRequest) bool {
+			return r.Code == req.Code
+		})).Return(nil, errors.New("database error"))
+
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/products", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+
+		handler.CreateProduct(ctx)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockService.AssertExpectations(t)
+	})
 }
 
 func TestProductHandler_GetProductByID(t *testing.T) {
@@ -206,6 +228,27 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, w.Code)
 		mockService.AssertExpectations(t)
 	})
+
+	t.Run("should return internal server error when service fails", func(t *testing.T) {
+		handler, mockService := setupProductHandler()
+
+		productID := uint(1)
+		mockService.On("GetProductByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), productID).Return(nil, errors.New("database error"))
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("GET", "/products/1", nil)
+		ctx.Params = gin.Params{
+			{Key: "id", Value: "1"},
+		}
+
+		handler.GetProductByID(ctx)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockService.AssertExpectations(t)
+	})
 }
 
 func TestProductHandler_GetProductByCode(t *testing.T) {
@@ -281,6 +324,26 @@ func TestProductHandler_GetProductByCode(t *testing.T) {
 		handler.GetProductByCode(ctx)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should return internal server error when service fails", func(t *testing.T) {
+		handler, mockService := setupProductHandler()
+
+		mockService.On("GetProductByCode", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "PROD1").Return(nil, errors.New("database error"))
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("GET", "/products/code/PROD1", nil)
+		ctx.Params = gin.Params{
+			{Key: "code", Value: "PROD1"},
+		}
+
+		handler.GetProductByCode(ctx)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		mockService.AssertExpectations(t)
 	})
 }
@@ -368,6 +431,39 @@ func TestProductHandler_GetAllProducts(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should get products with filters successfully", func(t *testing.T) {
+		handler, mockService := setupProductHandler()
+
+		response := &dto.ProductListResponse{
+			Data: []dto.ProductResponse{
+				{ID: 1, Name: "Product 1", Code: "PULSA10K", Price: 10000, Type: "PULSA"},
+			},
+			TotalCount: 1,
+			Page:       1,
+			PageSize:   10,
+		}
+
+		mockService.On("GetAllProducts", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), mock.MatchedBy(func(f *dto.ProductFilter) bool {
+			return f.ProviderID == 1 && f.Type == "PULSA"
+		})).Return(response, nil)
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("GET", "/products?provider_id=1&type=PULSA&page=1&page_size=10", nil)
+
+		handler.GetAllProducts(ctx)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result dto.ProductListResponse
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Len(t, result.Data, 1)
+		assert.Equal(t, "PULSA", result.Data[0].Type)
 	})
 }
 
@@ -461,6 +557,48 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, w.Code)
 		mockService.AssertExpectations(t)
 	})
+
+	t.Run("should return bad request for invalid JSON", func(t *testing.T) {
+		handler, _ := setupProductHandler()
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("PUT", "/products/1", bytes.NewBuffer([]byte("invalid json")))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Params = gin.Params{
+			{Key: "id", Value: "1"},
+		}
+
+		handler.UpdateProduct(ctx)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("should return internal server error when service fails", func(t *testing.T) {
+		handler, mockService := setupProductHandler()
+
+		productID := uint(1)
+		req := testutil.CreateUpdateProductRequestFixture()
+		mockService.On("UpdateProduct", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), productID, mock.MatchedBy(func(r *dto.UpdateProductRequest) bool {
+			return true
+		})).Return(nil, errors.New("database error"))
+
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("PUT", "/products/1", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Params = gin.Params{
+			{Key: "id", Value: "1"},
+		}
+
+		handler.UpdateProduct(ctx)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockService.AssertExpectations(t)
+	})
 }
 
 func TestProductHandler_DeleteProduct(t *testing.T) {
@@ -524,6 +662,27 @@ func TestProductHandler_DeleteProduct(t *testing.T) {
 		handler.DeleteProduct(ctx)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("should return internal server error when service fails", func(t *testing.T) {
+		handler, mockService := setupProductHandler()
+
+		productID := uint(1)
+		mockService.On("DeleteProduct", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), productID).Return(errors.New("database error"))
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("DELETE", "/products/1", nil)
+		ctx.Params = gin.Params{
+			{Key: "id", Value: "1"},
+		}
+
+		handler.DeleteProduct(ctx)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockService.AssertExpectations(t)
 	})
 }
 
