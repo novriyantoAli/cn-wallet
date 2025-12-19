@@ -44,14 +44,16 @@ func TestProductService_CreateProduct(t *testing.T) {
 			ProviderID: 1,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 
 		mockProviderRepo.On("GetByID", ctx, uint(1)).Return(provider, nil)
 		mockProductRepo.On("CodeExists", ctx, "PULSA10K").Return(false, nil)
 		mockProductRepo.On("Create", ctx, mock.MatchedBy(func(p *entity.Product) bool {
-			return p.ProviderID == req.ProviderID && p.Code == req.Code && p.Price == req.Price
+			return p.ProviderID == req.ProviderID && p.Code == req.Code && p.PriceSell == req.PriceSell
 		})).Return(nil).Run(func(args mock.Arguments) {
 			product := args.Get(1).(*entity.Product)
 			product.ID = 1
@@ -64,7 +66,7 @@ func TestProductService_CreateProduct(t *testing.T) {
 		assert.Equal(t, uint(1), response.ID)
 		assert.Equal(t, req.Code, response.Code)
 		assert.Equal(t, req.Name, response.Name)
-		assert.Equal(t, req.Price, response.Price)
+		assert.Equal(t, req.PriceSell, response.PriceSell)
 		mockProviderRepo.AssertExpectations(t)
 		mockProductRepo.AssertExpectations(t)
 	})
@@ -78,7 +80,9 @@ func TestProductService_CreateProduct(t *testing.T) {
 			ProviderID: 999,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 
@@ -107,7 +111,9 @@ func TestProductService_CreateProduct(t *testing.T) {
 			ProviderID: 1,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 
@@ -144,7 +150,9 @@ func TestProductService_GetProductByID(t *testing.T) {
 			Provider:   provider,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 
@@ -196,7 +204,9 @@ func TestProductService_GetProductByCode(t *testing.T) {
 			Provider:   provider,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 
@@ -247,7 +257,9 @@ func TestProductService_GetAllProducts(t *testing.T) {
 				Provider:   provider,
 				Name:       "Pulsa 10K",
 				Code:       "PULSA10K",
-				Price:      10000.00,
+				Category:   "Mobile",
+				PriceBasic: 9000.00,
+				PriceSell:  10000.00,
 				Type:       "PULSA",
 			},
 			{
@@ -256,7 +268,9 @@ func TestProductService_GetAllProducts(t *testing.T) {
 				Provider:   provider,
 				Name:       "Data 5GB",
 				Code:       "DATA5GB",
-				Price:      50000.00,
+				Category:   "Internet",
+				PriceBasic: 45000.00,
+				PriceSell:  50000.00,
 				Type:       "DATA",
 			},
 		}
@@ -295,7 +309,9 @@ func TestProductService_GetAllProducts(t *testing.T) {
 				Provider:   provider,
 				Name:       "Pulsa 10K",
 				Code:       "PULSA10K",
-				Price:      10000.00,
+				Category:   "Mobile",
+				PriceBasic: 9000.00,
+				PriceSell:  10000.00,
 				Type:       "PULSA",
 			},
 		}
@@ -361,14 +377,16 @@ func TestProductService_UpdateProduct(t *testing.T) {
 			Provider:   provider,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 
 		updateReq := &dto.UpdateProductRequest{
-			Name:  "Pulsa 20K",
-			Price: 20000.00,
-			Type:  "DATA",
+			Name:      "Pulsa 20K",
+			PriceSell: 20000.00,
+			Type:      "DATA",
 		}
 
 		mockProductRepo.On("GetByID", ctx, uint(1)).Return(existingProduct, nil)
@@ -379,7 +397,7 @@ func TestProductService_UpdateProduct(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, response)
 		assert.Equal(t, "Pulsa 20K", response.Name)
-		assert.Equal(t, 20000.00, response.Price)
+		assert.Equal(t, 20000.00, response.PriceSell)
 		assert.Equal(t, "DATA", response.Type)
 		mockProductRepo.AssertExpectations(t)
 	})
@@ -424,7 +442,9 @@ func TestProductService_DeleteProduct(t *testing.T) {
 			Provider:   provider,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 

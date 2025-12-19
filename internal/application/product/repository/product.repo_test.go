@@ -33,7 +33,9 @@ func TestProductRepository_Create(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "Pulsa 20K",
 			Code:       "PULSA20K",
-			Price:      20000.00,
+			Category:   "Mobile",
+			PriceBasic: 18000.00,
+			PriceSell:  20000.00,
 			Type:       "PULSA",
 		}
 
@@ -62,7 +64,9 @@ func TestProductRepository_Create(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "Product 1",
 			Code:       "UNIQUE_CODE",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 
@@ -70,7 +74,9 @@ func TestProductRepository_Create(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "Product 2",
 			Code:       "UNIQUE_CODE",
-			Price:      15000.00,
+			Category:   "Internet",
+			PriceBasic: 13000.00,
+			PriceSell:  15000.00,
 			Type:       "DATA",
 		}
 
@@ -103,7 +109,9 @@ func TestProductRepository_GetByID(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "Test Product",
 			Code:       "TEST001",
-			Price:      50000.00,
+			Category:   "Gaming",
+			PriceBasic: 45000.00,
+			PriceSell:  50000.00,
 			Type:       "GAME",
 		}
 		err = repo.Create(ctx, product)
@@ -148,7 +156,9 @@ func TestProductRepository_GetByCode(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "PLN 50K",
 			Code:       "PLN50K",
-			Price:      50000.00,
+			Category:   "Electricity",
+			PriceBasic: 45000.00,
+			PriceSell:  50000.00,
 			Type:       "PLN",
 		}
 		err = repo.Create(ctx, product)
@@ -191,7 +201,9 @@ func TestProductRepository_GetAll_Pagination(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       fmt.Sprintf("Product %d", i),
 			Code:       fmt.Sprintf("PROD%d", i),
-			Price:      float64((i + 1) * 10000),
+			Category:   "Mobile",
+			PriceBasic: float64((i + 1) * 9000),
+			PriceSell:  float64((i + 1) * 10000),
 			Type:       "PULSA",
 		}
 		err := repo.Create(ctx, product)
@@ -237,7 +249,9 @@ func TestProductRepository_GetAll_FilterByProvider(t *testing.T) {
 		ProviderID: provider1.ID,
 		Name:       "Provider1 Product",
 		Code:       "P1PROD",
-		Price:      10000.00,
+		Category:   "Mobile",
+		PriceBasic: 9000.00,
+		PriceSell:  10000.00,
 		Type:       "PULSA",
 	}
 	err = repo.Create(ctx, product1)
@@ -247,7 +261,9 @@ func TestProductRepository_GetAll_FilterByProvider(t *testing.T) {
 		ProviderID: provider2.ID,
 		Name:       "Provider2 Product",
 		Code:       "P2PROD",
-		Price:      20000.00,
+		Category:   "Internet",
+		PriceBasic: 18000.00,
+		PriceSell:  20000.00,
 		Type:       "DATA",
 	}
 	err = repo.Create(ctx, product2)
@@ -287,7 +303,9 @@ func TestProductRepository_GetAll_FilterByType(t *testing.T) {
 		ProviderID: provider.ID,
 		Name:       "Pulsa Product",
 		Code:       "PULSAPROD",
-		Price:      10000.00,
+		Category:   "Mobile",
+		PriceBasic: 9000.00,
+		PriceSell:  10000.00,
 		Type:       "PULSA",
 	}
 	err = repo.Create(ctx, pulsaProduct)
@@ -297,7 +315,9 @@ func TestProductRepository_GetAll_FilterByType(t *testing.T) {
 		ProviderID: provider.ID,
 		Name:       "Data Product",
 		Code:       "DATAPROD",
-		Price:      50000.00,
+		Category:   "Internet",
+		PriceBasic: 45000.00,
+		PriceSell:  50000.00,
 		Type:       "DATA",
 	}
 	err = repo.Create(ctx, dataProduct)
@@ -337,7 +357,9 @@ func TestProductRepository_GetAll_FilterByCode(t *testing.T) {
 		ProviderID: provider.ID,
 		Name:       "Test Product",
 		Code:       "TESTCODE123",
-		Price:      30000.00,
+		Category:   "Gaming",
+		PriceBasic: 27000.00,
+		PriceSell:  30000.00,
 		Type:       "GAME",
 	}
 	err = repo.Create(ctx, product)
@@ -378,14 +400,16 @@ func TestProductRepository_Update(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "Original Name",
 			Code:       "ORIGCODE",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 		err = repo.Create(ctx, product)
 		require.NoError(t, err)
 
 		product.Name = "Updated Name"
-		product.Price = 15000.00
+		product.PriceSell = 15000.00
 		product.Type = "DATA"
 		err = repo.Update(ctx, product)
 
@@ -395,16 +419,18 @@ func TestProductRepository_Update(t *testing.T) {
 		err = db.First(&dbProduct, product.ID).Error
 		assert.NoError(t, err)
 		assert.Equal(t, "Updated Name", dbProduct.Name)
-		assert.Equal(t, 15000.00, dbProduct.Price)
+		assert.Equal(t, 15000.00, dbProduct.PriceSell)
 		assert.Equal(t, "DATA", dbProduct.Type)
 	})
 
 	t.Run("should not error when updating non-existent product", func(t *testing.T) {
 		product := &entity.Product{
-			Name:  "Fake Product",
-			Code:  "FAKECODE",
-			Price: 10000.00,
-			Type:  "PULSA",
+			Name:       "Fake Product",
+			Code:       "FAKECODE",
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
+			Type:       "PULSA",
 		}
 		product.ID = 99999
 
@@ -435,7 +461,9 @@ func TestProductRepository_Delete(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "To Delete",
 			Code:       "TODEL",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 		err = repo.Create(ctx, product)
@@ -479,7 +507,9 @@ func TestProductRepository_CodeExists(t *testing.T) {
 			ProviderID: provider.ID,
 			Name:       "Existing Product",
 			Code:       "EXISTING",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 		}
 		err = repo.Create(ctx, product)
@@ -512,10 +542,12 @@ func TestProductRepository_ContextCancellation(t *testing.T) {
 		cancel()
 
 		product := &entity.Product{
-			Name:  "Test Product",
-			Code:  "TEST",
-			Price: 10000.00,
-			Type:  "PULSA",
+			Name:       "Test Product",
+			Code:       "TEST",
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
+			Type:       "PULSA",
 		}
 
 		err := repo.Create(ctx, product)

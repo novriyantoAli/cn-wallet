@@ -6,6 +6,7 @@ import (
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
+	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -28,6 +29,7 @@ func SetupTestDB() (*gorm.DB, error) {
 		&walletEntity.Wallet{},
 		&providerEntity.Provider{},
 		&productEntity.Product{},
+		&wifiVoucherEntity.WifiVoucher{},
 	)
 	if err != nil {
 		return nil, err
@@ -39,6 +41,9 @@ func SetupTestDB() (*gorm.DB, error) {
 // CleanDB cleans all data from test database
 func CleanDB(db *gorm.DB) error {
 	// Delete in reverse order of dependencies (Product before Provider)
+	if err := db.Exec("DELETE FROM wifi_vouchers").Error; err != nil {
+		return err
+	}
 	if err := db.Exec("DELETE FROM products").Error; err != nil {
 		return err
 	}

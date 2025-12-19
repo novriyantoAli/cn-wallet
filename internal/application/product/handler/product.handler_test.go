@@ -36,7 +36,9 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 			ProviderID: req.ProviderID,
 			Name:       req.Name,
 			Code:       req.Code,
-			Price:      req.Price,
+			Category:   req.Category,
+			PriceBasic: req.PriceBasic,
+			PriceSell:  req.PriceSell,
 			Type:       req.Type,
 			Provider: &dto.ProviderInfo{
 				ID:   1,
@@ -161,7 +163,9 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 			ProviderID: 1,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 			Provider: &dto.ProviderInfo{
 				ID:   1,
@@ -260,7 +264,9 @@ func TestProductHandler_GetProductByCode(t *testing.T) {
 			ProviderID: 1,
 			Name:       "Pulsa 10K",
 			Code:       "PULSA10K",
-			Price:      10000.00,
+			Category:   "Mobile",
+			PriceBasic: 9000.00,
+			PriceSell:  10000.00,
 			Type:       "PULSA",
 			Provider: &dto.ProviderInfo{
 				ID:   1,
@@ -354,8 +360,8 @@ func TestProductHandler_GetAllProducts(t *testing.T) {
 
 		response := &dto.ProductListResponse{
 			Data: []dto.ProductResponse{
-				{ID: 1, Name: "Product 1", Code: "PROD1", Price: 10000},
-				{ID: 2, Name: "Product 2", Code: "PROD2", Price: 20000},
+				{ID: 1, Name: "Product 1", Code: "PROD1", Category: "Mobile", PriceBasic: 9000, PriceSell: 10000},
+				{ID: 2, Name: "Product 2", Code: "PROD2", Category: "Internet", PriceBasic: 18000, PriceSell: 20000},
 			},
 			TotalCount: 2,
 			Page:       1,
@@ -438,7 +444,7 @@ func TestProductHandler_GetAllProducts(t *testing.T) {
 
 		response := &dto.ProductListResponse{
 			Data: []dto.ProductResponse{
-				{ID: 1, Name: "Product 1", Code: "PULSA10K", Price: 10000, Type: "PULSA"},
+				{ID: 1, Name: "Product 1", Code: "PULSA10K", Category: "Mobile", PriceBasic: 9000, PriceSell: 10000, Type: "PULSA"},
 			},
 			TotalCount: 1,
 			Page:       1,
@@ -478,8 +484,12 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 			ProviderID: 1,
 			Name:       req.Name,
 			Code:       "PULSA10K",
-			Price:      req.Price,
+			Category:   req.Category,
+			PriceBasic: req.PriceBasic,
+			PriceSell:  req.PriceSell,
 			Type:       req.Type,
+			IsActive:   req.IsActive,
+			IconURL:    req.IconURL,
 			Provider: &dto.ProviderInfo{
 				ID:   1,
 				Name: "Telkomsel",
@@ -492,7 +502,7 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 		mockService.On("UpdateProduct", mock.MatchedBy(func(ctx context.Context) bool {
 			return true
 		}), productID, mock.MatchedBy(func(r *dto.UpdateProductRequest) bool {
-			return r.Name == req.Name && r.Price == req.Price
+			return r.Name == req.Name && r.PriceSell == req.PriceSell
 		})).Return(response, nil)
 
 		reqBody, _ := json.Marshal(req)

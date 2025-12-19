@@ -13,6 +13,8 @@ import (
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
+	wifiVoucherDto "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/dto"
+	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
 )
 
 // User fixtures
@@ -154,8 +156,12 @@ func CreateProductFixture() *productEntity.Product {
 		ProviderID: 1,
 		Name:       "Pulsa 10K",
 		Code:       "PULSA10K",
-		Price:      10000.00,
+		Category:   "Mobile",
+		PriceBasic: 9500.00,
+		PriceSell:  10500.00,
 		Type:       "PULSA",
+		IsActive:   true,
+		IconURL:    "https://example.com/pulsa-icon.png",
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -166,16 +172,24 @@ func CreateProductRequestFixture() *productDto.CreateProductRequest {
 		ProviderID: 1,
 		Name:       "Paket Data 5GB",
 		Code:       "DATA5GB",
-		Price:      50000.00,
+		Category:   "Internet",
+		PriceBasic: 45000.00,
+		PriceSell:  55000.00,
 		Type:       "DATA",
+		IsActive:   true,
+		IconURL:    "https://example.com/data-icon.png",
 	}
 }
 
 func CreateUpdateProductRequestFixture() *productDto.UpdateProductRequest {
 	return &productDto.UpdateProductRequest{
-		Name:  "Paket Data 10GB",
-		Price: 75000.00,
-		Type:  "DATA",
+		Name:       "Paket Data 10GB",
+		Category:   "Internet",
+		PriceBasic: 70000.00,
+		PriceSell:  80000.00,
+		Type:       "DATA",
+		IsActive:   true,
+		IconURL:    "https://example.com/data-10gb-icon.png",
 	}
 }
 
@@ -184,5 +198,50 @@ func CreateProductFilterFixture() *productDto.ProductFilter {
 		ProviderID: 1,
 		Page:       1,
 		PageSize:   10,
+	}
+}
+
+// WifiVoucher fixtures
+func CreateWifiVoucherFixture() *wifiVoucherEntity.WifiVoucher {
+	userID := uint(1)
+	soldAt := time.Now().Add(-24 * time.Hour)
+	return &wifiVoucherEntity.WifiVoucher{
+		ID:              1,
+		Code:            "WIFI001",
+		Password:        "pass123",
+		DurationMinutes: 1440,
+		BatchID:         "BATCH001",
+		Status:          wifiVoucherEntity.StatusAvailable,
+		SoldToUserID:    &userID,
+		SoldAt:          &soldAt,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+}
+
+func CreateWifiVoucherRequestFixture() *wifiVoucherDto.CreateWifiVoucherRequest {
+	return &wifiVoucherDto.CreateWifiVoucherRequest{
+		Code:            "WIFI001",
+		Password:        "pass123",
+		DurationMinutes: 1440,
+		BatchID:         "BATCH001",
+	}
+}
+
+func CreateUpdateWifiVoucherRequestFixture() *wifiVoucherDto.UpdateWifiVoucherRequest {
+	return &wifiVoucherDto.UpdateWifiVoucherRequest{
+		Code:            "WIFI002",
+		Password:        "pass456",
+		DurationMinutes: 2880,
+		BatchID:         "BATCH002",
+		Status:          wifiVoucherEntity.StatusSold,
+	}
+}
+
+func CreateWifiVoucherFilterFixture() *wifiVoucherDto.WifiVoucherFilter {
+	return &wifiVoucherDto.WifiVoucherFilter{
+		Status:   wifiVoucherEntity.StatusAvailable,
+		Page:     1,
+		PageSize: 10,
 	}
 }
