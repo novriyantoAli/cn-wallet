@@ -171,7 +171,7 @@ func (s *oauthService) ExchangeCodeForToken(ctx context.Context, provider dto.OA
 	// Calculate expiration
 	expiresIn := int64(3600) // Default 1 hour
 	if !token.Expiry.IsZero() {
-		expiresIn = int64(token.Expiry.Sub(time.Now()).Seconds())
+		expiresIn = int64(time.Until(token.Expiry).Seconds())
 	}
 
 	s.logger.Info("Successfully exchanged code for token", zap.String("provider", string(provider)))
@@ -330,7 +330,7 @@ func (s *oauthService) RefreshToken(ctx context.Context, provider dto.OAuthProvi
 	// Calculate expiration
 	expiresIn := int64(3600)
 	if !newToken.Expiry.IsZero() {
-		expiresIn = int64(newToken.Expiry.Sub(time.Now()).Seconds())
+		expiresIn = int64(time.Until(newToken.Expiry).Seconds())
 	}
 
 	s.logger.Info("Successfully refreshed token", zap.String("provider", string(provider)))
