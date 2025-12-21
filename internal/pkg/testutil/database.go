@@ -4,6 +4,7 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
+	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
@@ -30,6 +31,7 @@ func SetupTestDB() (*gorm.DB, error) {
 		&providerEntity.Provider{},
 		&productEntity.Product{},
 		&wifiVoucherEntity.WifiVoucher{},
+		&transactionEntity.Transaction{},
 	)
 	if err != nil {
 		return nil, err

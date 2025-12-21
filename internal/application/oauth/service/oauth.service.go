@@ -557,7 +557,13 @@ func (s *oauthService) getMicrosoftUserInfo(ctx context.Context, accessToken str
 func (s *oauthService) createOrUpdateUser(ctx context.Context, provider dto.OAuthProvider, userInfo *dto.OAuthUserInfo) (*entity.User, error) {
 	// Try to find existing user by email
 	existingUser, err := s.userRepo.GetByEmail(ctx, userInfo.Email)
-	if err == nil && existingUser != nil {
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			s.logger.Error("Failed to check existing user", zap.String("email", userInfo.Email), zap.Error(err))
+			return nil, fmt.Errorf("failed to check existing user: %w", err)
+		}
+	}
+	if existingUser != nil {
 		// User exists, update it
 		existingUser.FullName = userInfo.Name
 		existingUser.IsActive = true

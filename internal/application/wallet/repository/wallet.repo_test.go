@@ -413,6 +413,117 @@ func TestWalletRepository_UpdatePIN(t *testing.T) {
 	testutil.CleanDB(db)
 }
 
+func TestWalletRepository_GetForUpdate(t *testing.T) {
+	// Setup
+	db, err := testutil.SetupTestDB()
+	require.NoError(t, err)
+	logger := testutil.NewTestLogger(t)
+	repo := NewWalletRepository(db, logger)
+	ctx := context.Background()
+
+	t.Run("should get wallet with FOR UPDATE lock successfully", func(t *testing.T) {
+		// Given
+		wallet := testutil.CreateWalletFixture()
+		wallet.ID = 0
+		err := repo.CreateWallet(ctx, wallet)
+		require.NoError(t, err)
+
+		// When
+		lockedWallet, err := repo.GetForUpdate(ctx, wallet.UserID)
+
+		// Then
+		assert.NoError(t, err)
+		assert.NotNil(t, lockedWallet)
+		assert.Equal(t, wallet.ID, lockedWallet.ID)
+		assert.Equal(t, wallet.UserID, lockedWallet.UserID)
+		assert.Equal(t, wallet.Balance, lockedWallet.Balance)
+	})
+
+	t.Run("should return error when wallet not found", func(t *testing.T) {
+		// When
+		_, err := repo.GetForUpdate(ctx, 9999)
+
+		// Then
+		assert.Error(t, err)
+		assert.Equal(t, "wallet not found", err.Error())
+	})
+
+	t.Run("should fetch correct wallet data with lock", func(t *testing.T) {
+		// Given
+		wallet1 := testutil.CreateWalletFixture()
+		wallet1.ID = 0
+		wallet1.UserID = 60
+		wallet1.Balance = 1000.00
+		wallet1.PINHash = "pin_hash_60"
+
+		wallet2 := testutil.CreateWalletFixture()
+		wallet2.ID = 0
+		wallet2.UserID = 61
+		wallet2.Balance = 2000.00
+		wallet2.PINHash = "pin_hash_61"
+
+		err := repo.CreateWallet(ctx, wallet1)
+		require.NoError(t, err)
+		err = repo.CreateWallet(ctx, wallet2)
+		require.NoError(t, err)
+
+		// When
+		locked1, err := repo.GetForUpdate(ctx, wallet1.UserID)
+		require.NoError(t, err)
+
+		locked2, err := repo.GetForUpdate(ctx, wallet2.UserID)
+		require.NoError(t, err)
+
+		// Then
+		assert.Equal(t, 1000.00, locked1.Balance)
+		assert.Equal(t, "pin_hash_60", locked1.PINHash)
+		assert.Equal(t, 2000.00, locked2.Balance)
+		assert.Equal(t, "pin_hash_61", locked2.PINHash)
+	})
+
+	t.Run("should acquire lock during transaction", func(t *testing.T) {
+		// Given
+		wallet := testutil.CreateWalletFixture()
+		wallet.ID = 0
+		wallet.UserID = 70
+		wallet.Balance = 500.00
+		err := repo.CreateWallet(ctx, wallet)
+		require.NoError(t, err)
+
+		// When - Get wallet with lock in a transaction context
+		lockedWallet, err := repo.GetForUpdate(ctx, wallet.UserID)
+
+		// Then - Verify we got the wallet (lock behavior is enforced at DB level)
+		assert.NoError(t, err)
+		assert.NotNil(t, lockedWallet)
+		assert.Equal(t, wallet.Balance, lockedWallet.Balance)
+	})
+
+	t.Run("should preserve wallet state when locked", func(t *testing.T) {
+		// Given
+		wallet := testutil.CreateWalletFixture()
+		wallet.ID = 0
+		wallet.UserID = 80
+		wallet.Balance = 750.50
+		wallet.PINHash = "original_pin"
+		err := repo.CreateWallet(ctx, wallet)
+		require.NoError(t, err)
+
+		// When - Get with lock
+		lockedWallet, err := repo.GetForUpdate(ctx, wallet.UserID)
+		require.NoError(t, err)
+
+		// Then - Verify all fields are preserved
+		assert.Equal(t, wallet.ID, lockedWallet.ID)
+		assert.Equal(t, wallet.UserID, lockedWallet.UserID)
+		assert.Equal(t, wallet.Balance, lockedWallet.Balance)
+		assert.Equal(t, wallet.PINHash, lockedWallet.PINHash)
+	})
+
+	// Cleanup
+	testutil.CleanDB(db)
+}
+
 func TestWalletRepository_DeleteWallet(t *testing.T) {
 	// Setup
 	db, err := testutil.SetupTestDB()

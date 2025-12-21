@@ -3,12 +3,15 @@ package testutil
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productDto "github.com/novriyantoAli/cn-wallet/internal/application/product/dto"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerDto "github.com/novriyantoAli/cn-wallet/internal/application/provider/dto"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
+	transactionDto "github.com/novriyantoAli/cn-wallet/internal/application/transaction/dto"
+	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
@@ -241,6 +244,60 @@ func CreateUpdateWifiVoucherRequestFixture() *wifiVoucherDto.UpdateWifiVoucherRe
 func CreateWifiVoucherFilterFixture() *wifiVoucherDto.WifiVoucherFilter {
 	return &wifiVoucherDto.WifiVoucherFilter{
 		Status:   wifiVoucherEntity.StatusAvailable,
+		Page:     1,
+		PageSize: 10,
+	}
+}
+
+// Transaction fixtures
+func CreateTransactionFixture() *transactionEntity.Transaction {
+	return &transactionEntity.Transaction{
+		ID:                 uuid.New(),
+		WalletID:           1,
+		Type:               transactionEntity.TypeTopup,
+		Amount:             100.00,
+		Status:             transactionEntity.StatusPending,
+		Description:        "Test transaction",
+		PaymentMethod:      "credit_card",
+		PaymentProviderRef: "ref123",
+		ProductID:          nil,
+		TargetNumber:       "",
+		SerialNumber:       "",
+		RelatedWalletID:    nil,
+		CreatedAt:          time.Now(),
+		Wallet:             nil,
+		Product:            nil,
+		RelatedWallet:      nil,
+	}
+}
+
+func CreateTransactionRequestFixture() *transactionDto.CreateTransactionRequest {
+	return &transactionDto.CreateTransactionRequest{
+		WalletID:           1,
+		Type:               transactionEntity.TypeTopup,
+		Amount:             100.00,
+		Description:        "Test transaction",
+		PaymentMethod:      "credit_card",
+		PaymentProviderRef: "ref123",
+		ProductID:          nil,
+		TargetNumber:       "",
+		SerialNumber:       "",
+		RelatedWalletID:    nil,
+	}
+}
+
+func CreateUpdateTransactionRequestFixture() *transactionDto.UpdateTransactionRequest {
+	return &transactionDto.UpdateTransactionRequest{
+		Status:      transactionEntity.StatusSuccess,
+		Description: "Updated transaction",
+	}
+}
+
+func CreateTransactionFilterFixture() *transactionDto.TransactionFilter {
+	return &transactionDto.TransactionFilter{
+		WalletID: 1,
+		Type:     transactionEntity.TypeTopup,
+		Status:   transactionEntity.StatusPending,
 		Page:     1,
 		PageSize: 10,
 	}

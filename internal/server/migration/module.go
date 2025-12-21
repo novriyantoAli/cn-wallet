@@ -4,8 +4,10 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
+	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
+	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -27,13 +29,15 @@ func (s *Server) RunMigrations() error {
 	s.logger.Info("Starting database migrations")
 
 	// Run auto migrations for all entities
-	// Order matters: Provider before Product (foreign key dependency)
+	// Order matters: dependencies should be created before dependent tables
 	err := s.db.AutoMigrate(
 		&userEntity.User{},
 		&entity.Payment{},
 		&walletEntity.Wallet{},
 		&providerEntity.Provider{},
 		&productEntity.Product{},
+		&transactionEntity.Transaction{},
+		&wifiVoucherEntity.WifiVoucher{},
 	)
 	if err != nil {
 		s.logger.Error("Failed to run database migrations", zap.Error(err))
@@ -57,13 +61,13 @@ func (s *Server) SeedData() error {
 func (s *Server) DropTables() error {
 	s.logger.Warn("Dropping all database tables")
 
-	// Drop in reverse order of creation (Product before Provider due to foreign key)
+	// Drop in reverse order of creation to handle foreign key constraints
 	err := s.db.Migrator().DropTable(
 		&productEntity.Product{},
 		&providerEntity.Provider{},
-		&userEntity.User{},
-		&entity.Payment{},
 		&walletEntity.Wallet{},
+		&entity.Payment{},
+		&userEntity.User{},
 	)
 	if err != nil {
 		s.logger.Error("Failed to drop database tables", zap.Error(err))

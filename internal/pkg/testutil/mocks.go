@@ -2,13 +2,18 @@ package testutil
 
 import (
 	"context"
+	"errors"
 
+	"github.com/google/uuid"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productDto "github.com/novriyantoAli/cn-wallet/internal/application/product/dto"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerDto "github.com/novriyantoAli/cn-wallet/internal/application/provider/dto"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
+	purchaseDto "github.com/novriyantoAli/cn-wallet/internal/application/purchase/dto"
+	transactionDto "github.com/novriyantoAli/cn-wallet/internal/application/transaction/dto"
+	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
@@ -16,6 +21,9 @@ import (
 
 	"github.com/stretchr/testify/mock"
 )
+
+// Common test errors
+var ErrRecordNotFound = errors.New("record not found")
 
 // MockUserRepository is a mock implementation of UserRepository
 type MockUserRepository struct {
@@ -279,6 +287,14 @@ func (m *MockWalletRepository) DeleteWallet(ctx context.Context, userID uint) er
 	return args.Error(0)
 }
 
+func (m *MockWalletRepository) GetForUpdate(ctx context.Context, userID uint) (*walletEntity.Wallet, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletEntity.Wallet), args.Error(1)
+}
+
 // MockProductRepository is a mock implementation of ProductRepository
 type MockProductRepository struct {
 	mock.Mock
@@ -437,4 +453,141 @@ func (m *MockProductService) UpdateProduct(ctx context.Context, id uint, req *pr
 func (m *MockProductService) DeleteProduct(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
+}
+
+// MockTransactionRepository is a mock implementation of TransactionRepository
+type MockTransactionRepository struct {
+	mock.Mock
+}
+
+func (m *MockTransactionRepository) Create(ctx context.Context, transaction *transactionEntity.Transaction) error {
+	args := m.Called(ctx, transaction)
+	return args.Error(0)
+}
+
+func (m *MockTransactionRepository) GetByID(ctx context.Context, id uuid.UUID) (*transactionEntity.Transaction, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transactionEntity.Transaction), args.Error(1)
+}
+
+func (m *MockTransactionRepository) GetAll(ctx context.Context, filter *transactionDto.TransactionFilter) ([]transactionEntity.Transaction, int64, error) {
+	args := m.Called(ctx, filter)
+	var transactions []transactionEntity.Transaction
+	if args.Get(0) != nil {
+		transactions = args.Get(0).([]transactionEntity.Transaction)
+	}
+
+	var count int64
+	if args.Get(1) != nil {
+		count = args.Get(1).(int64)
+	}
+	return transactions, count, args.Error(2)
+}
+
+// MockTransactionService is a mock implementation of TransactionService
+type MockTransactionService struct {
+	mock.Mock
+}
+
+func (m *MockTransactionService) CreateTransaction(ctx context.Context, req *transactionDto.CreateTransactionRequest) (*transactionDto.TransactionResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transactionDto.TransactionResponse), args.Error(1)
+}
+
+func (m *MockTransactionService) GetTransactionByID(ctx context.Context, id uuid.UUID) (*transactionDto.TransactionResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transactionDto.TransactionResponse), args.Error(1)
+}
+
+func (m *MockTransactionService) GetAllTransactions(ctx context.Context, filter *transactionDto.TransactionFilter) (*transactionDto.TransactionListResponse, error) {
+	args := m.Called(ctx, filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transactionDto.TransactionListResponse), args.Error(1)
+}
+
+func (m *MockTransactionService) UpdateTransaction(ctx context.Context, id uuid.UUID, req *transactionDto.UpdateTransactionRequest) (*transactionDto.TransactionResponse, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transactionDto.TransactionResponse), args.Error(1)
+}
+
+func (m *MockTransactionService) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockTransactionService) GetWalletTransactions(ctx context.Context, walletID uint, page, pageSize int) (*transactionDto.TransactionListResponse, error) {
+	args := m.Called(ctx, walletID, page, pageSize)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transactionDto.TransactionListResponse), args.Error(1)
+}
+
+func (m *MockTransactionRepository) Update(ctx context.Context, transaction *transactionEntity.Transaction) error {
+	args := m.Called(ctx, transaction)
+	return args.Error(0)
+}
+
+func (m *MockTransactionRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockTransactionRepository) GetByWalletID(ctx context.Context, walletID uint, page, pageSize int) ([]transactionEntity.Transaction, int64, error) {
+	args := m.Called(ctx, walletID, page, pageSize)
+	var transactions []transactionEntity.Transaction
+	if args.Get(0) != nil {
+		transactions = args.Get(0).([]transactionEntity.Transaction)
+	}
+
+	var count int64
+	if args.Get(1) != nil {
+		count = args.Get(1).(int64)
+	}
+	return transactions, count, args.Error(2)
+}
+
+// MockTransactionManager is a mock implementation of TransactionManagerI
+type MockTransactionManager struct {
+	mock.Mock
+}
+
+func (m *MockTransactionManager) WithinTransaction(ctx context.Context, fn func(context.Context) error) error {
+	args := m.Called(ctx, fn)
+	return args.Error(0)
+}
+
+// MockPurchaseService is a mock implementation of PurchaseService
+type MockPurchaseService struct {
+	mock.Mock
+}
+
+func (m *MockPurchaseService) ProcessPurchase(ctx context.Context, token string, req *purchaseDto.PurchaseRequest) (*purchaseDto.PurchaseResponse, error) {
+	args := m.Called(ctx, token, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*purchaseDto.PurchaseResponse), args.Error(1)
+}
+
+func (m *MockPurchaseService) GetPurchaseHistory(ctx context.Context, filter *purchaseDto.PurchaseHistoryFilter) (*purchaseDto.PurchaseHistoryList, error) {
+	args := m.Called(ctx, filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*purchaseDto.PurchaseHistoryList), args.Error(1)
 }

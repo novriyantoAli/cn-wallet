@@ -84,8 +84,10 @@ func (m *mockWifiVoucherService) UseWifiVoucher(ctx context.Context, voucherID u
 }
 
 func setupWifiVoucherHandler() (*WifiVoucherHandler, *mockWifiVoucherService) {
+	gin.SetMode(gin.TestMode)
 	mockService := new(mockWifiVoucherService)
-	handler := NewWifiVoucherHandler(mockService)
+	logger := testutil.NewSilentLogger()
+	handler := NewWifiVoucherHandler(mockService, logger)
 	return handler, mockService
 }
 
@@ -453,8 +455,9 @@ func TestWifiVoucherHandler_RegisterRoutes(t *testing.T) {
 	t.Run("should register all routes correctly", func(t *testing.T) {
 		handler, _ := setupWifiVoucherHandler()
 		router := gin.New()
+		api := router.Group("/api/v1")
 
-		handler.RegisterRoutes(router)
+		handler.RegisterRoutes(api)
 
 		routes := router.Routes()
 		assert.NotNil(t, routes)

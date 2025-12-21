@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // WalletRepository defines the interface for wallet data access
@@ -16,6 +17,7 @@ type WalletRepository interface {
 	CreateWallet(ctx context.Context, wallet *entity.Wallet) error
 	GetWalletByUserID(ctx context.Context, userID uint) (*entity.Wallet, error)
 	GetWalletByID(ctx context.Context, id uint) (*entity.Wallet, error)
+	GetForUpdate(ctx context.Context, userID uint) (*entity.Wallet, error)
 	UpdateWallet(ctx context.Context, wallet *entity.Wallet) error
 	UpdateBalance(ctx context.Context, userID uint, newBalance float64) error
 	UpdatePIN(ctx context.Context, userID uint, pinHash string) error
@@ -69,6 +71,22 @@ func (r *walletRepository) GetWalletByID(ctx context.Context, id uint) (*entity.
 			return nil, errors.New("wallet not found")
 		}
 		r.logger.Error("Failed to get wallet", zap.Error(result.Error), zap.Uint("id", id))
+		return nil, result.Error
+	}
+	return &wallet, nil
+}
+
+// GetForUpdate retrieves wallet by user ID with a FOR UPDATE lock for atomic updates
+func (r *walletRepository) GetForUpdate(ctx context.Context, userID uint) (*entity.Wallet, error) {
+	var wallet entity.Wallet
+	db := database.GetDB(ctx, r.db)
+	result := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id = ?", userID).First(&wallet)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			r.logger.Debug("Wallet not found", zap.Uint("user_id", userID))
+			return nil, errors.New("wallet not found")
+		}
+		r.logger.Error("Failed to get wallet for update", zap.Error(result.Error), zap.Uint("user_id", userID))
 		return nil, result.Error
 	}
 	return &wallet, nil

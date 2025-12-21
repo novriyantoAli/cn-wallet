@@ -5,26 +5,22 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/repository"
 	"github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/service"
 
-	"go.uber.org/zap"
-	"gorm.io/gorm"
+	"go.uber.org/fx"
 )
 
-// Module represents the wifi voucher module.
-type Module struct {
-	Handler handler.WifiVoucherHandler
-	Service service.WifiVoucherService
-	Repo    repository.WifiVoucherRepository
-}
+// Module provides all wifi voucher domain dependencies
+var Module = fx.Options(
+	fx.Provide(
+		repository.NewWifiVoucherRepository,
+		service.NewWifiVoucherService,
+		handler.NewWifiVoucherHandler,
+	),
+)
 
-// NewModule creates and initializes a new wifi voucher module.
-func NewModule(db *gorm.DB, logger *zap.Logger) Module {
-	repo := repository.NewWifiVoucherRepository(db, logger)
-	svc := service.NewWifiVoucherService(repo, logger)
-	hdlr := handler.NewWifiVoucherHandler(svc)
-
-	return Module{
-		Handler: *hdlr,
-		Service: svc,
-		Repo:    repo,
-	}
-}
+// WorkerModule provides only worker dependencies for worker api
+var WorkerModule = fx.Options(
+	fx.Provide(
+		repository.NewWifiVoucherRepository,
+		service.NewWifiVoucherService,
+	),
+)
