@@ -70,8 +70,8 @@ func (r *productRepository) GetAll(ctx context.Context, filter *dto.ProductFilte
 	if filter.ProviderID > 0 {
 		query = query.Where("provider_id = ?", filter.ProviderID)
 	}
-	if filter.Type != "" {
-		query = query.Where("type = ?", filter.Type)
+	if filter.Category != "" {
+		query = query.Where("category = ?", filter.Category)
 	}
 	if filter.Code != "" {
 		query = query.Where("code LIKE ?", "%"+filter.Code+"%")

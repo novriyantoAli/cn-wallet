@@ -35,6 +35,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
+			Pin:       "123456",
 		}
 
 		txID := uuid.New()
@@ -76,6 +77,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
+			Pin:       "123456",
 		}
 
 		// Prepare request
@@ -104,6 +106,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
+			Pin:       "123456",
 		}
 
 		// Prepare request
@@ -132,6 +135,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
+			Pin:       "123456",
 		}
 
 		// Prepare request
@@ -177,6 +181,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
+			Pin:       "123456",
 		}
 
 		mockService.On("ProcessPurchase", mock.MatchedBy(func(ctx context.Context) bool {
@@ -210,6 +215,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 999,
 			Phone:     "08123456789",
+			Pin:       "123456",
 		}
 
 		mockService.On("ProcessPurchase", mock.MatchedBy(func(ctx context.Context) bool {
@@ -243,6 +249,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
+			Pin:       "123456",
 		}
 
 		mockService.On("ProcessPurchase", mock.MatchedBy(func(ctx context.Context) bool {

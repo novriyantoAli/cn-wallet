@@ -14,6 +14,7 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/oauth/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/repository"
+	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -296,8 +297,14 @@ func (s *oauthService) Authenticate(ctx context.Context, provider dto.OAuthProvi
 		zap.Uint("db_user_id", user.ID))
 
 	return &dto.OAuthLoginResponse{
-		Token:    token,
-		UserInfo: *userInfo,
+		Token: token,
+		UserInfo: dto.OAuthUserInfo{
+			ID:        fmt.Sprintf("%d", user.ID),
+			Email:     user.Email,
+			Name:      user.FullName,
+			AvatarURL: userInfo.AvatarURL,
+			Provider:  string(provider),
+		},
 	}, nil
 }
 
@@ -582,6 +589,14 @@ func (s *oauthService) createOrUpdateUser(ctx context.Context, provider dto.OAut
 		FullName: userInfo.Name,
 		Level:    "user",
 		IsActive: true,
+		Wallet: &walletEntity.Wallet{
+			Balance:   0,
+			PINHash:   "000000", // Default PIN (not hashed for now)
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	err = s.userRepo.Create(ctx, newUser)

@@ -62,7 +62,7 @@ func (h *WalletHandler) CreateWallet(ctx *gin.Context) {
 // @Success 200 {object} map[string]interface{} "Wallet details"
 // @Failure 400 {object} map[string]interface{} "Invalid user ID"
 // @Failure 404 {object} map[string]interface{} "Wallet not found"
-// @Router /wallets/{user_id} [get]
+// @Router /wallets/by-user/{user_id} [get]
 func (h *WalletHandler) GetWalletByUserID(ctx *gin.Context) {
 	idStr := ctx.Param("user_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -123,7 +123,7 @@ func (h *WalletHandler) GetWalletByID(ctx *gin.Context) {
 // @Failure 401 {object} map[string]interface{} "Invalid current PIN"
 // @Failure 404 {object} map[string]interface{} "Wallet not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /wallets/{user_id}/set-pin [post]
+// @Router /wallets/by-user/{user_id}/set-pin [post]
 func (h *WalletHandler) SetPIN(ctx *gin.Context) {
 	idStr := ctx.Param("user_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -168,7 +168,7 @@ func (h *WalletHandler) SetPIN(ctx *gin.Context) {
 // @Failure 400 {object} map[string]interface{} "Invalid request"
 // @Failure 401 {object} map[string]interface{} "Invalid PIN"
 // @Failure 404 {object} map[string]interface{} "Wallet not found"
-// @Router /wallets/{user_id}/verify-pin [post]
+// @Router /wallets/by-user/{user_id}/verify-pin [post]
 func (h *WalletHandler) VerifyPIN(ctx *gin.Context) {
 	idStr := ctx.Param("user_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -209,7 +209,7 @@ func (h *WalletHandler) VerifyPIN(ctx *gin.Context) {
 // @Failure 400 {object} map[string]interface{} "Invalid request"
 // @Failure 404 {object} map[string]interface{} "Wallet not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /wallets/{user_id}/add-balance [post]
+// @Router /wallets/by-user/{user_id}/add-balance [post]
 func (h *WalletHandler) AddBalance(ctx *gin.Context) {
 	idStr := ctx.Param("user_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -252,7 +252,7 @@ func (h *WalletHandler) AddBalance(ctx *gin.Context) {
 // @Failure 402 {object} map[string]interface{} "Insufficient balance"
 // @Failure 404 {object} map[string]interface{} "Wallet not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /wallets/{user_id}/deduct-balance [post]
+// @Router /wallets/by-user/{user_id}/deduct-balance [post]
 func (h *WalletHandler) DeductBalance(ctx *gin.Context) {
 	idStr := ctx.Param("user_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -297,7 +297,7 @@ func (h *WalletHandler) DeductBalance(ctx *gin.Context) {
 // @Failure 400 {object} map[string]interface{} "Invalid user ID"
 // @Failure 404 {object} map[string]interface{} "Wallet not found"
 // @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /wallets/{user_id} [delete]
+// @Router /wallets/by-user/{user_id} [delete]
 func (h *WalletHandler) DeleteWallet(ctx *gin.Context) {
 	idStr := ctx.Param("user_id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -324,12 +324,12 @@ func (h *WalletHandler) RegisterRoutes(api *gin.RouterGroup) {
 	wallets := api.Group("/wallets")
 	{
 		wallets.POST("", h.CreateWallet)
-		wallets.GET("/:user_id", h.GetWalletByUserID)
+		wallets.GET("/by-user/:user_id", h.GetWalletByUserID)
 		wallets.GET("/wallet/:id", h.GetWalletByID)
-		wallets.POST("/:user_id/set-pin", h.SetPIN)
-		wallets.POST("/:user_id/verify-pin", h.VerifyPIN)
-		wallets.POST("/:user_id/add-balance", h.AddBalance)
-		wallets.POST("/:user_id/deduct-balance", h.DeductBalance)
-		wallets.DELETE("/:user_id", h.DeleteWallet)
+		wallets.POST("/by-user/:user_id/set-pin", h.SetPIN)
+		wallets.POST("/by-user/:user_id/verify-pin", h.VerifyPIN)
+		wallets.POST("/by-user/:user_id/add-balance", h.AddBalance)
+		wallets.POST("/by-user/:user_id/deduct-balance", h.DeductBalance)
+		wallets.DELETE("/by-user/:user_id", h.DeleteWallet)
 	}
 }

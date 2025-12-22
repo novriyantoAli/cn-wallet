@@ -8,9 +8,11 @@ import (
 
 	oauthHandler "github.com/novriyantoAli/cn-wallet/internal/application/oauth/handler"
 	paymentHandler "github.com/novriyantoAli/cn-wallet/internal/application/payment/handler"
+	productHandler "github.com/novriyantoAli/cn-wallet/internal/application/product/handler"
 	providerHandler "github.com/novriyantoAli/cn-wallet/internal/application/provider/handler"
 	transactionHandler "github.com/novriyantoAli/cn-wallet/internal/application/transaction/handler"
 	userHandler "github.com/novriyantoAli/cn-wallet/internal/application/user/handler"
+	walletHandler "github.com/novriyantoAli/cn-wallet/internal/application/wallet/handler"
 	wifiVoucherHandler "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/handler"
 	"github.com/novriyantoAli/cn-wallet/internal/middleware"
 
@@ -21,7 +23,9 @@ type Server struct {
 	oauthHandler       *oauthHandler.OAuthHandler
 	userHandler        *userHandler.UserHandler
 	paymentHandler     *paymentHandler.PaymentHandler
+	productHandler     *productHandler.ProductHandler
 	providerHandler    *providerHandler.ProviderHandler
+	walletHandler      *walletHandler.WalletHandler
 	wifiVoucherHandler *wifiVoucherHandler.WifiVoucherHandler
 	transactionHandler *transactionHandler.TransactionHandler
 	logger             *zap.Logger
@@ -31,7 +35,9 @@ func NewServer(
 	oauthHandler *oauthHandler.OAuthHandler,
 	userHandler *userHandler.UserHandler,
 	paymentHandler *paymentHandler.PaymentHandler,
+	productHandler *productHandler.ProductHandler,
 	providerHandler *providerHandler.ProviderHandler,
+	walletHandler *walletHandler.WalletHandler,
 	wifiVoucherHandler *wifiVoucherHandler.WifiVoucherHandler,
 	transactionHandler *transactionHandler.TransactionHandler,
 	logger *zap.Logger,
@@ -40,7 +46,9 @@ func NewServer(
 		oauthHandler:       oauthHandler,
 		userHandler:        userHandler,
 		paymentHandler:     paymentHandler,
+		productHandler:     productHandler,
 		providerHandler:    providerHandler,
+		walletHandler:      walletHandler,
 		wifiVoucherHandler: wifiVoucherHandler,
 		transactionHandler: transactionHandler,
 		logger:             logger,
@@ -66,7 +74,9 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.oauthHandler.RegisterRoutes(router)
 		s.userHandler.RegisterRoutes(api)
 		s.paymentHandler.RegisterRoutes(api)
+		s.productHandler.RegisterRoutes(api)
 		s.providerHandler.RegisterRoutes(api)
+		s.walletHandler.RegisterRoutes(api)
 		s.wifiVoucherHandler.RegisterRoutes(api)
 		s.transactionHandler.RegisterRoutes(api)
 	}

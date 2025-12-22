@@ -39,7 +39,6 @@ func TestProductHandler_CreateProduct(t *testing.T) {
 			Category:   req.Category,
 			PriceBasic: req.PriceBasic,
 			PriceSell:  req.PriceSell,
-			Type:       req.Type,
 			Provider: &dto.ProviderInfo{
 				ID:   1,
 				Name: "Telkomsel",
@@ -166,7 +165,6 @@ func TestProductHandler_GetProductByID(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 			Provider: &dto.ProviderInfo{
 				ID:   1,
 				Name: "Telkomsel",
@@ -267,7 +265,6 @@ func TestProductHandler_GetProductByCode(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 			Provider: &dto.ProviderInfo{
 				ID:   1,
 				Name: "Telkomsel",
@@ -444,7 +441,7 @@ func TestProductHandler_GetAllProducts(t *testing.T) {
 
 		response := &dto.ProductListResponse{
 			Data: []dto.ProductResponse{
-				{ID: 1, Name: "Product 1", Code: "PULSA10K", Category: "Mobile", PriceBasic: 9000, PriceSell: 10000, Type: "PULSA"},
+				{ID: 1, Name: "Product 1", Code: "PULSA10K", Category: "Mobile", PriceBasic: 9000, PriceSell: 10000},
 			},
 			TotalCount: 1,
 			Page:       1,
@@ -454,7 +451,7 @@ func TestProductHandler_GetAllProducts(t *testing.T) {
 		mockService.On("GetAllProducts", mock.MatchedBy(func(ctx context.Context) bool {
 			return true
 		}), mock.MatchedBy(func(f *dto.ProductFilter) bool {
-			return f.ProviderID == 1 && f.Type == "PULSA"
+			return f.ProviderID == 1
 		})).Return(response, nil)
 
 		w := httptest.NewRecorder()
@@ -469,7 +466,6 @@ func TestProductHandler_GetAllProducts(t *testing.T) {
 		var result dto.ProductListResponse
 		json.Unmarshal(w.Body.Bytes(), &result)
 		assert.Len(t, result.Data, 1)
-		assert.Equal(t, "PULSA", result.Data[0].Type)
 	})
 }
 
@@ -487,7 +483,6 @@ func TestProductHandler_UpdateProduct(t *testing.T) {
 			Category:   req.Category,
 			PriceBasic: req.PriceBasic,
 			PriceSell:  req.PriceSell,
-			Type:       req.Type,
 			IsActive:   req.IsActive,
 			IconURL:    req.IconURL,
 			Provider: &dto.ProviderInfo{

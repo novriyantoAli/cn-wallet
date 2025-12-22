@@ -8,6 +8,7 @@ import (
 type PurchaseRequest struct {
 	ProductID uint   `json:"product_id" binding:"required,gt=0"`
 	Phone     string `json:"phone" binding:"required"`
+	Pin       string `json:"pin" binding:"required"`
 }
 
 // PurchaseResponse represents the response after a purchase attempt

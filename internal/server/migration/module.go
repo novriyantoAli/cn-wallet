@@ -68,6 +68,8 @@ func (s *Server) DropTables() error {
 		&walletEntity.Wallet{},
 		&entity.Payment{},
 		&userEntity.User{},
+		&transactionEntity.Transaction{},
+		&wifiVoucherEntity.WifiVoucher{},
 	)
 	if err != nil {
 		s.logger.Error("Failed to drop database tables", zap.Error(err))

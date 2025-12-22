@@ -12,6 +12,7 @@ import (
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
 	transactionDto "github.com/novriyantoAli/cn-wallet/internal/application/transaction/dto"
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
+	securityEntity "github.com/novriyantoAli/cn-wallet/internal/application/user-security/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
@@ -159,10 +160,9 @@ func CreateProductFixture() *productEntity.Product {
 		ProviderID: 1,
 		Name:       "Pulsa 10K",
 		Code:       "PULSA10K",
-		Category:   "Mobile",
+		Category:   "pulsa",
 		PriceBasic: 9500.00,
 		PriceSell:  10500.00,
-		Type:       "PULSA",
 		IsActive:   true,
 		IconURL:    "https://example.com/pulsa-icon.png",
 		CreatedAt:  time.Now(),
@@ -175,10 +175,9 @@ func CreateProductRequestFixture() *productDto.CreateProductRequest {
 		ProviderID: 1,
 		Name:       "Paket Data 5GB",
 		Code:       "DATA5GB",
-		Category:   "Internet",
+		Category:   "wifi",
 		PriceBasic: 45000.00,
 		PriceSell:  55000.00,
-		Type:       "DATA",
 		IsActive:   true,
 		IconURL:    "https://example.com/data-icon.png",
 	}
@@ -187,10 +186,9 @@ func CreateProductRequestFixture() *productDto.CreateProductRequest {
 func CreateUpdateProductRequestFixture() *productDto.UpdateProductRequest {
 	return &productDto.UpdateProductRequest{
 		Name:       "Paket Data 10GB",
-		Category:   "Internet",
+		Category:   "wifi",
 		PriceBasic: 70000.00,
 		PriceSell:  80000.00,
-		Type:       "DATA",
 		IsActive:   true,
 		IconURL:    "https://example.com/data-10gb-icon.png",
 	}
@@ -300,5 +298,15 @@ func CreateTransactionFilterFixture() *transactionDto.TransactionFilter {
 		Status:   transactionEntity.StatusPending,
 		Page:     1,
 		PageSize: 10,
+	}
+}
+
+// Security fixtures
+func CreateUserSecurityFixture() *securityEntity.UserSecurity {
+	return &securityEntity.UserSecurity{
+		UserID:        1,
+		PinHash:       "hashed_pin_value",
+		FailedAttempt: 0,
+		LockedUntil:   nil,
 	}
 }

@@ -124,7 +124,7 @@ func (h *ProductHandler) GetProductByCode(c *gin.Context) {
 // @Tags products
 // @Produce json
 // @Param provider_id query int false "Filter by provider ID"
-// @Param type query string false "Filter by product type (PULSA|DATA|GAME|PLN)"
+// @Param category query string false "Filter by category (pulsa|wifi)"
 // @Param code query string false "Filter by product code (partial match)"
 // @Param page query int false "Page number (default: 1)"
 // @Param page_size query int false "Page size (default: 10)"

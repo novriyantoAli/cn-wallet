@@ -938,7 +938,7 @@ const file_api_proto_payment_payment_proto_rawDesc = "" +
 	"\fListPayments\x12\x1c.payment.ListPaymentsRequest\x1a\x1d.payment.ListPaymentsResponse\x12N\n" +
 	"\rUpdatePayment\x12\x1d.payment.UpdatePaymentRequest\x1a\x1e.payment.UpdatePaymentResponse\x12N\n" +
 	"\rDeletePayment\x12\x1d.payment.DeletePaymentRequest\x1a\x1e.payment.DeletePaymentResponse\x12T\n" +
-	"\x0fGetUserPayments\x12\x1f.payment.GetUserPaymentsRequest\x1a .payment.GetUserPaymentsResponseB6Z4github.com/novriyantoAli/cn-wallet/api/proto/paymentb\x06proto3"
+	"\x0fGetUserPayments\x12\x1f.payment.GetUserPaymentsRequest\x1a .payment.GetUserPaymentsResponseB#Z!vibe-ddd-golang/api/proto/paymentb\x06proto3"
 
 var (
 	file_api_proto_payment_payment_proto_rawDescOnce sync.Once

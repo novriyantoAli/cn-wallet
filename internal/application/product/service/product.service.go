@@ -63,7 +63,6 @@ func (s *productService) CreateProduct(ctx context.Context, req *dto.CreateProdu
 		Category:   req.Category,
 		PriceBasic: req.PriceBasic,
 		PriceSell:  req.PriceSell,
-		Type:       req.Type,
 		IsActive:   req.IsActive,
 		IconURL:    req.IconURL,
 		CreatedAt:  time.Now(),
@@ -163,9 +162,6 @@ func (s *productService) UpdateProduct(ctx context.Context, id uint, req *dto.Up
 	if req.PriceSell > 0 {
 		product.PriceSell = req.PriceSell
 	}
-	if req.Type != "" {
-		product.Type = req.Type
-	}
 	if req.IconURL != "" {
 		product.IconURL = req.IconURL
 	}
@@ -201,7 +197,6 @@ func (s *productService) entityToResponse(product *entity.Product) *dto.ProductR
 		Category:   product.Category,
 		PriceBasic: product.PriceBasic,
 		PriceSell:  product.PriceSell,
-		Type:       product.Type,
 		IsActive:   product.IsActive,
 		IconURL:    product.IconURL,
 		CreatedAt:  product.CreatedAt,

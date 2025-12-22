@@ -18,7 +18,6 @@ type Product struct {
 	Category   ProductCategory          `json:"category" gorm:"type:varchar(50);not null"`
 	PriceBasic float64                  `json:"price_basic" gorm:"type:decimal(12,2);not null"`
 	PriceSell  float64                  `json:"price_sell" gorm:"type:decimal(12,2);not null"`
-	Type       string                   `json:"type" gorm:"type:varchar(50);not null"`
 	IsActive   bool                     `json:"is_active" gorm:"default:true"`
 	IconURL    string                   `json:"icon_url" gorm:"type:text"`
 	CreatedAt  time.Time                `json:"created_at" gorm:"autoCreateTime:milli"`

@@ -108,7 +108,7 @@ func (c *paymentServiceClient) GetUserPayments(ctx context.Context, in *GetUserP
 }
 
 // PaymentServiceServer is the server API for PaymentService service.
-// All implementations must embed UnimplementedPaymentServiceServer
+// All implementations should embed UnimplementedPaymentServiceServer
 // for forward compatibility
 type PaymentServiceServer interface {
 	// Create a new payment
@@ -123,10 +123,9 @@ type PaymentServiceServer interface {
 	DeletePayment(context.Context, *DeletePaymentRequest) (*DeletePaymentResponse, error)
 	// Get payments by user ID
 	GetUserPayments(context.Context, *GetUserPaymentsRequest) (*GetUserPaymentsResponse, error)
-	mustEmbedUnimplementedPaymentServiceServer()
 }
 
-// UnimplementedPaymentServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedPaymentServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedPaymentServiceServer struct {
 }
 
@@ -148,7 +147,6 @@ func (UnimplementedPaymentServiceServer) DeletePayment(context.Context, *DeleteP
 func (UnimplementedPaymentServiceServer) GetUserPayments(context.Context, *GetUserPaymentsRequest) (*GetUserPaymentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserPayments not implemented")
 }
-func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
 
 // UnsafePaymentServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to PaymentServiceServer will

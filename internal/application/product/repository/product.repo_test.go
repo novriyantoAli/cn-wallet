@@ -36,7 +36,6 @@ func TestProductRepository_Create(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 18000.00,
 			PriceSell:  20000.00,
-			Type:       "PULSA",
 		}
 
 		err = repo.Create(ctx, product)
@@ -67,7 +66,6 @@ func TestProductRepository_Create(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 		}
 
 		product2 := &entity.Product{
@@ -77,7 +75,6 @@ func TestProductRepository_Create(t *testing.T) {
 			Category:   "Internet",
 			PriceBasic: 13000.00,
 			PriceSell:  15000.00,
-			Type:       "DATA",
 		}
 
 		err1 := repo.Create(ctx, product1)
@@ -108,14 +105,12 @@ func TestProductRepository_GetByID(t *testing.T) {
 		product := &entity.Product{
 			ProviderID: provider.ID,
 			Name:       "Test Product",
-			Code:       "TEST001",
+			Code:       "TESTCODE123",
 			Category:   "Gaming",
-			PriceBasic: 45000.00,
-			PriceSell:  50000.00,
-			Type:       "GAME",
+			PriceBasic: 27000.00,
+			PriceSell:  30000.00,
 		}
 		err = repo.Create(ctx, product)
-		require.NoError(t, err)
 
 		foundProduct, err := repo.GetByID(ctx, product.ID)
 
@@ -159,7 +154,6 @@ func TestProductRepository_GetByCode(t *testing.T) {
 			Category:   "Electricity",
 			PriceBasic: 45000.00,
 			PriceSell:  50000.00,
-			Type:       "PLN",
 		}
 		err = repo.Create(ctx, product)
 		require.NoError(t, err)
@@ -204,7 +198,6 @@ func TestProductRepository_GetAll_Pagination(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: float64((i + 1) * 9000),
 			PriceSell:  float64((i + 1) * 10000),
-			Type:       "PULSA",
 		}
 		err := repo.Create(ctx, product)
 		require.NoError(t, err)
@@ -252,7 +245,6 @@ func TestProductRepository_GetAll_FilterByProvider(t *testing.T) {
 		Category:   "Mobile",
 		PriceBasic: 9000.00,
 		PriceSell:  10000.00,
-		Type:       "PULSA",
 	}
 	err = repo.Create(ctx, product1)
 	require.NoError(t, err)
@@ -264,7 +256,6 @@ func TestProductRepository_GetAll_FilterByProvider(t *testing.T) {
 		Category:   "Internet",
 		PriceBasic: 18000.00,
 		PriceSell:  20000.00,
-		Type:       "DATA",
 	}
 	err = repo.Create(ctx, product2)
 	require.NoError(t, err)
@@ -306,7 +297,6 @@ func TestProductRepository_GetAll_FilterByType(t *testing.T) {
 		Category:   "Mobile",
 		PriceBasic: 9000.00,
 		PriceSell:  10000.00,
-		Type:       "PULSA",
 	}
 	err = repo.Create(ctx, pulsaProduct)
 	require.NoError(t, err)
@@ -318,13 +308,10 @@ func TestProductRepository_GetAll_FilterByType(t *testing.T) {
 		Category:   "Internet",
 		PriceBasic: 45000.00,
 		PriceSell:  50000.00,
-		Type:       "DATA",
 	}
 	err = repo.Create(ctx, dataProduct)
-	require.NoError(t, err)
 
 	filter := &dto.ProductFilter{
-		Type:     "PULSA",
 		Page:     1,
 		PageSize: 10,
 	}
@@ -332,9 +319,8 @@ func TestProductRepository_GetAll_FilterByType(t *testing.T) {
 	products, totalCount, err := repo.GetAll(ctx, filter)
 
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1), totalCount)
-	assert.Len(t, products, 1)
-	assert.Equal(t, "PULSA", products[0].Type)
+	assert.Equal(t, int64(2), totalCount)
+	assert.Len(t, products, 2)
 }
 
 func TestProductRepository_GetAll_FilterByCode(t *testing.T) {
@@ -360,7 +346,6 @@ func TestProductRepository_GetAll_FilterByCode(t *testing.T) {
 		Category:   "Gaming",
 		PriceBasic: 27000.00,
 		PriceSell:  30000.00,
-		Type:       "GAME",
 	}
 	err = repo.Create(ctx, product)
 	require.NoError(t, err)
@@ -403,14 +388,12 @@ func TestProductRepository_Update(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 		}
 		err = repo.Create(ctx, product)
 		require.NoError(t, err)
 
 		product.Name = "Updated Name"
 		product.PriceSell = 15000.00
-		product.Type = "DATA"
 		err = repo.Update(ctx, product)
 
 		assert.NoError(t, err)
@@ -420,7 +403,6 @@ func TestProductRepository_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "Updated Name", dbProduct.Name)
 		assert.Equal(t, 15000.00, dbProduct.PriceSell)
-		assert.Equal(t, "DATA", dbProduct.Type)
 	})
 
 	t.Run("should not error when updating non-existent product", func(t *testing.T) {
@@ -430,7 +412,6 @@ func TestProductRepository_Update(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 		}
 		product.ID = 99999
 
@@ -464,7 +445,6 @@ func TestProductRepository_Delete(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 		}
 		err = repo.Create(ctx, product)
 		require.NoError(t, err)
@@ -510,7 +490,6 @@ func TestProductRepository_CodeExists(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 		}
 		err = repo.Create(ctx, product)
 		require.NoError(t, err)
@@ -547,7 +526,6 @@ func TestProductRepository_ContextCancellation(t *testing.T) {
 			Category:   "Mobile",
 			PriceBasic: 9000.00,
 			PriceSell:  10000.00,
-			Type:       "PULSA",
 		}
 
 		err := repo.Create(ctx, product)
