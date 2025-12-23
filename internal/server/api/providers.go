@@ -5,6 +5,7 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment"
 	"github.com/novriyantoAli/cn-wallet/internal/application/product"
 	"github.com/novriyantoAli/cn-wallet/internal/application/provider"
+	"github.com/novriyantoAli/cn-wallet/internal/application/purchase"
 	"github.com/novriyantoAli/cn-wallet/internal/application/transaction"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user"
 	usersecurity "github.com/novriyantoAli/cn-wallet/internal/application/user-security"
@@ -22,6 +23,7 @@ var Module = fx.Options(
 	payment.Module,
 	product.Module,
 	provider.Module,
+	purchase.Module,
 	wallet.Module,
 	wifivoucher.Module,
 	transaction.Module,

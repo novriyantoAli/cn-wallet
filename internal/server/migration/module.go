@@ -69,14 +69,16 @@ func (s *Server) SeedData() error {
 	}
 
 	// Seed data for products table
+	p1 := 24
 	products := []productEntity.Product{
 		{
-			ProviderID: 1,
-			Name:       "CN Hotspot 1GB",
-			Code:       "CNHOTSPOT1GB",
-			Category:   "wifi",
-			PriceBasic: 9000.00,
-			PriceSell:  10000.00,
+			ProviderID:    1,
+			Name:          "CN Hotspot 1GB",
+			Code:          "CNHOTSPOT1GB",
+			Category:      "wifi",
+			DurationHours: &p1,
+			PriceBasic:    9000.00,
+			PriceSell:     10000.00,
 		},
 	}
 	err = s.db.Create(&products).Error
@@ -84,6 +86,35 @@ func (s *Server) SeedData() error {
 		s.logger.Error("Failed to seed data for products table", zap.Error(err))
 		return err
 	}
+
+	// Seed data for wifi_voucher table
+	prov := uint(1)
+	wifiVouchers := []wifiVoucherEntity.WifiVoucher{
+		{
+			ProviderID:    &prov,
+			Code:          "WIFI-VOUCHER-001",
+			Status:        "available",
+			DurationHours: 24,
+		},
+		{
+			ProviderID:    &prov,
+			Code:          "WIFI-VOUCHER-002",
+			Status:        "available",
+			DurationHours: 24,
+		},
+		{
+			ProviderID:    &prov,
+			Code:          "WIFI-VOUCHER-003",
+			Status:        "available",
+			DurationHours: 24,
+		},
+	}
+	err = s.db.Create(&wifiVouchers).Error
+	if err != nil {
+		s.logger.Error("Failed to seed data for wifi_voucher table", zap.Error(err))
+		return err
+	}
+
 	s.logger.Info("Data seeding completed successfully")
 	return nil
 }
