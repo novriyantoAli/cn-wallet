@@ -37,7 +37,6 @@ func TestWalletRepository_CreateWallet(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, wallet.UserID, dbWallet.UserID)
 		assert.Equal(t, wallet.Balance, dbWallet.Balance)
-		assert.Equal(t, wallet.PINHash, dbWallet.PINHash)
 	})
 
 	t.Run("should create wallet with zero balance", func(t *testing.T) {
@@ -97,7 +96,6 @@ func TestWalletRepository_GetWalletByUserID(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, wallet.UserID, foundWallet.UserID)
 		assert.Equal(t, wallet.Balance, foundWallet.Balance)
-		assert.Equal(t, wallet.PINHash, foundWallet.PINHash)
 	})
 
 	t.Run("should return error when wallet not found", func(t *testing.T) {
@@ -228,7 +226,6 @@ func TestWalletRepository_UpdateWallet(t *testing.T) {
 		require.NoError(t, err)
 
 		wallet.Balance = 500.00
-		wallet.PINHash = "new_pin_hash"
 
 		// When
 		err = repo.UpdateWallet(ctx, wallet)
@@ -240,7 +237,6 @@ func TestWalletRepository_UpdateWallet(t *testing.T) {
 		updated, err := repo.GetWalletByID(ctx, wallet.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, 500.00, updated.Balance)
-		assert.Equal(t, "new_pin_hash", updated.PINHash)
 	})
 
 	t.Run("should update wallet balance only", func(t *testing.T) {
@@ -248,7 +244,6 @@ func TestWalletRepository_UpdateWallet(t *testing.T) {
 		wallet := testutil.CreateWalletFixture()
 		wallet.ID = 0
 		wallet.UserID = 100 // Different user ID
-		originalPIN := wallet.PINHash
 		err := repo.CreateWallet(ctx, wallet)
 		require.NoError(t, err)
 
@@ -263,7 +258,6 @@ func TestWalletRepository_UpdateWallet(t *testing.T) {
 		updated, err := repo.GetWalletByID(ctx, wallet.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, 750.50, updated.Balance)
-		assert.Equal(t, originalPIN, updated.PINHash) // PIN should remain unchanged
 	})
 
 	t.Run("should update wallet PIN only", func(t *testing.T) {
@@ -271,11 +265,10 @@ func TestWalletRepository_UpdateWallet(t *testing.T) {
 		wallet := testutil.CreateWalletFixture()
 		wallet.ID = 0
 		wallet.UserID = 101 // Different user ID
-		originalBalance := wallet.Balance
 		err := repo.CreateWallet(ctx, wallet)
 		require.NoError(t, err)
 
-		wallet.PINHash = "updated_pin_hash"
+		wallet.Balance = 900.00
 
 		// When
 		err = repo.UpdateWallet(ctx, wallet)
@@ -285,8 +278,7 @@ func TestWalletRepository_UpdateWallet(t *testing.T) {
 
 		updated, err := repo.GetWalletByID(ctx, wallet.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, "updated_pin_hash", updated.PINHash)
-		assert.Equal(t, originalBalance, updated.Balance) // Balance should remain unchanged
+		assert.Equal(t, 900.00, updated.Balance)
 	})
 
 	// Cleanup
@@ -353,66 +345,6 @@ func TestWalletRepository_UpdateBalance(t *testing.T) {
 	testutil.CleanDB(db)
 }
 
-func TestWalletRepository_UpdatePIN(t *testing.T) {
-	// Setup
-	db, err := testutil.SetupTestDB()
-	require.NoError(t, err)
-	logger := testutil.NewTestLogger(t)
-	repo := NewWalletRepository(db, logger)
-	ctx := context.Background()
-
-	t.Run("should update PIN successfully", func(t *testing.T) {
-		// Given
-		wallet := testutil.CreateWalletFixture()
-		wallet.ID = 0
-		err := repo.CreateWallet(ctx, wallet)
-		require.NoError(t, err)
-
-		newPINHash := "new_hashed_pin_1234567890"
-
-		// When
-		err = repo.UpdatePIN(ctx, wallet.UserID, newPINHash)
-
-		// Then
-		assert.NoError(t, err)
-
-		// Verify
-		updated, err := repo.GetWalletByUserID(ctx, wallet.UserID)
-		assert.NoError(t, err)
-		assert.Equal(t, newPINHash, updated.PINHash)
-	})
-
-	t.Run("should update PIN to different value", func(t *testing.T) {
-		// Given
-		wallet := testutil.CreateWalletFixture()
-		wallet.ID = 0
-		wallet.UserID = 40
-		err := repo.CreateWallet(ctx, wallet)
-		require.NoError(t, err)
-
-		// When
-		err = repo.UpdatePIN(ctx, wallet.UserID, "another_pin_hash_0987654321")
-
-		// Then
-		assert.NoError(t, err)
-
-		updated, err := repo.GetWalletByUserID(ctx, wallet.UserID)
-		assert.NoError(t, err)
-		assert.Equal(t, "another_pin_hash_0987654321", updated.PINHash)
-	})
-
-	t.Run("should handle PIN update for non-existent user gracefully", func(t *testing.T) {
-		// When
-		err := repo.UpdatePIN(ctx, 9999, "some_pin_hash")
-
-		// Then - Should not error, just no-op
-		assert.NoError(t, err)
-	})
-
-	// Cleanup
-	testutil.CleanDB(db)
-}
-
 func TestWalletRepository_GetForUpdate(t *testing.T) {
 	// Setup
 	db, err := testutil.SetupTestDB()
@@ -454,13 +386,11 @@ func TestWalletRepository_GetForUpdate(t *testing.T) {
 		wallet1.ID = 0
 		wallet1.UserID = 60
 		wallet1.Balance = 1000.00
-		wallet1.PINHash = "pin_hash_60"
 
 		wallet2 := testutil.CreateWalletFixture()
 		wallet2.ID = 0
 		wallet2.UserID = 61
 		wallet2.Balance = 2000.00
-		wallet2.PINHash = "pin_hash_61"
 
 		err := repo.CreateWallet(ctx, wallet1)
 		require.NoError(t, err)
@@ -476,9 +406,7 @@ func TestWalletRepository_GetForUpdate(t *testing.T) {
 
 		// Then
 		assert.Equal(t, 1000.00, locked1.Balance)
-		assert.Equal(t, "pin_hash_60", locked1.PINHash)
 		assert.Equal(t, 2000.00, locked2.Balance)
-		assert.Equal(t, "pin_hash_61", locked2.PINHash)
 	})
 
 	t.Run("should acquire lock during transaction", func(t *testing.T) {
@@ -505,7 +433,6 @@ func TestWalletRepository_GetForUpdate(t *testing.T) {
 		wallet.ID = 0
 		wallet.UserID = 80
 		wallet.Balance = 750.50
-		wallet.PINHash = "original_pin"
 		err := repo.CreateWallet(ctx, wallet)
 		require.NoError(t, err)
 
@@ -517,7 +444,6 @@ func TestWalletRepository_GetForUpdate(t *testing.T) {
 		assert.Equal(t, wallet.ID, lockedWallet.ID)
 		assert.Equal(t, wallet.UserID, lockedWallet.UserID)
 		assert.Equal(t, wallet.Balance, lockedWallet.Balance)
-		assert.Equal(t, wallet.PINHash, lockedWallet.PINHash)
 	})
 
 	// Cleanup

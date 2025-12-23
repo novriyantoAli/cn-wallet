@@ -418,7 +418,6 @@ func TestUserRepository_GetByIDWithWallet(t *testing.T) {
 		wallet := &walletEntity.Wallet{
 			UserID:  user.ID,
 			Balance: 100.50,
-			PINHash: "hashed_pin",
 		}
 		err = db.Create(wallet).Error
 		require.NoError(t, err)
@@ -473,7 +472,6 @@ func TestUserRepository_GetByEmailWithWallet(t *testing.T) {
 		wallet := &walletEntity.Wallet{
 			UserID:  user.ID,
 			Balance: 250.75,
-			PINHash: "another_hash",
 		}
 		err = db.Create(wallet).Error
 		require.NoError(t, err)
@@ -547,7 +545,6 @@ func TestUserRepository_GetAllWithWallet(t *testing.T) {
 		wallet1 := &walletEntity.Wallet{
 			UserID:  user1.ID,
 			Balance: 100.00,
-			PINHash: "pin1",
 		}
 		err = db.Create(wallet1).Error
 		require.NoError(t, err)
@@ -555,7 +552,6 @@ func TestUserRepository_GetAllWithWallet(t *testing.T) {
 		wallet2 := &walletEntity.Wallet{
 			UserID:  user2.ID,
 			Balance: 200.00,
-			PINHash: "pin2",
 		}
 		err = db.Create(wallet2).Error
 		require.NoError(t, err)
@@ -599,7 +595,6 @@ func TestUserRepository_GetAllWithWallet(t *testing.T) {
 				wallet := &walletEntity.Wallet{
 					UserID:  user.ID,
 					Balance: float64(i * 100),
-					PINHash: fmt.Sprintf("pin%d", i),
 				}
 				err = db.Create(wallet).Error
 				require.NoError(t, err)

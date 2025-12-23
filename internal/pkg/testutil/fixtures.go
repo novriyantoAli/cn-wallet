@@ -95,7 +95,6 @@ func CreateWalletFixture() *walletEntity.Wallet {
 		ID:        1,
 		UserID:    1,
 		Balance:   1000.00,
-		PINHash:   "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", // SHA256 of "123456"
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
