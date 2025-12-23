@@ -38,10 +38,7 @@ func (r *userSecurityRepository) GetByUserID(ctx context.Context, userID uint) (
 	r.logger.Info("Getting user security", zap.Uint("user_id", userID))
 	db := database.GetDB(ctx, r.db)
 	var security entity.UserSecurity
-	if err := db.First(&security, "user_id = ?", userID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
+	if err := db.Where("user_id = ?", userID).First(&security).Error; err != nil {
 		return nil, err
 	}
 	return &security, nil

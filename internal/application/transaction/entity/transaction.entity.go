@@ -21,6 +21,8 @@ type Transaction struct {
 	ProductID    *uint  `json:"product_id"` // Nullable
 	TargetNumber string `gorm:"type:varchar(50)" json:"target_number"`
 	SerialNumber string `gorm:"type:varchar(100)" json:"serial_number"`
+	// WiFi Voucher Details
+	WifiVoucherID *uint `json:"wifi_voucher_id"` // Nullable - for wifi product purchases
 	// Transfer Details
 	RelatedWalletID *uint     `json:"related_wallet_id"` // Nullable
 	CreatedAt       time.Time `json:"created_at"`

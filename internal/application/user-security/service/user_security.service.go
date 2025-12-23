@@ -40,7 +40,7 @@ func (s *userSecurityService) SetPIN(ctx context.Context, req *dto.SetPINRequest
 	pinHash := s.hashPIN(req.PIN)
 
 	security, err := s.repo.GetByUserID(ctx, req.UserID)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
@@ -107,12 +107,15 @@ func (s *userSecurityService) GetSecurity(ctx context.Context, userID uint) (*dt
 	security, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return &dto.UserSecurityResponse{}, nil
+			s.logger.Info("User security not found", zap.Uint("user_id", userID))
+			return nil, nil
 		}
 		s.logger.Error("Failed to get user security", zap.Error(err))
 
 		return nil, err
 	}
+
+	s.logger.Info("User security found", zap.Uint("user_id", userID))
 
 	if security == nil {
 		return &dto.UserSecurityResponse{

@@ -474,3 +474,326 @@ func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 		assert.Equal(t, "Failed to get purchase history", result["error"])
 	})
 }
+func TestPurchaseHandler_ProcessWifiPurchase(t *testing.T) {
+	t.Run("should process wifi purchase successfully", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		txID := uuid.New()
+		response := &dto.PurchaseWifiResponse{
+			TransactionID:   txID,
+			VoucherID:       1,
+			VoucherCode:     "WIFI001",
+			VoucherPassword: "pass123",
+			Status:          transactionEntity.StatusSuccess,
+			Message:         "WiFi voucher purchase successful",
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "valid-token", req).Return(response, nil)
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.NotNil(t, result["data"])
+	})
+
+	t.Run("should return bad request when product_id is missing", func(t *testing.T) {
+		// Setup
+		handler, _, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 0,
+		}
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("should return unauthorized when authorization header missing", func(t *testing.T) {
+		// Setup
+		handler, _, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Equal(t, "Authorization header is required", result["error"])
+	})
+
+	t.Run("should return unauthorized when token is invalid", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "invalid-token", req).Return(nil, errors.New("invalid or expired token"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer invalid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Equal(t, "invalid or expired token", result["error"])
+	})
+
+	t.Run("should return not found when product not found", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 999,
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "valid-token", req).Return(nil, errors.New("product not found"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Equal(t, "product not found", result["error"])
+	})
+
+	t.Run("should return bad request when product is not active", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "valid-token", req).Return(nil, errors.New("product is not active"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Equal(t, "product is not active", result["error"])
+	})
+
+	t.Run("should return bad request when insufficient balance", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "valid-token", req).Return(nil, errors.New("insufficient wallet balance"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Equal(t, "insufficient wallet balance", result["error"])
+	})
+
+	t.Run("should return bad request when no available vouchers", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "valid-token", req).Return(nil, errors.New("no available wifi vouchers in stock"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Equal(t, "no available wifi vouchers in stock", result["error"])
+	})
+
+	t.Run("should return internal server error when service fails with unknown error", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "valid-token", req).Return(nil, errors.New("unexpected database error"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.Equal(t, "Failed to process WiFi purchase", result["error"])
+	})
+
+	t.Run("should return bad request when wifi purchase fails", func(t *testing.T) {
+		// Setup
+		handler, mockService, _ := setupPurchaseHandler()
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		txID := uuid.New()
+		response := &dto.PurchaseWifiResponse{
+			TransactionID: txID,
+			Status:        transactionEntity.StatusFailed,
+			Message:       "WiFi purchase failed",
+		}
+
+		mockService.On("ProcessWifiPurchase", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "valid-token", req).Return(response, nil)
+
+		// Prepare request
+		reqBody, _ := json.Marshal(req)
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		ctx.Request = httptest.NewRequest("POST", "/purchases/wifi", bytes.NewBuffer(reqBody))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Request.Header.Set("Authorization", "Bearer valid-token")
+
+		// When
+		handler.ProcessWifiPurchase(ctx)
+
+		// Then
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		mockService.AssertExpectations(t)
+
+		var result map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &result)
+		assert.NotNil(t, result["data"])
+	})
+}

@@ -10,6 +10,7 @@ import (
 	paymentHandler "github.com/novriyantoAli/cn-wallet/internal/application/payment/handler"
 	productHandler "github.com/novriyantoAli/cn-wallet/internal/application/product/handler"
 	providerHandler "github.com/novriyantoAli/cn-wallet/internal/application/provider/handler"
+	purchaseHandler "github.com/novriyantoAli/cn-wallet/internal/application/purchase/handler"
 	transactionHandler "github.com/novriyantoAli/cn-wallet/internal/application/transaction/handler"
 	userSecurityHandler "github.com/novriyantoAli/cn-wallet/internal/application/user-security/handler"
 	userHandler "github.com/novriyantoAli/cn-wallet/internal/application/user/handler"
@@ -27,6 +28,7 @@ type Server struct {
 	paymentHandler      *paymentHandler.PaymentHandler
 	productHandler      *productHandler.ProductHandler
 	providerHandler     *providerHandler.ProviderHandler
+	purchaseHandler     *purchaseHandler.PurchaseHandler
 	walletHandler       *walletHandler.WalletHandler
 	wifiVoucherHandler  *wifiVoucherHandler.WifiVoucherHandler
 	transactionHandler  *transactionHandler.TransactionHandler
@@ -40,6 +42,7 @@ func NewServer(
 	paymentHandler *paymentHandler.PaymentHandler,
 	productHandler *productHandler.ProductHandler,
 	providerHandler *providerHandler.ProviderHandler,
+	purchaseHandler *purchaseHandler.PurchaseHandler,
 	walletHandler *walletHandler.WalletHandler,
 	wifiVoucherHandler *wifiVoucherHandler.WifiVoucherHandler,
 	transactionHandler *transactionHandler.TransactionHandler,
@@ -52,6 +55,7 @@ func NewServer(
 		paymentHandler:      paymentHandler,
 		productHandler:      productHandler,
 		providerHandler:     providerHandler,
+		purchaseHandler:     purchaseHandler,
 		walletHandler:       walletHandler,
 		wifiVoucherHandler:  wifiVoucherHandler,
 		transactionHandler:  transactionHandler,
@@ -81,6 +85,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.paymentHandler.RegisterRoutes(api)
 		s.productHandler.RegisterRoutes(api)
 		s.providerHandler.RegisterRoutes(api)
+		s.purchaseHandler.RegisterRoutes(api)
 		s.walletHandler.RegisterRoutes(api)
 		s.wifiVoucherHandler.RegisterRoutes(api)
 		s.transactionHandler.RegisterRoutes(api)

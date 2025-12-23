@@ -118,6 +118,49 @@ func (h *PurchaseHandler) GetPurchaseHistory(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+// ProcessWifiPurchase godoc
+// @Summary Process a WiFi voucher purchase
+// @Description Process a WiFi voucher purchase with product ID
+// @Tags purchases
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param purchase body dto.PurchaseWifiRequest true "WiFi purchase request"
+// @Success 200 {object} map[string]interface{} "WiFi voucher purchased successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid request or insufficient balance"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Product or user not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /purchases/wifi [post]
+func (h *PurchaseHandler) ProcessWifiPurchase(ctx *gin.Context) {
+	var req dto.PurchaseWifiRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Invalid request body", zap.Error(err))
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, err := h.extractBearerToken(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := h.service.ProcessWifiPurchase(ctx.Request.Context(), token, &req)
+	if err != nil {
+		h.logger.Error("Failed to process WiFi purchase", zap.Error(err))
+		h.handleWifiPurchaseError(ctx, err)
+		return
+	}
+
+	statusCode := http.StatusOK
+	if response.Status == "failed" {
+		statusCode = http.StatusBadRequest
+	}
+
+	ctx.JSON(statusCode, gin.H{"data": response})
+}
+
 // extractBearerToken extracts and validates the bearer token from Authorization header
 func (h *PurchaseHandler) extractBearerToken(ctx *gin.Context) (string, error) {
 	authHeader := ctx.GetHeader("Authorization")
@@ -207,6 +250,37 @@ func (h *PurchaseHandler) handlePurchaseError(ctx *gin.Context, err error) {
 	}
 }
 
+// handleWifiPurchaseError handles WiFi purchase service errors with appropriate HTTP status codes
+func (h *PurchaseHandler) handleWifiPurchaseError(ctx *gin.Context, err error) {
+	if err == nil {
+		return
+	}
+
+	errMsg := err.Error()
+	switch {
+	case errMsg == "invalid or expired token":
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": errMsg})
+	case errMsg == "user not found":
+		ctx.JSON(http.StatusNotFound, gin.H{"error": errMsg})
+	case errMsg == "product not found":
+		ctx.JSON(http.StatusNotFound, gin.H{"error": errMsg})
+	case errMsg == "product is not active":
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+	case errMsg == "wallet not found":
+		ctx.JSON(http.StatusNotFound, gin.H{"error": errMsg})
+	case errMsg == "insufficient wallet balance":
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+	case errMsg == "no available wifi vouchers in stock":
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+	case errMsg == "failed to get available vouchers":
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": errMsg})
+	case errMsg == "product_id is required":
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": errMsg})
+	default:
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process WiFi purchase"})
+	}
+}
+
 func (h *PurchaseHandler) RegisterRoutes(api *gin.RouterGroup) {
 	purchases := api.Group("/purchases")
 	{
@@ -219,6 +293,12 @@ func (h *PurchaseHandler) RegisterRoutes(api *gin.RouterGroup) {
 		purchase.POST("", h.ProcessPurchase)
 	}
 	purchase.Use(middleware.PINMiddleware(h.userSecurityService, h.jwt, h.logger))
+
+	wifiPurchase := api.Group("/purchase/wifi")
+	{
+		wifiPurchase.POST("", h.ProcessWifiPurchase)
+	}
+	wifiPurchase.Use(middleware.PINMiddleware(h.userSecurityService, h.jwt, h.logger))
 }
 
 // HandlerError represents a handler-level error with code and message

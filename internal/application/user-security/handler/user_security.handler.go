@@ -106,7 +106,7 @@ func (h *UserSecurityHandler) GetSecurity(c *gin.Context) {
 		return
 	}
 
-	if resp == (&dto.UserSecurityResponse{}) {
+	if resp == nil {
 		c.JSON(http.StatusNoContent, gin.H{"error": "user not set security"})
 		return
 	}

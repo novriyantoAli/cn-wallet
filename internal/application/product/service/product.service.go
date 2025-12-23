@@ -57,16 +57,17 @@ func (s *productService) CreateProduct(ctx context.Context, req *dto.CreateProdu
 	}
 
 	product := &entity.Product{
-		ProviderID: req.ProviderID,
-		Name:       req.Name,
-		Code:       req.Code,
-		Category:   req.Category,
-		PriceBasic: req.PriceBasic,
-		PriceSell:  req.PriceSell,
-		IsActive:   req.IsActive,
-		IconURL:    req.IconURL,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		ProviderID:    req.ProviderID,
+		Name:          req.Name,
+		Code:          req.Code,
+		Category:      req.Category,
+		PriceBasic:    req.PriceBasic,
+		PriceSell:     req.PriceSell,
+		IsActive:      req.IsActive,
+		IconURL:       req.IconURL,
+		DurationHours: req.DurationHours,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	if err := s.repo.Create(ctx, product); err != nil {
@@ -164,6 +165,9 @@ func (s *productService) UpdateProduct(ctx context.Context, id uint, req *dto.Up
 	}
 	if req.IconURL != "" {
 		product.IconURL = req.IconURL
+	}
+	if req.DurationHours >= 0 {
+		product.DurationHours = req.DurationHours
 	}
 	product.UpdatedAt = time.Now()
 

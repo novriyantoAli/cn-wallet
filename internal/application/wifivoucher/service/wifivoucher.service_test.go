@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/dto"
@@ -58,6 +59,14 @@ func (m *mockWifiVoucherRepository) Delete(ctx context.Context, id uint) error {
 func (m *mockWifiVoucherRepository) CodeExists(ctx context.Context, code string) (bool, error) {
 	args := m.Called(ctx, code)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *mockWifiVoucherRepository) GetByProviderAndDurationHours(ctx context.Context, providerID uint, durationHours int, filter *dto.WifiVoucherFilter) ([]entity.WifiVoucher, int64, error) {
+	args := m.Called(ctx, providerID, durationHours, filter)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]entity.WifiVoucher), args.Get(1).(int64), args.Error(2)
 }
 
 func TestWifiVoucherService_CreateWifiVoucher(t *testing.T) {
@@ -400,6 +409,313 @@ func TestWifiVoucherService_UseWifiVoucher(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("should fail when wifi voucher is not sold", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+		wifiVoucher.ID = 1
+		wifiVoucher.Status = entity.StatusAvailable
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(wifiVoucher, nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.UseWifiVoucher(context.Background(), 1)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestWifiVoucherService_GetWifiVoucherByID_NotFound(t *testing.T) {
+	t.Run("should get wifi voucher by ID successfully", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(wifiVoucher, nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.GetWifiVoucherByID(context.Background(), 1)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, wifiVoucher.Code, result.Code)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when voucher not found", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(999)).Return(nil, gorm.ErrRecordNotFound)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.GetWifiVoucherByID(context.Background(), 999)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, "wifi voucher not found", err.Error())
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestWifiVoucherService_GetWifiVoucherByCode_Tests(t *testing.T) {
+	t.Run("should get wifi voucher by code successfully", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+
+		mockRepo.On("GetByCode", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "WIFI001").Return(wifiVoucher, nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.GetWifiVoucherByCode(context.Background(), "WIFI001")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, wifiVoucher.Code, result.Code)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when code not found", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+
+		mockRepo.On("GetByCode", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), "NONEXISTENT").Return(nil, gorm.ErrRecordNotFound)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.GetWifiVoucherByCode(context.Background(), "NONEXISTENT")
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, "wifi voucher not found", err.Error())
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestWifiVoucherService_GetAllWifiVouchers_Tests(t *testing.T) {
+	t.Run("should get all wifi vouchers with pagination", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		vouchers := []entity.WifiVoucher{
+			*testutil.CreateWifiVoucherFixture(),
+		}
+
+		filter := &dto.WifiVoucherFilter{
+			Page:     1,
+			PageSize: 10,
+		}
+
+		mockRepo.On("GetAll", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), filter).Return(vouchers, int64(1), nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.GetAllWifiVouchers(context.Background(), filter)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, int64(1), result.TotalCount)
+		assert.Equal(t, 1, len(result.Data))
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when repository fails", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+
+		filter := &dto.WifiVoucherFilter{
+			Page:     1,
+			PageSize: 10,
+		}
+
+		mockRepo.On("GetAll", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), filter).Return(nil, int64(0), errors.New("database error"))
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.GetAllWifiVouchers(context.Background(), filter)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestWifiVoucherService_UpdateWifiVoucher_Tests(t *testing.T) {
+	t.Run("should update wifi voucher successfully", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+		wifiVoucher.ID = 1
+
+		updateReq := testutil.CreateUpdateWifiVoucherRequestFixture()
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(wifiVoucher, nil)
+
+		mockRepo.On("CodeExists", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), mock.Anything).Return(false, nil)
+
+		mockRepo.On("Update", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), mock.MatchedBy(func(w *entity.WifiVoucher) bool {
+			return w.ID == 1
+		})).Return(nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.UpdateWifiVoucher(context.Background(), 1, updateReq)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when voucher not found", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+
+		updateReq := testutil.CreateUpdateWifiVoucherRequestFixture()
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(999)).Return(nil, gorm.ErrRecordNotFound)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.UpdateWifiVoucher(context.Background(), 999, updateReq)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, "wifi voucher not found", err.Error())
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestWifiVoucherService_DeleteWifiVoucher_Tests(t *testing.T) {
+	t.Run("should delete wifi voucher successfully", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+		wifiVoucher.ID = 1
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(wifiVoucher, nil)
+
+		mockRepo.On("Delete", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		err := service.DeleteWifiVoucher(context.Background(), 1)
+
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when voucher not found", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(999)).Return(nil, gorm.ErrRecordNotFound)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		err := service.DeleteWifiVoucher(context.Background(), 999)
+
+		assert.Error(t, err)
+		assert.Equal(t, "wifi voucher not found", err.Error())
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestWifiVoucherService_SellWifiVoucher_Tests(t *testing.T) {
+	t.Run("should sell wifi voucher successfully", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+		wifiVoucher.ID = 1
+		wifiVoucher.Status = entity.StatusAvailable
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(wifiVoucher, nil)
+
+		mockRepo.On("Update", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), mock.MatchedBy(func(w *entity.WifiVoucher) bool {
+			return w.Status == entity.StatusSold
+		})).Return(nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.SellWifiVoucher(context.Background(), 1, 5)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, entity.StatusSold, result.Status)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("should fail when voucher is not available", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+		wifiVoucher.ID = 1
+		wifiVoucher.Status = entity.StatusSold
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(wifiVoucher, nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.SellWifiVoucher(context.Background(), 1, 5)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		mockRepo.AssertExpectations(t)
+	})
+}
+
+func TestWifiVoucherService_UseWifiVoucher_Tests(t *testing.T) {
+	t.Run("should use wifi voucher successfully", func(t *testing.T) {
+		mockRepo := new(mockWifiVoucherRepository)
+		logger := testutil.NewTestLogger(t)
+		wifiVoucher := testutil.CreateWifiVoucherFixture()
+		wifiVoucher.ID = 1
+		wifiVoucher.Status = entity.StatusSold
+
+		mockRepo.On("GetByID", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), uint(1)).Return(wifiVoucher, nil)
+
+		mockRepo.On("Update", mock.MatchedBy(func(ctx context.Context) bool {
+			return true
+		}), mock.MatchedBy(func(w *entity.WifiVoucher) bool {
+			return w.Status == entity.StatusUsed
+		})).Return(nil)
+
+		service := NewWifiVoucherService(mockRepo, logger)
+		result, err := service.UseWifiVoucher(context.Background(), 1)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, entity.StatusUsed, result.Status)
 		mockRepo.AssertExpectations(t)
 	})
 

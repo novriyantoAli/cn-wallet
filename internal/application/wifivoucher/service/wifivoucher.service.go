@@ -51,13 +51,14 @@ func (s *wifiVoucherService) CreateWifiVoucher(ctx context.Context, req *dto.Cre
 	}
 
 	wifiVoucher := &entity.WifiVoucher{
-		Code:            req.Code,
-		Password:        req.Password,
-		DurationMinutes: req.DurationMinutes,
-		BatchID:         req.BatchID,
-		Status:          entity.StatusAvailable,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		Code:          req.Code,
+		Password:      req.Password,
+		DurationHours: req.DurationHours,
+		BatchID:       req.BatchID,
+		ProviderID:    req.ProviderID,
+		Status:        entity.StatusAvailable,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	err = s.repo.Create(ctx, wifiVoucher)
@@ -154,11 +155,14 @@ func (s *wifiVoucherService) UpdateWifiVoucher(ctx context.Context, id uint, req
 	if req.Password != "" {
 		wifiVoucher.Password = req.Password
 	}
-	if req.DurationMinutes > 0 {
-		wifiVoucher.DurationMinutes = req.DurationMinutes
+	if req.DurationHours > 0 {
+		wifiVoucher.DurationHours = req.DurationHours
 	}
 	if req.BatchID != "" {
 		wifiVoucher.BatchID = req.BatchID
+	}
+	if req.ProviderID > 0 {
+		wifiVoucher.ProviderID = req.ProviderID
 	}
 	if req.Status != "" {
 		wifiVoucher.Status = req.Status
@@ -277,16 +281,17 @@ func (s *wifiVoucherService) UseWifiVoucher(ctx context.Context, voucherID uint)
 // entityToResponse converts a WifiVoucher entity to response DTO.
 func (s *wifiVoucherService) entityToResponse(wv *entity.WifiVoucher) *dto.WifiVoucherResponse {
 	return &dto.WifiVoucherResponse{
-		ID:              wv.ID,
-		Code:            wv.Code,
-		Password:        wv.Password,
-		DurationMinutes: wv.DurationMinutes,
-		BatchID:         wv.BatchID,
-		Status:          wv.Status,
-		SoldToUserID:    wv.SoldToUserID,
-		SoldAt:          wv.SoldAt,
-		UsedAt:          wv.UsedAt,
-		CreatedAt:       wv.CreatedAt,
-		UpdatedAt:       wv.UpdatedAt,
+		ID:            wv.ID,
+		Code:          wv.Code,
+		Password:      wv.Password,
+		DurationHours: wv.DurationHours,
+		BatchID:       wv.BatchID,
+		ProviderID:    wv.ProviderID,
+		Status:        wv.Status,
+		SoldToUserID:  wv.SoldToUserID,
+		SoldAt:        wv.SoldAt,
+		UsedAt:        wv.UsedAt,
+		CreatedAt:     wv.CreatedAt,
+		UpdatedAt:     wv.UpdatedAt,
 	}
 }

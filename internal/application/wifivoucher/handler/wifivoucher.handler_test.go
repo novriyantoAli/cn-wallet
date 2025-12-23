@@ -97,14 +97,14 @@ func TestWifiVoucherHandler_CreateWifiVoucher(t *testing.T) {
 		req := testutil.CreateWifiVoucherRequestFixture()
 
 		response := &dto.WifiVoucherResponse{
-			ID:              1,
-			Code:            req.Code,
-			Password:        req.Password,
-			DurationMinutes: req.DurationMinutes,
-			BatchID:         req.BatchID,
-			Status:          entity.StatusAvailable,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
+			ID:            1,
+			Code:          req.Code,
+			Password:      req.Password,
+			DurationHours: req.DurationHours,
+			BatchID:       req.BatchID,
+			Status:        entity.StatusAvailable,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		mockService.On("CreateWifiVoucher", mock.MatchedBy(func(ctx context.Context) bool {
@@ -145,14 +145,14 @@ func TestWifiVoucherHandler_GetWifiVoucherByID(t *testing.T) {
 		handler, mockService := setupWifiVoucherHandler()
 
 		response := &dto.WifiVoucherResponse{
-			ID:              1,
-			Code:            "WIFI001",
-			Password:        "pass123",
-			DurationMinutes: 1440,
-			BatchID:         "BATCH001",
-			Status:          entity.StatusAvailable,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
+			ID:            1,
+			Code:          "WIFI001",
+			Password:      "pass123",
+			DurationHours: 24,
+			BatchID:       "BATCH001",
+			Status:        entity.StatusAvailable,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		mockService.On("GetWifiVoucherByID", mock.MatchedBy(func(ctx context.Context) bool {
@@ -194,14 +194,14 @@ func TestWifiVoucherHandler_GetWifiVoucherByCode(t *testing.T) {
 		handler, mockService := setupWifiVoucherHandler()
 
 		response := &dto.WifiVoucherResponse{
-			ID:              1,
-			Code:            "WIFI001",
-			Password:        "pass123",
-			DurationMinutes: 1440,
-			BatchID:         "BATCH001",
-			Status:          entity.StatusAvailable,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
+			ID:            1,
+			Code:          "WIFI001",
+			Password:      "pass123",
+			DurationHours: 24,
+			BatchID:       "BATCH001",
+			Status:        entity.StatusAvailable,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		mockService.On("GetWifiVoucherByCode", mock.MatchedBy(func(ctx context.Context) bool {
@@ -244,8 +244,8 @@ func TestWifiVoucherHandler_GetAllWifiVouchers(t *testing.T) {
 
 		response := &dto.WifiVoucherListResponse{
 			Data: []dto.WifiVoucherResponse{
-				{ID: 1, Code: "WIFI001", Status: entity.StatusAvailable, DurationMinutes: 1440},
-				{ID: 2, Code: "WIFI002", Status: entity.StatusAvailable, DurationMinutes: 1440},
+				{ID: 1, Code: "WIFI001", Status: entity.StatusAvailable, DurationHours: 24},
+				{ID: 2, Code: "WIFI002", Status: entity.StatusAvailable, DurationHours: 24},
 			},
 			TotalCount: 2,
 			Page:       1,
@@ -297,14 +297,14 @@ func TestWifiVoucherHandler_UpdateWifiVoucher(t *testing.T) {
 
 		req := testutil.CreateUpdateWifiVoucherRequestFixture()
 		response := &dto.WifiVoucherResponse{
-			ID:              1,
-			Code:            req.Code,
-			Password:        req.Password,
-			DurationMinutes: req.DurationMinutes,
-			BatchID:         req.BatchID,
-			Status:          req.Status,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
+			ID:            1,
+			Code:          req.Code,
+			Password:      req.Password,
+			DurationHours: req.DurationHours,
+			BatchID:       req.BatchID,
+			Status:        req.Status,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		mockService.On("UpdateWifiVoucher", mock.MatchedBy(func(ctx context.Context) bool {
@@ -388,12 +388,12 @@ func TestWifiVoucherHandler_SellWifiVoucher(t *testing.T) {
 		handler, mockService := setupWifiVoucherHandler()
 
 		response := &dto.WifiVoucherResponse{
-			ID:              1,
-			Code:            "WIFI001",
-			Status:          entity.StatusSold,
-			DurationMinutes: 1440,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
+			ID:            1,
+			Code:          "WIFI001",
+			Status:        entity.StatusSold,
+			DurationHours: 24,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		sellReq := struct {
@@ -425,12 +425,12 @@ func TestWifiVoucherHandler_UseWifiVoucher(t *testing.T) {
 		handler, mockService := setupWifiVoucherHandler()
 
 		response := &dto.WifiVoucherResponse{
-			ID:              1,
-			Code:            "WIFI001",
-			Status:          entity.StatusUsed,
-			DurationMinutes: 1440,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
+			ID:            1,
+			Code:          "WIFI001",
+			Status:        entity.StatusUsed,
+			DurationHours: 24,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
 		}
 
 		mockService.On("UseWifiVoucher", mock.MatchedBy(func(ctx context.Context) bool {

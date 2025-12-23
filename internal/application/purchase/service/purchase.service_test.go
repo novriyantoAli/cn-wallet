@@ -33,6 +33,7 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 		mockWalletRepo := &testutil.MockWalletRepository{}
 		mockTransactionRepo := &testutil.MockTransactionRepository{}
 		mockUserRepo := &testutil.MockUserRepository{}
+		mockWifiVoucherRepo := &testutil.MockWifiVoucherRepository{}
 		mockProviderClient := &MockProviderClient{}
 		mockTxManager := &testutil.MockTransactionManager{}
 		logger := testutil.NewSilentLogger()
@@ -42,6 +43,7 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 			mockWalletRepo,
 			mockTransactionRepo,
 			mockUserRepo,
+			mockWifiVoucherRepo,
 			mockProviderClient,
 			mockTxManager,
 			nil,
@@ -68,6 +70,7 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 		mockWalletRepo := &testutil.MockWalletRepository{}
 		mockTransactionRepo := &testutil.MockTransactionRepository{}
 		mockUserRepo := &testutil.MockUserRepository{}
+		mockWifiVoucherRepo := &testutil.MockWifiVoucherRepository{}
 		mockProviderClient := &MockProviderClient{}
 		mockTxManager := &testutil.MockTransactionManager{}
 		logger := testutil.NewSilentLogger()
@@ -77,6 +80,7 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 			mockWalletRepo,
 			mockTransactionRepo,
 			mockUserRepo,
+			mockWifiVoucherRepo,
 			mockProviderClient,
 			mockTxManager,
 			nil,
@@ -103,6 +107,7 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 		mockWalletRepo := &testutil.MockWalletRepository{}
 		mockTransactionRepo := &testutil.MockTransactionRepository{}
 		mockUserRepo := &testutil.MockUserRepository{}
+		mockWifiVoucherRepo := &testutil.MockWifiVoucherRepository{}
 		mockProviderClient := &MockProviderClient{}
 		mockTxManager := &testutil.MockTransactionManager{}
 		logger := testutil.NewSilentLogger()
@@ -112,6 +117,7 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 			mockWalletRepo,
 			mockTransactionRepo,
 			mockUserRepo,
+			mockWifiVoucherRepo,
 			mockProviderClient,
 			mockTxManager,
 			nil,
@@ -324,5 +330,160 @@ func TestPurchaseService_GetPurchaseHistory(t *testing.T) {
 		assert.Equal(t, "SN789012", hist.SerialNumber)
 		assert.Equal(t, uint(1), hist.ProductID)
 		mockTransactionRepo.AssertExpectations(t)
+	})
+}
+
+func TestPurchaseService_ProcessWifiPurchase_Validation(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("should return error when product_id is missing", func(t *testing.T) {
+		mockProductRepo := &testutil.MockProductRepository{}
+		mockWalletRepo := &testutil.MockWalletRepository{}
+		mockTransactionRepo := &testutil.MockTransactionRepository{}
+		mockUserRepo := &testutil.MockUserRepository{}
+		mockWifiVoucherRepo := &testutil.MockWifiVoucherRepository{}
+		mockProviderClient := &MockProviderClient{}
+		mockTxManager := &testutil.MockTransactionManager{}
+		logger := testutil.NewSilentLogger()
+
+		service := NewPurchaseService(
+			mockProductRepo,
+			mockWalletRepo,
+			mockTransactionRepo,
+			mockUserRepo,
+			mockWifiVoucherRepo,
+			mockProviderClient,
+			mockTxManager,
+			nil,
+			logger,
+		)
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 0,
+		}
+
+		response, err := service.ProcessWifiPurchase(ctx, "token", req)
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Equal(t, "product_id is required", err.Error())
+	})
+
+	t.Run("should return error when token is invalid", func(t *testing.T) {
+		mockProductRepo := &testutil.MockProductRepository{}
+		mockWalletRepo := &testutil.MockWalletRepository{}
+		mockTransactionRepo := &testutil.MockTransactionRepository{}
+		mockUserRepo := &testutil.MockUserRepository{}
+		mockWifiVoucherRepo := &testutil.MockWifiVoucherRepository{}
+		mockProviderClient := &MockProviderClient{}
+		mockTxManager := &testutil.MockTransactionManager{}
+		logger := testutil.NewSilentLogger()
+
+		service := NewPurchaseService(
+			mockProductRepo,
+			mockWalletRepo,
+			mockTransactionRepo,
+			mockUserRepo,
+			mockWifiVoucherRepo,
+			mockProviderClient,
+			mockTxManager,
+			nil,
+			logger,
+		)
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		response, err := service.ProcessWifiPurchase(ctx, "invalid-token", req)
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Equal(t, "invalid or expired token", err.Error())
+	})
+
+	t.Run("should return error when product not found", func(t *testing.T) {
+		mockProductRepo := &testutil.MockProductRepository{}
+		mockWalletRepo := &testutil.MockWalletRepository{}
+		mockTransactionRepo := &testutil.MockTransactionRepository{}
+		mockUserRepo := &testutil.MockUserRepository{}
+		mockWifiVoucherRepo := &testutil.MockWifiVoucherRepository{}
+		mockProviderClient := &MockProviderClient{}
+		mockTxManager := &testutil.MockTransactionManager{}
+		jwtManager := testutil.CreateTestJWTManager()
+		logger := testutil.NewSilentLogger()
+
+		service := NewPurchaseService(
+			mockProductRepo,
+			mockWalletRepo,
+			mockTransactionRepo,
+			mockUserRepo,
+			mockWifiVoucherRepo,
+			mockProviderClient,
+			mockTxManager,
+			jwtManager,
+			logger,
+		)
+
+		token := testutil.CreateValidJWTToken(jwtManager, 1)
+		user := testutil.CreateUserFixture()
+		user.ID = 1
+
+		mockUserRepo.On("GetByID", ctx, uint(1)).Return(user, nil)
+		mockProductRepo.On("GetByID", ctx, uint(999)).Return(nil, errors.New("product not found"))
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 999,
+		}
+
+		response, err := service.ProcessWifiPurchase(ctx, token, req)
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Equal(t, "product not found", err.Error())
+	})
+
+	t.Run("should return error when product is not active", func(t *testing.T) {
+		mockProductRepo := &testutil.MockProductRepository{}
+		mockWalletRepo := &testutil.MockWalletRepository{}
+		mockTransactionRepo := &testutil.MockTransactionRepository{}
+		mockUserRepo := &testutil.MockUserRepository{}
+		mockWifiVoucherRepo := &testutil.MockWifiVoucherRepository{}
+		mockProviderClient := &MockProviderClient{}
+		mockTxManager := &testutil.MockTransactionManager{}
+		jwtManager := testutil.CreateTestJWTManager()
+		logger := testutil.NewSilentLogger()
+
+		service := NewPurchaseService(
+			mockProductRepo,
+			mockWalletRepo,
+			mockTransactionRepo,
+			mockUserRepo,
+			mockWifiVoucherRepo,
+			mockProviderClient,
+			mockTxManager,
+			jwtManager,
+			logger,
+		)
+
+		token := testutil.CreateValidJWTToken(jwtManager, 1)
+		user := testutil.CreateUserFixture()
+		user.ID = 1
+		product := testutil.CreateProductFixture()
+		product.ID = 1
+		product.IsActive = false
+
+		mockUserRepo.On("GetByID", ctx, uint(1)).Return(user, nil)
+		mockProductRepo.On("GetByID", ctx, uint(1)).Return(product, nil)
+
+		req := &dto.PurchaseWifiRequest{
+			ProductID: 1,
+		}
+
+		response, err := service.ProcessWifiPurchase(ctx, token, req)
+
+		assert.Error(t, err)
+		assert.Nil(t, response)
+		assert.Equal(t, "product is not active", err.Error())
 	})
 }

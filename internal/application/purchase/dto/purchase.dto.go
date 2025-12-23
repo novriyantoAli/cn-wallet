@@ -18,6 +18,21 @@ type PurchaseResponse struct {
 	Message       string    `json:"message"`
 }
 
+// PurchaseWifiRequest represents a request to purchase wifi voucher product
+type PurchaseWifiRequest struct {
+	ProductID uint `json:"product_id" binding:"required,gt=0"`
+}
+
+// PurchaseWifiResponse represents the response after a wifi purchase attempt
+type PurchaseWifiResponse struct {
+	TransactionID   uuid.UUID `json:"transaction_id"`
+	VoucherID       uint      `json:"voucher_id"`
+	VoucherCode     string    `json:"voucher_code"`
+	VoucherPassword string    `json:"voucher_password"`
+	Status          string    `json:"status"` // pending, success, failed
+	Message         string    `json:"message"`
+}
+
 // PurchaseHistory represents a purchase transaction history
 type PurchaseHistory struct {
 	ID           uuid.UUID `json:"id"`

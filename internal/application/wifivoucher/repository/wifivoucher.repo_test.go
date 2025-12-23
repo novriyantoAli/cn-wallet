@@ -247,6 +247,190 @@ func TestWifiVoucherRepository_CodeExists(t *testing.T) {
 	})
 }
 
+func TestWifiVoucherRepository_GetByProviderAndDurationHours(t *testing.T) {
+	t.Run("should get wifi vouchers by provider and duration hours successfully", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+
+		// Create vouchers with different provider and duration combinations
+		voucher1 := testutil.CreateWifiVoucherFixture()
+		voucher1.ID = 0
+		voucher1.ProviderID = 1
+		voucher1.DurationHours = 24
+		db.Create(voucher1)
+
+		voucher2 := testutil.CreateWifiVoucherFixture()
+		voucher2.ID = 0
+		voucher2.Code = "WIFI002"
+		voucher2.ProviderID = 1
+		voucher2.DurationHours = 24
+		db.Create(voucher2)
+
+		voucher3 := testutil.CreateWifiVoucherFixture()
+		voucher3.ID = 0
+		voucher3.Code = "WIFI003"
+		voucher3.ProviderID = 1
+		voucher3.DurationHours = 48
+		db.Create(voucher3)
+
+		voucher4 := testutil.CreateWifiVoucherFixture()
+		voucher4.ID = 0
+		voucher4.Code = "WIFI004"
+		voucher4.ProviderID = 2
+		voucher4.DurationHours = 24
+		db.Create(voucher4)
+
+		// Get vouchers for provider 1 with 24 hours duration
+		filter := &dto.WifiVoucherFilter{
+			Page:     1,
+			PageSize: 10,
+		}
+		results, total, err := repo.GetByProviderAndDurationHours(context.Background(), 1, 24, filter)
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), total)
+		assert.Equal(t, 2, len(results))
+		assert.Equal(t, uint(1), results[0].ProviderID)
+		assert.Equal(t, 24, results[0].DurationHours)
+		assert.Equal(t, uint(1), results[1].ProviderID)
+		assert.Equal(t, 24, results[1].DurationHours)
+	})
+
+	t.Run("should filter by provider and duration hours with status filter", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+
+		voucher1 := testutil.CreateWifiVoucherFixture()
+		voucher1.ID = 0
+		voucher1.ProviderID = 1
+		voucher1.DurationHours = 24
+		voucher1.Status = "available"
+		db.Create(voucher1)
+
+		voucher2 := testutil.CreateWifiVoucherFixture()
+		voucher2.ID = 0
+		voucher2.Code = "WIFI002"
+		voucher2.ProviderID = 1
+		voucher2.DurationHours = 24
+		voucher2.Status = "sold"
+		db.Create(voucher2)
+
+		filter := &dto.WifiVoucherFilter{
+			Status:   "available",
+			Page:     1,
+			PageSize: 10,
+		}
+		results, total, err := repo.GetByProviderAndDurationHours(context.Background(), 1, 24, filter)
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), total)
+		assert.Equal(t, 1, len(results))
+		assert.Equal(t, "available", results[0].Status)
+	})
+
+	t.Run("should support pagination", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+
+		// Create 5 vouchers
+		for i := 1; i <= 5; i++ {
+			voucher := testutil.CreateWifiVoucherFixture()
+			voucher.ID = 0
+			voucher.Code = "WIFI00" + string(rune('0'+i))
+			voucher.ProviderID = 1
+			voucher.DurationHours = 24
+			db.Create(voucher)
+		}
+
+		// Get first page with page size 2
+		filter := &dto.WifiVoucherFilter{
+			Page:     1,
+			PageSize: 2,
+		}
+		results, total, err := repo.GetByProviderAndDurationHours(context.Background(), 1, 24, filter)
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(5), total)
+		assert.Equal(t, 2, len(results))
+
+		// Get second page with page size 2
+		filter.Page = 2
+		results, total, err = repo.GetByProviderAndDurationHours(context.Background(), 1, 24, filter)
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(5), total)
+		assert.Equal(t, 2, len(results))
+	})
+
+	t.Run("should return empty result when no matching vouchers", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+
+		voucher := testutil.CreateWifiVoucherFixture()
+		voucher.ID = 0
+		voucher.ProviderID = 1
+		voucher.DurationHours = 24
+		db.Create(voucher)
+
+		filter := &dto.WifiVoucherFilter{
+			Page:     1,
+			PageSize: 10,
+		}
+		// Search for provider 2 with 48 hours duration (doesn't exist)
+		results, total, err := repo.GetByProviderAndDurationHours(context.Background(), 2, 48, filter)
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), total)
+		assert.Equal(t, 0, len(results))
+	})
+
+	t.Run("should filter by code within provider and duration hours results", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+
+		voucher1 := testutil.CreateWifiVoucherFixture()
+		voucher1.ID = 0
+		voucher1.Code = "WIFI001"
+		voucher1.ProviderID = 1
+		voucher1.DurationHours = 24
+		db.Create(voucher1)
+
+		voucher2 := testutil.CreateWifiVoucherFixture()
+		voucher2.ID = 0
+		voucher2.Code = "WIFIOTHER"
+		voucher2.ProviderID = 1
+		voucher2.DurationHours = 24
+		db.Create(voucher2)
+
+		filter := &dto.WifiVoucherFilter{
+			Code:     "001",
+			Page:     1,
+			PageSize: 10,
+		}
+		results, total, err := repo.GetByProviderAndDurationHours(context.Background(), 1, 24, filter)
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), total)
+		assert.Equal(t, 1, len(results))
+		assert.Equal(t, "WIFI001", results[0].Code)
+	})
+}
+
 func TestWifiVoucherRepository_ContextCancellation(t *testing.T) {
 	t.Run("should handle context cancellation gracefully", func(t *testing.T) {
 		db, err := testutil.SetupTestDB()

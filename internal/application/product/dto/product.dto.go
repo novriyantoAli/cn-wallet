@@ -7,23 +7,25 @@ import (
 )
 
 type CreateProductRequest struct {
-	ProviderID uint                   `json:"provider_id" binding:"required"`
-	Name       string                 `json:"name" binding:"required"`
-	Code       string                 `json:"code" binding:"required"`
-	Category   entity.ProductCategory `json:"category" binding:"required"`
-	PriceBasic float64                `json:"price_basic" binding:"required,gt=0"`
-	PriceSell  float64                `json:"price_sell" binding:"required,gt=0"`
-	IsActive   bool                   `json:"is_active" binding:"omitempty"`
-	IconURL    string                 `json:"icon_url" binding:"omitempty"`
+	ProviderID    uint                   `json:"provider_id" binding:"required"`
+	Name          string                 `json:"name" binding:"required"`
+	Code          string                 `json:"code" binding:"required"`
+	Category      entity.ProductCategory `json:"category" binding:"required"`
+	PriceBasic    float64                `json:"price_basic" binding:"required,gt=0"`
+	PriceSell     float64                `json:"price_sell" binding:"required,gt=0"`
+	IsActive      bool                   `json:"is_active" binding:"omitempty"`
+	IconURL       string                 `json:"icon_url" binding:"omitempty"`
+	DurationHours int                    `json:"duration_hours" binding:"omitempty,gte=0"`
 }
 
 type UpdateProductRequest struct {
-	Name       string                 `json:"name" binding:"omitempty"`
-	Category   entity.ProductCategory `json:"category" binding:"omitempty"`
-	PriceBasic float64                `json:"price_basic" binding:"omitempty,gt=0"`
-	PriceSell  float64                `json:"price_sell" binding:"omitempty,gt=0"`
-	IsActive   bool                   `json:"is_active" binding:"omitempty"`
-	IconURL    string                 `json:"icon_url" binding:"omitempty"`
+	Name          string                 `json:"name" binding:"omitempty"`
+	Category      entity.ProductCategory `json:"category" binding:"omitempty"`
+	PriceBasic    float64                `json:"price_basic" binding:"omitempty,gt=0"`
+	PriceSell     float64                `json:"price_sell" binding:"omitempty,gt=0"`
+	IsActive      bool                   `json:"is_active" binding:"omitempty"`
+	IconURL       string                 `json:"icon_url" binding:"omitempty"`
+	DurationHours int                    `json:"duration_hours" binding:"omitempty,gte=0"`
 }
 
 type ProviderInfo struct {
@@ -33,18 +35,19 @@ type ProviderInfo struct {
 }
 
 type ProductResponse struct {
-	ID         uint                   `json:"id"`
-	ProviderID uint                   `json:"provider_id"`
-	Provider   *ProviderInfo          `json:"provider,omitempty"`
-	Name       string                 `json:"name"`
-	Code       string                 `json:"code"`
-	Category   entity.ProductCategory `json:"category"`
-	PriceBasic float64                `json:"price_basic"`
-	PriceSell  float64                `json:"price_sell"`
-	IsActive   bool                   `json:"is_active"`
-	IconURL    string                 `json:"icon_url"`
-	CreatedAt  time.Time              `json:"created_at"`
-	UpdatedAt  time.Time              `json:"updated_at"`
+	ID            uint                   `json:"id"`
+	ProviderID    uint                   `json:"provider_id"`
+	Provider      *ProviderInfo          `json:"provider,omitempty"`
+	Name          string                 `json:"name"`
+	Code          string                 `json:"code"`
+	Category      entity.ProductCategory `json:"category"`
+	PriceBasic    float64                `json:"price_basic"`
+	PriceSell     float64                `json:"price_sell"`
+	IsActive      bool                   `json:"is_active"`
+	IconURL       string                 `json:"icon_url"`
+	DurationHours int                    `json:"duration_hours"`
+	CreatedAt     time.Time              `json:"created_at"`
+	UpdatedAt     time.Time              `json:"updated_at"`
 }
 
 type ProductListResponse struct {

@@ -17,6 +17,7 @@ type WifiVoucherRepository interface {
 	GetByID(ctx context.Context, id uint) (*entity.WifiVoucher, error)
 	GetByCode(ctx context.Context, code string) (*entity.WifiVoucher, error)
 	GetAll(ctx context.Context, filter *dto.WifiVoucherFilter) ([]entity.WifiVoucher, int64, error)
+	GetByProviderAndDurationHours(ctx context.Context, providerID uint, durationHours int, filter *dto.WifiVoucherFilter) ([]entity.WifiVoucher, int64, error)
 	Update(ctx context.Context, wifiVoucher *entity.WifiVoucher) error
 	Delete(ctx context.Context, id uint) error
 	CodeExists(ctx context.Context, code string) (bool, error)
@@ -95,6 +96,47 @@ func (r *wifiVoucherRepository) GetAll(ctx context.Context, filter *dto.WifiVouc
 	err := query.Preload("SoldToUser").Find(&wifiVouchers).Error
 	if err != nil {
 		r.logger.Error("Failed to get wifi vouchers", zap.Error(err))
+		return nil, 0, err
+	}
+
+	return wifiVouchers, totalCount, nil
+}
+
+// GetByProviderAndDurationHours retrieves wifi vouchers filtered by provider and duration hours with pagination.
+func (r *wifiVoucherRepository) GetByProviderAndDurationHours(ctx context.Context, providerID uint, durationHours int, filter *dto.WifiVoucherFilter) ([]entity.WifiVoucher, int64, error) {
+	var wifiVouchers []entity.WifiVoucher
+	var totalCount int64
+
+	db := database.GetDB(ctx, r.db)
+	query := db.Model(&entity.WifiVoucher{})
+
+	// Apply provider filter
+	query = query.Where("provider_id = ?", providerID)
+
+	// Apply duration hours filter
+	query = query.Where("duration_hours = ?", durationHours)
+
+	// Apply other filters from WifiVoucherFilter
+	if filter.Status != "" {
+		query = query.Where("status = ?", filter.Status)
+	}
+	if filter.Code != "" {
+		query = query.Where("code LIKE ?", "%"+filter.Code+"%")
+	}
+	if filter.BatchID != "" {
+		query = query.Where("batch_id = ?", filter.BatchID)
+	}
+
+	query.Count(&totalCount)
+
+	if filter.Page > 0 && filter.PageSize > 0 {
+		offset := (filter.Page - 1) * filter.PageSize
+		query = query.Offset(offset).Limit(filter.PageSize)
+	}
+
+	err := query.Preload("SoldToUser").Find(&wifiVouchers).Error
+	if err != nil {
+		r.logger.Error("Failed to get wifi vouchers by provider and duration", zap.Uint("provider_id", providerID), zap.Int("duration_hours", durationHours), zap.Error(err))
 		return nil, 0, err
 	}
 
