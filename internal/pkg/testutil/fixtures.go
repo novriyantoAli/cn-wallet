@@ -19,6 +19,8 @@ import (
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 	wifiVoucherDto "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/dto"
 	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
+	"github.com/novriyantoAli/cn-wallet/internal/config"
+	"github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
 )
 
 // User fixtures
@@ -308,4 +310,15 @@ func CreateUserSecurityFixture() *securityEntity.UserSecurity {
 		FailedAttempt: 0,
 		LockedUntil:   nil,
 	}
+}
+
+// JWT Manager helper
+func NewMockJWTManager() *jwt.JWTManager {
+	cfg := &config.Config{
+		JWT: config.JWTConfig{
+			SecretKey: "test-secret-key-for-jwt-generation-in-tests",
+			Expiry:    time.Hour,
+		},
+	}
+	return jwt.NewJWTManager(cfg)
 }

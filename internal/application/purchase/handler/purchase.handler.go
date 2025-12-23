@@ -80,6 +80,49 @@ func (h *PurchaseHandler) ProcessPurchase(ctx *gin.Context) {
 	ctx.JSON(statusCode, gin.H{"data": response})
 }
 
+// ProcessPurchaseWifi godoc
+// @Summary Process a wifi voucher purchase
+// @Description Process a wifi voucher purchase transaction with provider ID and duration hours
+// @Tags purchases
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param purchase body dto.PurchaseWifiRequest true "Wifi purchase request"
+// @Success 200 {object} map[string]interface{} "Wifi purchase processed successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid request or insufficient balance"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Product or user not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /purchases/wifi [post]
+func (h *PurchaseHandler) ProcessPurchaseWifi(ctx *gin.Context) {
+	var req dto.PurchaseWifiRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Invalid request body", zap.Error(err))
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, err := h.extractBearerToken(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := h.service.ProcessPurchaseWifi(ctx.Request.Context(), token, &req)
+	if err != nil {
+		h.logger.Error("Failed to process wifi purchase", zap.Error(err))
+		h.handlePurchaseError(ctx, err)
+		return
+	}
+
+	statusCode := http.StatusOK
+	if response.Status == "failed" {
+		statusCode = http.StatusBadRequest
+	}
+
+	ctx.JSON(statusCode, gin.H{"data": response})
+}
+
 // GetPurchaseHistory godoc
 // @Summary Get purchase history
 // @Description Get purchase history for a wallet with pagination
@@ -217,6 +260,7 @@ func (h *PurchaseHandler) RegisterRoutes(api *gin.RouterGroup) {
 	purchase := api.Group("/purchase")
 	{
 		purchase.POST("", h.ProcessPurchase)
+		purchase.POST("/wifi", h.ProcessPurchaseWifi)
 	}
 	purchase.Use(middleware.PINMiddleware(h.userSecurityService, h.jwt, h.logger))
 }

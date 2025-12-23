@@ -68,6 +68,14 @@ func (m *mockWifiVoucherRepository) GetByProviderIDWithDurationHours(ctx context
 	return args.Get(0).([]entity.WifiVoucher), args.Error(1)
 }
 
+func (m *mockWifiVoucherRepository) GetForUpdate(ctx context.Context, id uint) (*entity.WifiVoucher, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.WifiVoucher), args.Error(1)
+}
+
 func TestWifiVoucherService_CreateWifiVoucher(t *testing.T) {
 	t.Run("should create wifi voucher successfully", func(t *testing.T) {
 		mockRepo := new(mockWifiVoucherRepository)

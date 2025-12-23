@@ -15,6 +15,8 @@ import (
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	userRepo "github.com/novriyantoAli/cn-wallet/internal/application/user/repository"
 	walletRepo "github.com/novriyantoAli/cn-wallet/internal/application/wallet/repository"
+	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
+	wifiVoucherRepo "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/repository"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/database"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
 
@@ -39,6 +41,17 @@ type PurchaseService interface {
 	// Failed: Update Transaction to failed, Refund balance
 	ProcessPurchase(ctx context.Context, token string, req *dto.PurchaseRequest) (*dto.PurchaseResponse, error)
 
+	// ProcessPurchaseWifi handles wifi voucher purchase flow:
+	// Step 1: Validate provider and duration hours
+	// Step 2: Get available wifi voucher
+	// Step 3: Check wallet balance >= Product Price
+	// Step 4: Create pending transaction
+	// Step 5: Deduct balance from wallet
+	// Step 6: Mark voucher as sold
+	// Success: Update Transaction to success
+	// Failed: Update Transaction to failed, Refund balance
+	ProcessPurchaseWifi(ctx context.Context, token string, req *dto.PurchaseWifiRequest) (*dto.PurchaseResponse, error)
+
 	// GetPurchaseHistory retrieves purchase history for a wallet
 	GetPurchaseHistory(ctx context.Context, filter *dto.PurchaseHistoryFilter) (*dto.PurchaseHistoryList, error)
 }
@@ -48,6 +61,7 @@ type purchaseService struct {
 	walletRepo      walletRepo.WalletRepository
 	transactionRepo transactionRepo.TransactionRepository
 	userRepo        userRepo.UserRepository
+	wifiVoucherRepo wifiVoucherRepo.WifiVoucherRepository
 	providerClient  ProviderClient
 	txManager       database.TransactionManagerI
 	jwtManager      *jwt.JWTManager
@@ -60,6 +74,7 @@ func NewPurchaseService(
 	walletRepo walletRepo.WalletRepository,
 	transactionRepo transactionRepo.TransactionRepository,
 	userRepo userRepo.UserRepository,
+	wifiVoucherRepo wifiVoucherRepo.WifiVoucherRepository,
 	providerClient ProviderClient,
 	txManager database.TransactionManagerI,
 	jwtManager *jwt.JWTManager,
@@ -70,6 +85,7 @@ func NewPurchaseService(
 		walletRepo:      walletRepo,
 		transactionRepo: transactionRepo,
 		userRepo:        userRepo,
+		wifiVoucherRepo: wifiVoucherRepo,
 		providerClient:  providerClient,
 		txManager:       txManager,
 		jwtManager:      jwtManager,
@@ -347,4 +363,156 @@ func (s *purchaseService) transactionsToHistories(transactions []transactionEnti
 		histories = append(histories, hist)
 	}
 	return histories
+}
+
+// ProcessPurchaseWifi processes a wifi voucher purchase transaction
+func (s *purchaseService) ProcessPurchaseWifi(ctx context.Context, token string, req *dto.PurchaseWifiRequest) (*dto.PurchaseResponse, error) {
+	// Validate request
+	if req.ProductID == 0 {
+		return nil, errors.New("product_id is required")
+	}
+
+	// Verify token and get user
+	user, err := s.getUserFromToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get product
+	product, err := s.productRepo.GetByID(ctx, req.ProductID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("product not found")
+		}
+		s.logger.Error("Failed to get product", zap.Uint("product_id", req.ProductID), zap.Error(err))
+		return nil, errors.New("failed to get product")
+	}
+
+	// Validate product is active
+	if product.IsActive == false {
+		s.logger.Warn("Product is inactive", zap.Uint("product_id", req.ProductID))
+		return nil, errors.New("product is inactive")
+	}
+
+	// Validate product category
+	if product.Category != productEntity.CategoryWifi {
+		return nil, errors.New("product is not a wifi voucher")
+	}
+
+	// Get provider ID and duration hours from product
+	if product.ProviderID == 0 || product.DurationHours == nil {
+		s.logger.Error("Invalid product configuration", zap.Uint("product_id", req.ProductID))
+		return nil, errors.New("invalid product configuration")
+	}
+
+	// Get available wifi vouchers
+	vouchers, err := s.wifiVoucherRepo.GetByProviderIDWithDurationHours(ctx, product.ProviderID, *product.DurationHours)
+	if err != nil {
+		s.logger.Error("Failed to get wifi vouchers", zap.Uint("provider_id", product.ProviderID), zap.Int("duration_hours", *product.DurationHours), zap.Error(err))
+		return nil, errors.New("failed to get wifi vouchers")
+	}
+
+	// Filter available vouchers
+	var availableVoucher *wifiVoucherEntity.WifiVoucher
+	for i := range vouchers {
+		if vouchers[i].Status == wifiVoucherEntity.StatusAvailable {
+			availableVoucher = &vouchers[i]
+			break
+		}
+	}
+
+	if availableVoucher == nil {
+		s.logger.Warn("No available wifi vouchers", zap.Uint("provider_id", product.ProviderID), zap.Int("duration_hours", *product.DurationHours))
+		return nil, errors.New("no available wifi vouchers")
+	}
+
+	txID := uuid.New()
+
+	// Execute database operations within a transaction
+	err = s.txManager.WithinTransaction(ctx, func(txCtx context.Context) error {
+		// Get wallet with FOR UPDATE lock
+		wallet, err := s.walletRepo.GetForUpdate(txCtx, user.ID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("wallet not found")
+			}
+			s.logger.Error("Failed to get wallet", zap.Uint("user_id", user.ID), zap.Error(err))
+			return err
+		}
+
+		s.logger.Info("Starting wifi purchase process", zap.String("tx_id", txID.String()), zap.Uint("wallet_id", wallet.ID), zap.Float64("balance", wallet.Balance), zap.Float64("price", product.PriceSell))
+
+		// Check wallet balance
+		if wallet.Balance < product.PriceSell {
+			s.logger.Warn("Insufficient balance", zap.Uint("wallet_id", wallet.ID), zap.Float64("balance", wallet.Balance), zap.Float64("price", product.PriceSell))
+			return errors.New("insufficient wallet balance")
+		}
+
+		// Deduct balance from wallet
+		newBalance := wallet.Balance - product.PriceSell
+		if err := s.walletRepo.UpdateBalance(txCtx, user.ID, newBalance); err != nil {
+			s.logger.Error("Failed to update wallet balance", zap.Uint("user_id", user.ID), zap.Error(err))
+			return errors.New("failed to update wallet balance")
+		}
+
+		s.logger.Info("Wallet balance updated", zap.Uint("wallet_id", wallet.ID), zap.Float64("new_balance", newBalance))
+
+		// Create pending transaction
+		txn := &transactionEntity.Transaction{
+			ID:          txID,
+			WalletID:    wallet.ID,
+			Type:        transactionEntity.TypePurchase,
+			Amount:      product.PriceSell,
+			Status:      transactionEntity.StatusPending,
+			Description: "Wifi voucher purchase",
+			ProductID:   &product.ID,
+			CreatedAt:   time.Now(),
+		}
+
+		if err := s.transactionRepo.Create(txCtx, txn); err != nil {
+			s.logger.Error("Failed to create transaction", zap.String("tx_id", txID.String()), zap.Error(err))
+			return errors.New("failed to create transaction")
+		}
+
+		s.logger.Info("Transaction created", zap.String("tx_id", txID.String()), zap.Float64("amount", product.PriceSell))
+
+		// Mark voucher as sold
+		lockedVoucher, err := s.wifiVoucherRepo.GetForUpdate(txCtx, availableVoucher.ID)
+		// Mark voucher as sold
+		lockedVoucher.Status = wifiVoucherEntity.StatusSold
+		lockedVoucher.SoldToUserID = &user.ID
+		now := time.Now()
+		lockedVoucher.SoldAt = &now
+		lockedVoucher.UpdatedAt = now
+
+		if err := s.wifiVoucherRepo.Update(txCtx, lockedVoucher); err != nil {
+			s.logger.Error("Failed to update wifi voucher", zap.Uint("voucher_id", lockedVoucher.ID), zap.Error(err))
+			return errors.New("failed to update wifi voucher")
+		}
+
+		s.logger.Info("Wifi voucher marked as sold", zap.Uint("voucher_id", lockedVoucher.ID))
+		// Update transaction to success
+		txn.Status = transactionEntity.StatusSuccess
+		txn.SerialNumber = lockedVoucher.Code
+
+		if err := s.transactionRepo.Update(txCtx, txn); err != nil {
+			s.logger.Error("Failed to update transaction to success", zap.String("tx_id", txID.String()), zap.Error(err))
+			return errors.New("failed to update transaction status")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("Wifi purchase completed successfully", zap.String("tx_id", txID.String()), zap.String("voucher_code", availableVoucher.Code))
+
+	return &dto.PurchaseResponse{
+		TransactionID: txID,
+		Status:        transactionEntity.StatusSuccess,
+		SerialNumber:  availableVoucher.Code,
+		Message:       "Wifi voucher purchase successful",
+	}, nil
 }
