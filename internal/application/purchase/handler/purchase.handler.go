@@ -8,19 +8,32 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/novriyantoAli/cn-wallet/internal/application/purchase/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/purchase/service"
+	"github.com/novriyantoAli/cn-wallet/internal/middleware"
+	"github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
+
+	userSecurityService "github.com/novriyantoAli/cn-wallet/internal/application/user-security/service"
 
 	"go.uber.org/zap"
 )
 
 type PurchaseHandler struct {
-	service service.PurchaseService
-	logger  *zap.Logger
+	service             service.PurchaseService
+	userSecurityService userSecurityService.UserSecurityService
+	jwt                 *jwt.JWTManager
+	logger              *zap.Logger
 }
 
-func NewPurchaseHandler(svc service.PurchaseService, logger *zap.Logger) *PurchaseHandler {
+func NewPurchaseHandler(
+	svc service.PurchaseService,
+	usrSecuritySvc userSecurityService.UserSecurityService,
+	jwtManager *jwt.JWTManager,
+	logger *zap.Logger,
+) *PurchaseHandler {
 	return &PurchaseHandler{
-		service: svc,
-		logger:  logger,
+		service:             svc,
+		userSecurityService: usrSecuritySvc,
+		jwt:                 jwtManager,
+		logger:              logger,
 	}
 }
 
@@ -197,9 +210,15 @@ func (h *PurchaseHandler) handlePurchaseError(ctx *gin.Context, err error) {
 func (h *PurchaseHandler) RegisterRoutes(api *gin.RouterGroup) {
 	purchases := api.Group("/purchases")
 	{
-		purchases.POST("", h.ProcessPurchase)
 		purchases.GET("/history", h.GetPurchaseHistory)
 	}
+	purchases.Use(middleware.JWTMiddleware(h.jwt, h.logger))
+
+	purchase := api.Group("/purchase")
+	{
+		purchase.POST("", h.ProcessPurchase)
+	}
+	purchase.Use(middleware.PINMiddleware(h.userSecurityService, h.jwt, h.logger))
 }
 
 // HandlerError represents a handler-level error with code and message

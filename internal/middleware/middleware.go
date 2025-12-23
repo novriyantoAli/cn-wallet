@@ -2,10 +2,15 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	userSecurityDto "github.com/novriyantoAli/cn-wallet/internal/application/user-security/dto"
+	userSecurityService "github.com/novriyantoAli/cn-wallet/internal/application/user-security/service"
+	jwt "github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
 )
 
 func Logger(logger *zap.Logger) gin.HandlerFunc {
@@ -64,6 +69,119 @@ func CORS() gin.HandlerFunc {
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func JWTMiddleware(
+	jwtManager *jwt.JWTManager,
+	logger *zap.Logger,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Authorization header missing",
+			})
+			return
+		}
+
+		const bearerPrefix = "Bearer "
+		if !strings.HasPrefix(authHeader, bearerPrefix) {
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Invalid authorization header format",
+			})
+			return
+		}
+
+		token := authHeader[len(bearerPrefix):]
+		if token == "" {
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Empty token in authorization header",
+			})
+			return
+		}
+
+		_, err := jwtManager.VerifyToken(token)
+		if err != nil {
+			logger.Error("Failed to verify token", zap.Error(err))
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Invalid token",
+			})
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func PINMiddleware(
+	userSecurity userSecurityService.UserSecurityService,
+	jwtManager *jwt.JWTManager,
+	logger *zap.Logger,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		// get authorization from header
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Authorization header missing",
+			})
+			return
+		}
+
+		const bearerPrefix = "Bearer "
+		if !strings.HasPrefix(authHeader, bearerPrefix) {
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Invalid authorization header format",
+			})
+			return
+		}
+
+		token := authHeader[len(bearerPrefix):]
+		if token == "" {
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Empty token in authorization header",
+			})
+			return
+		}
+
+		claims, err := jwtManager.VerifyToken(token)
+		if err != nil {
+			logger.Error("Failed to verify token", zap.Error(err))
+			c.AbortWithStatusJSON(401, gin.H{
+				"error": "Invalid token",
+			})
+			return
+		}
+
+		pin := c.GetHeader("X-PIN")
+		if pin == "" {
+			c.AbortWithStatusJSON(403, gin.H{
+				"error": "PIN required",
+			})
+			return
+		}
+
+		b, err := userSecurity.VerifyPIN(c, &userSecurityDto.VerifyPINRequest{
+			UserID: claims.UserID,
+			PIN:    pin,
+		})
+		if err != nil {
+			logger.Error("Failed to verify PIN", zap.Error(err))
+			c.AbortWithStatusJSON(403, gin.H{
+				"error": "Invalid PIN",
+			})
+			return
+		}
+		if !b {
+			c.AbortWithStatusJSON(403, gin.H{
+				"error": "Invalid PIN",
+			})
 			return
 		}
 

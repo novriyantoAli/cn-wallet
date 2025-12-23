@@ -11,6 +11,7 @@ import (
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/purchase/dto"
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
+	"github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/testutil"
 
 	"github.com/gin-gonic/gin"
@@ -19,23 +20,24 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func setupPurchaseHandler() (*PurchaseHandler, *testutil.MockPurchaseService) {
+func setupPurchaseHandler() (*PurchaseHandler, *testutil.MockPurchaseService, *testutil.MockUserSecurityService) {
 	gin.SetMode(gin.TestMode)
 	mockService := &testutil.MockPurchaseService{}
+	mockUserSecurityService := &testutil.MockUserSecurityService{}
+	jwtManager := &jwt.JWTManager{}
 	logger := testutil.NewSilentLogger()
-	handler := NewPurchaseHandler(mockService, logger)
-	return handler, mockService
+	handler := NewPurchaseHandler(mockService, mockUserSecurityService, jwtManager, logger)
+	return handler, mockService, mockUserSecurityService
 }
 
 func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 	t.Run("should process purchase successfully", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		txID := uuid.New()
@@ -72,12 +74,11 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 
 	t.Run("should return unauthorized when authorization header is missing", func(t *testing.T) {
 		// Setup
-		handler, _ := setupPurchaseHandler()
+		handler, _, _ := setupPurchaseHandler()
 
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		// Prepare request
@@ -101,12 +102,11 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 
 	t.Run("should return unauthorized when authorization header format is invalid", func(t *testing.T) {
 		// Setup
-		handler, _ := setupPurchaseHandler()
+		handler, _, _ := setupPurchaseHandler()
 
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		// Prepare request
@@ -130,12 +130,11 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 
 	t.Run("should return unauthorized when token is empty", func(t *testing.T) {
 		// Setup
-		handler, _ := setupPurchaseHandler()
+		handler, _, _ := setupPurchaseHandler()
 
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		// Prepare request
@@ -159,7 +158,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 
 	t.Run("should return bad request for invalid JSON", func(t *testing.T) {
 		// Setup
-		handler, _ := setupPurchaseHandler()
+		handler, _, _ := setupPurchaseHandler()
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
@@ -176,12 +175,11 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 
 	t.Run("should return not found when user not found", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		mockService.On("ProcessPurchase", mock.MatchedBy(func(ctx context.Context) bool {
@@ -210,12 +208,11 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 
 	t.Run("should return not found when product not found", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		req := &dto.PurchaseRequest{
 			ProductID: 999,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		mockService.On("ProcessPurchase", mock.MatchedBy(func(ctx context.Context) bool {
@@ -244,12 +241,11 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 
 	t.Run("should return bad request when insufficient balance", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		mockService.On("ProcessPurchase", mock.MatchedBy(func(ctx context.Context) bool {
@@ -280,7 +276,7 @@ func TestPurchaseHandler_ProcessPurchase(t *testing.T) {
 func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 	t.Run("should get purchase history successfully", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		filter := &dto.PurchaseHistoryFilter{
 			WalletID: 1,
@@ -319,7 +315,7 @@ func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 
 	t.Run("should return bad request when wallet_id is missing", func(t *testing.T) {
 		// Setup
-		handler, _ := setupPurchaseHandler()
+		handler, _, _ := setupPurchaseHandler()
 
 		// Prepare request
 		w := httptest.NewRecorder()
@@ -339,7 +335,7 @@ func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 
 	t.Run("should return bad request when wallet_id is invalid", func(t *testing.T) {
 		// Setup
-		handler, _ := setupPurchaseHandler()
+		handler, _, _ := setupPurchaseHandler()
 
 		// Prepare request
 		w := httptest.NewRecorder()
@@ -359,7 +355,7 @@ func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 
 	t.Run("should return bad request when wallet_id is zero", func(t *testing.T) {
 		// Setup
-		handler, _ := setupPurchaseHandler()
+		handler, _, _ := setupPurchaseHandler()
 
 		// Prepare request
 		w := httptest.NewRecorder()
@@ -379,7 +375,7 @@ func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 
 	t.Run("should use default pagination values", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		expectedFilter := &dto.PurchaseHistoryFilter{
 			WalletID: 1,
@@ -414,7 +410,7 @@ func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 
 	t.Run("should accept custom pagination values", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		expectedFilter := &dto.PurchaseHistoryFilter{
 			WalletID: 1,
@@ -449,7 +445,7 @@ func TestPurchaseHandler_GetPurchaseHistory(t *testing.T) {
 
 	t.Run("should return internal server error when service fails", func(t *testing.T) {
 		// Setup
-		handler, mockService := setupPurchaseHandler()
+		handler, mockService, _ := setupPurchaseHandler()
 
 		filter := &dto.PurchaseHistoryFilter{
 			WalletID: 1,

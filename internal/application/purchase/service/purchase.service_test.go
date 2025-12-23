@@ -97,42 +97,6 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 		assert.Equal(t, "phone is required", err.Error())
 	})
 
-	t.Run("should return error when pin is missing", func(t *testing.T) {
-		// Setup
-		mockProductRepo := &testutil.MockProductRepository{}
-		mockWalletRepo := &testutil.MockWalletRepository{}
-		mockTransactionRepo := &testutil.MockTransactionRepository{}
-		mockUserRepo := &testutil.MockUserRepository{}
-		mockProviderClient := &MockProviderClient{}
-		mockTxManager := &testutil.MockTransactionManager{}
-		logger := testutil.NewSilentLogger()
-
-		service := NewPurchaseService(
-			mockProductRepo,
-			mockWalletRepo,
-			mockTransactionRepo,
-			mockUserRepo,
-			mockProviderClient,
-			mockTxManager,
-			nil,
-			logger,
-		)
-
-		req := &dto.PurchaseRequest{
-			ProductID: 1,
-			Phone:     "08123456789",
-			Pin:       "",
-		}
-
-		// When
-		response, err := service.ProcessPurchase(ctx, "valid-token", req)
-
-		// Then
-		assert.Error(t, err)
-		assert.Nil(t, response)
-		assert.Equal(t, "pin is required", err.Error())
-	})
-
 	t.Run("should return error when token is invalid", func(t *testing.T) {
 		// Setup
 		mockProductRepo := &testutil.MockProductRepository{}
@@ -157,7 +121,6 @@ func TestPurchaseService_ProcessPurchase_RequestValidation(t *testing.T) {
 		req := &dto.PurchaseRequest{
 			ProductID: 1,
 			Phone:     "08123456789",
-			Pin:       "123456",
 		}
 
 		// When - JWT manager is nil, so it will fail with "invalid or expired token"

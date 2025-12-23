@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user-security/dto"
@@ -90,24 +91,34 @@ func (h *UserSecurityHandler) VerifyPIN(c *gin.Context) {
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/v1/user-security [get]
 func (h *UserSecurityHandler) GetSecurity(c *gin.Context) {
-	userID := uint(0)
-	if err := c.ShouldBindQuery(&struct {
-		UserID uint `form:"user_id" binding:"required"`
-	}{UserID: userID}); err == nil {
-		userID = uint(c.GetUint64("user_id"))
-	}
-
-	if userID == 0 {
+	userIDStr := c.Query("user_id")
+	userIDUint, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil || userIDUint == 0 {
+		h.logger.Error("Invalid user_id", zap.String("user_id", userIDStr), zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
 		return
 	}
 
-	resp, err := h.service.GetSecurity(c.Request.Context(), userID)
+	resp, err := h.service.GetSecurity(c.Request.Context(), uint(userIDUint))
 	if err != nil {
 		h.logger.Error("Failed to get security info", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get security info"})
 		return
 	}
 
+	if resp == (&dto.UserSecurityResponse{}) {
+		c.JSON(http.StatusNoContent, gin.H{"error": "user not set security"})
+		return
+	}
+
 	c.JSON(http.StatusOK, resp)
+}
+
+func (h *UserSecurityHandler) RegisterRoutes(api *gin.RouterGroup) {
+	security := api.Group("/user-security")
+	{
+		security.POST("/pin", h.SetPIN)
+		security.POST("/pin/verify", h.VerifyPIN)
+		security.GET("", h.GetSecurity)
+	}
 }

@@ -15,6 +15,7 @@ import (
 	purchaseDto "github.com/novriyantoAli/cn-wallet/internal/application/purchase/dto"
 	transactionDto "github.com/novriyantoAli/cn-wallet/internal/application/transaction/dto"
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
+	userSecurityDto "github.com/novriyantoAli/cn-wallet/internal/application/user-security/dto"
 	userSecurityEntity "github.com/novriyantoAli/cn-wallet/internal/application/user-security/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
@@ -640,4 +641,32 @@ func (m *MockUserSecurityRepository) Unlock(ctx context.Context, userID uint) er
 func (m *MockUserSecurityRepository) Delete(ctx context.Context, userID uint) error {
 	args := m.Called(ctx, userID)
 	return args.Error(0)
+}
+
+// MockUserSecurityService is a mock implementation of UserSecurityService
+type MockUserSecurityService struct {
+	mock.Mock
+}
+
+func (m *MockUserSecurityService) SetPIN(ctx context.Context, req *userSecurityDto.SetPINRequest) error {
+	args := m.Called(ctx, req)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityService) VerifyPIN(ctx context.Context, req *userSecurityDto.VerifyPINRequest) (bool, error) {
+	args := m.Called(ctx, req)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockUserSecurityService) GetSecurity(ctx context.Context, userID uint) (*userSecurityDto.UserSecurityResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userSecurityDto.UserSecurityResponse), args.Error(1)
+}
+
+func (m *MockUserSecurityService) IsAccountLocked(ctx context.Context, userID uint) (bool, error) {
+	args := m.Called(ctx, userID)
+	return args.Bool(0), args.Error(1)
 }

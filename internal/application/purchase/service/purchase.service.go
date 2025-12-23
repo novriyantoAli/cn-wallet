@@ -17,7 +17,6 @@ import (
 	walletRepo "github.com/novriyantoAli/cn-wallet/internal/application/wallet/repository"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/database"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/jwt"
-	"golang.org/x/crypto/bcrypt"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -87,20 +86,11 @@ func (s *purchaseService) ProcessPurchase(ctx context.Context, token string, req
 	if req.Phone == "" {
 		return nil, errors.New("phone is required")
 	}
-	if req.Pin == "" {
-		return nil, errors.New("pin is required")
-	}
 
 	// Verify token and get user
 	user, err := s.getUserFromToken(ctx, token)
 	if err != nil {
 		return nil, err
-	}
-
-	// Verify PIN against stored hash
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Wallet.PINHash), []byte(req.Pin)); err != nil {
-		s.logger.Warn("Invalid PIN provided", zap.Uint("user_id", user.ID))
-		return nil, errors.New("invalid pin")
 	}
 
 	// Validate product exists
