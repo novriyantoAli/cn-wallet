@@ -251,18 +251,16 @@ func (h *PurchaseHandler) handlePurchaseError(ctx *gin.Context, err error) {
 }
 
 func (h *PurchaseHandler) RegisterRoutes(api *gin.RouterGroup) {
-	purchases := api.Group("/purchases")
+	purchases := api.Group("/purchases").Use(middleware.JWTMiddleware(h.jwt, h.logger))
 	{
 		purchases.GET("/history", h.GetPurchaseHistory)
 	}
-	purchases.Use(middleware.JWTMiddleware(h.jwt, h.logger))
 
-	purchase := api.Group("/purchase")
+	purchase := api.Group("/purchase").Use(middleware.PINMiddleware(h.userSecurityService, h.jwt, h.logger))
 	{
 		purchase.POST("", h.ProcessPurchase)
 		purchase.POST("/wifi", h.ProcessPurchaseWifi)
 	}
-	purchase.Use(middleware.PINMiddleware(h.userSecurityService, h.jwt, h.logger))
 }
 
 // HandlerError represents a handler-level error with code and message

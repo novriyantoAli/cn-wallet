@@ -185,6 +185,8 @@ func PINMiddleware(
 			return
 		}
 
+		logger.Info("PIN verified successfully", zap.Uint("user_id", claims.UserID))
+
 		c.Next()
 	}
 }

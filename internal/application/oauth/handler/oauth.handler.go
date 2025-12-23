@@ -245,6 +245,56 @@ func (h *OAuthHandler) RefreshToken(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, tokenResp)
 }
 
+// Logout godoc
+// @Summary Logout user
+// @Description Revoke the user's JWT token and logout
+// @Tags oauth
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} map[string]interface{} "Logout successful"
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized - Invalid token"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /oauth/deauthenticate [delete]
+func (h *OAuthHandler) Logout(ctx *gin.Context) {
+	// Extract token from Authorization header
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		h.logger.Warn("Missing authorization header")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Authorization header is required"})
+		return
+	}
+
+	// Extract token from "Bearer <token>" format
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		h.logger.Warn("Invalid authorization header format")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid authorization header format"})
+		return
+	}
+
+	token := authHeader[len(bearerPrefix):]
+	if token == "" {
+		h.logger.Warn("Empty token in authorization header")
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid authorization header format"})
+		return
+	}
+
+	err := h.service.Logout(ctx.Request.Context(), token)
+	if err != nil {
+		h.logger.Error("Failed to logout", zap.Error(err))
+		if err.Error() == "invalid token" {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
+}
+
 // RegisterRoutes registers OAuth routes
 func (h *OAuthHandler) RegisterRoutes(router *gin.Engine) {
 	oauthGroup := router.Group("/api/v1/oauth")
@@ -255,5 +305,6 @@ func (h *OAuthHandler) RegisterRoutes(router *gin.Engine) {
 		oauthGroup.POST("/authenticate", h.Authenticate)
 		oauthGroup.POST("/refresh", h.RefreshToken)
 		oauthGroup.GET("/me", h.GetCurrentUser)
+		oauthGroup.DELETE("/deauthenticate", h.Logout)
 	}
 }
