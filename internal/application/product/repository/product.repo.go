@@ -65,8 +65,8 @@ func (r *productRepository) GetAll(ctx context.Context, filter *dto.ProductFilte
 	var products []entity.Product
 	var total int64
 
-	db := database.GetDB(ctx, r.db)
-	query := db
+	query := database.GetDB(ctx, r.db)
+	// query := db
 	if filter.ProviderID > 0 {
 		query = query.Where("provider_id = ?", filter.ProviderID)
 	}
