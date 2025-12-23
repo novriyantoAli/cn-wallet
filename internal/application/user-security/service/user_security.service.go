@@ -107,7 +107,7 @@ func (s *userSecurityService) GetSecurity(ctx context.Context, userID uint) (*dt
 	security, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return &dto.UserSecurityResponse{}, nil
+			return nil, nil
 		}
 		s.logger.Error("Failed to get user security", zap.Error(err))
 
@@ -115,11 +115,9 @@ func (s *userSecurityService) GetSecurity(ctx context.Context, userID uint) (*dt
 	}
 
 	if security == nil {
-		return &dto.UserSecurityResponse{
-			UserID:        userID,
-			FailedAttempt: 0,
-			IsLocked:      false,
-		}, nil
+		s.logger.Info("User security not found", zap.Uint("user_id", userID))
+		s.logger.Info("Returning nil for user security", zap.Uint("user_id", userID))
+		return nil, nil
 	}
 
 	isLocked := security.LockedUntil != nil && security.LockedUntil.After(time.Now())

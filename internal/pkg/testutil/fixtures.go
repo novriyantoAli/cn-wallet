@@ -206,35 +206,35 @@ func CreateWifiVoucherFixture() *wifiVoucherEntity.WifiVoucher {
 	userID := uint(1)
 	soldAt := time.Now().Add(-24 * time.Hour)
 	return &wifiVoucherEntity.WifiVoucher{
-		ID:              1,
-		Code:            "WIFI001",
-		Password:        "pass123",
-		DurationMinutes: 1440,
-		BatchID:         "BATCH001",
-		Status:          wifiVoucherEntity.StatusAvailable,
-		SoldToUserID:    &userID,
-		SoldAt:          &soldAt,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		ID:            1,
+		Code:          "WIFI001",
+		Password:      "pass123",
+		DurationHours: 24,
+		BatchID:       "BATCH001",
+		Status:        wifiVoucherEntity.StatusAvailable,
+		SoldToUserID:  &userID,
+		SoldAt:        &soldAt,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 }
 
 func CreateWifiVoucherRequestFixture() *wifiVoucherDto.CreateWifiVoucherRequest {
 	return &wifiVoucherDto.CreateWifiVoucherRequest{
-		Code:            "WIFI001",
-		Password:        "pass123",
-		DurationMinutes: 1440,
-		BatchID:         "BATCH001",
+		Code:          "WIFI001",
+		Password:      "pass123",
+		DurationHours: 24,
+		BatchID:       "BATCH001",
 	}
 }
 
 func CreateUpdateWifiVoucherRequestFixture() *wifiVoucherDto.UpdateWifiVoucherRequest {
 	return &wifiVoucherDto.UpdateWifiVoucherRequest{
-		Code:            "WIFI002",
-		Password:        "pass456",
-		DurationMinutes: 2880,
-		BatchID:         "BATCH002",
-		Status:          wifiVoucherEntity.StatusSold,
+		Code:          "WIFI002",
+		Password:      "pass456",
+		DurationHours: 48,
+		BatchID:       "BATCH002",
+		Status:        wifiVoucherEntity.StatusSold,
 	}
 }
 
