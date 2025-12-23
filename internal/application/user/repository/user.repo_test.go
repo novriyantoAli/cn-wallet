@@ -181,7 +181,7 @@ func TestUserRepository_GetAll(t *testing.T) {
 		user1.ID = 0
 		user1.Email = "alice@example.com"
 		user1.FullName = "Alice Smith"
-		user1.Level = "admin"
+		user1.Level = entity.UserLevelAdmin
 		err := repo.Create(ctx, user1)
 		require.NoError(t, err)
 
@@ -189,7 +189,7 @@ func TestUserRepository_GetAll(t *testing.T) {
 		user2.ID = 0
 		user2.Email = "bob@example.com"
 		user2.FullName = "Bob Johnson"
-		user2.Level = "agent"
+		user2.Level = entity.UserLevelProvider
 		err = repo.Create(ctx, user2)
 		require.NoError(t, err)
 
@@ -259,7 +259,7 @@ func TestUserRepository_Update(t *testing.T) {
 
 		// When
 		user.FullName = "Updated Name"
-		user.Level = "admin"
+		user.Level = entity.UserLevelAdmin
 		user.IsActive = false
 		err = repo.Update(ctx, user)
 
@@ -271,7 +271,7 @@ func TestUserRepository_Update(t *testing.T) {
 		err = db.First(&dbUser, user.ID).Error
 		assert.NoError(t, err)
 		assert.Equal(t, "Updated Name", dbUser.FullName)
-		assert.Equal(t, "admin", dbUser.Level)
+		assert.Equal(t, entity.UserLevelAdmin, dbUser.Level)
 		assert.False(t, dbUser.IsActive)
 	})
 
@@ -280,7 +280,7 @@ func TestUserRepository_Update(t *testing.T) {
 		user := &entity.User{
 			Email:    "fake@example.com",
 			FullName: "Fake User",
-			Level:    "user",
+			Level:    entity.UserLevelUser,
 			IsActive: true,
 		}
 		user.ID = 99999 // Non-existent ID
