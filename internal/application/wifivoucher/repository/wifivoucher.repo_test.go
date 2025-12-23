@@ -247,6 +247,84 @@ func TestWifiVoucherRepository_CodeExists(t *testing.T) {
 	})
 }
 
+func TestWifiVoucherRepository_GetByProviderIDWithDurationHours(t *testing.T) {
+	t.Run("should get wifi vouchers by provider ID and duration hours successfully", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+		providerID := uint(1)
+
+		wifiVoucher1 := testutil.CreateWifiVoucherFixture()
+		wifiVoucher1.ID = 0
+		wifiVoucher1.ProviderID = &providerID
+		wifiVoucher1.DurationHours = 24
+		db.Create(wifiVoucher1)
+
+		wifiVoucher2 := testutil.CreateWifiVoucherFixture()
+		wifiVoucher2.ID = 0
+		wifiVoucher2.Code = "WIFI002"
+		wifiVoucher2.ProviderID = &providerID
+		wifiVoucher2.DurationHours = 24
+		db.Create(wifiVoucher2)
+
+		// Different duration hours - should not be returned
+		wifiVoucher3 := testutil.CreateWifiVoucherFixture()
+		wifiVoucher3.ID = 0
+		wifiVoucher3.Code = "WIFI003"
+		wifiVoucher3.ProviderID = &providerID
+		wifiVoucher3.DurationHours = 48
+		db.Create(wifiVoucher3)
+
+		result, err := repo.GetByProviderIDWithDurationHours(context.Background(), providerID, 24)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, 24, result[0].DurationHours)
+		assert.Equal(t, 24, result[1].DurationHours)
+	})
+
+	t.Run("should return empty slice when no vouchers match", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+		result, err := repo.GetByProviderIDWithDurationHours(context.Background(), 999, 24)
+
+		require.NoError(t, err)
+		assert.Empty(t, result)
+	})
+
+	t.Run("should filter by both provider ID and duration hours", func(t *testing.T) {
+		db, err := testutil.SetupTestDB()
+		require.NoError(t, err)
+		defer testutil.CleanDB(db)
+
+		repo := NewWifiVoucherRepository(db, testutil.NewTestLogger(t))
+		providerID1 := uint(1)
+		providerID2 := uint(2)
+
+		wifiVoucher1 := testutil.CreateWifiVoucherFixture()
+		wifiVoucher1.ID = 0
+		wifiVoucher1.ProviderID = &providerID1
+		wifiVoucher1.DurationHours = 24
+		db.Create(wifiVoucher1)
+
+		wifiVoucher2 := testutil.CreateWifiVoucherFixture()
+		wifiVoucher2.ID = 0
+		wifiVoucher2.Code = "WIFI002"
+		wifiVoucher2.ProviderID = &providerID2
+		wifiVoucher2.DurationHours = 24
+		db.Create(wifiVoucher2)
+
+		result, err := repo.GetByProviderIDWithDurationHours(context.Background(), providerID1, 24)
+		require.NoError(t, err)
+		assert.Len(t, result, 1)
+		assert.Equal(t, providerID1, *result[0].ProviderID)
+	})
+}
+
 func TestWifiVoucherRepository_ContextCancellation(t *testing.T) {
 	t.Run("should handle context cancellation gracefully", func(t *testing.T) {
 		db, err := testutil.SetupTestDB()

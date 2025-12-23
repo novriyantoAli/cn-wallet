@@ -60,6 +60,14 @@ func (m *mockWifiVoucherRepository) CodeExists(ctx context.Context, code string)
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *mockWifiVoucherRepository) GetByProviderIDWithDurationHours(ctx context.Context, providerID uint, durationHours int) ([]entity.WifiVoucher, error) {
+	args := m.Called(ctx, providerID, durationHours)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entity.WifiVoucher), args.Error(1)
+}
+
 func TestWifiVoucherService_CreateWifiVoucher(t *testing.T) {
 	t.Run("should create wifi voucher successfully", func(t *testing.T) {
 		mockRepo := new(mockWifiVoucherRepository)

@@ -13,7 +13,7 @@ type WifiVoucher struct {
 	ID            uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 	Code          string `gorm:"type:varchar(50);unique;not null" json:"code"`
 	Password      string `gorm:"type:varchar(50)" json:"password"`
-	DurationHours int    `gorm:"not null" json:"duration_hours"`
+	DurationHours int    `gorm:"not null;index" json:"duration_hours"`
 	BatchID       string `gorm:"type:varchar(50)" json:"batch_id"`
 	ProviderID    *uint  `gorm:"index" json:"provider_id"`
 	Status        string `gorm:"type:varchar(20);default:'available';check:status IN ('available', 'sold', 'used')" json:"status"`

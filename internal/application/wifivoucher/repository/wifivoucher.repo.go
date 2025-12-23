@@ -20,6 +20,7 @@ type WifiVoucherRepository interface {
 	Update(ctx context.Context, wifiVoucher *entity.WifiVoucher) error
 	Delete(ctx context.Context, id uint) error
 	CodeExists(ctx context.Context, code string) (bool, error)
+	GetByProviderIDWithDurationHours(ctx context.Context, providerID uint, durationHours int) ([]entity.WifiVoucher, error)
 }
 
 type wifiVoucherRepository struct {
@@ -121,4 +122,22 @@ func (r *wifiVoucherRepository) CodeExists(ctx context.Context, code string) (bo
 	db := database.GetDB(ctx, r.db)
 	err := db.Model(&entity.WifiVoucher{}).Where("code = ?", code).Count(&count).Error
 	return count > 0, err
+}
+
+// GetByProviderIDWithDurationHours retrieves wifi vouchers by provider ID and duration hours.
+func (r *wifiVoucherRepository) GetByProviderIDWithDurationHours(ctx context.Context, providerID uint, durationHours int) ([]entity.WifiVoucher, error) {
+	var wifiVouchers []entity.WifiVoucher
+	db := database.GetDB(ctx, r.db)
+	err := db.Where("provider_id = ? AND duration_hours = ?", providerID, durationHours).
+		Preload("Provider").
+		Preload("SoldToUser").
+		Find(&wifiVouchers).Error
+	if err != nil {
+		r.logger.Error("Failed to get wifi vouchers by provider ID and duration hours",
+			zap.Uint("provider_id", providerID),
+			zap.Int("duration_hours", durationHours),
+			zap.Error(err))
+		return nil, err
+	}
+	return wifiVouchers, nil
 }
