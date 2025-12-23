@@ -110,93 +110,6 @@ func (h *WalletHandler) GetWalletByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": wallet})
 }
 
-// SetPIN godoc
-// @Summary Set or update wallet PIN
-// @Description Set or update the PIN for a wallet
-// @Tags wallets
-// @Accept json
-// @Produce json
-// @Param user_id path int true "User ID"
-// @Param req body dto.SetPINRequest true "Set PIN request"
-// @Success 200 {object} map[string]interface{} "PIN updated successfully"
-// @Failure 400 {object} map[string]interface{} "Invalid request"
-// @Failure 401 {object} map[string]interface{} "Invalid current PIN"
-// @Failure 404 {object} map[string]interface{} "Wallet not found"
-// @Failure 500 {object} map[string]interface{} "Internal server error"
-// @Router /wallets/by-user/{user_id}/set-pin [post]
-func (h *WalletHandler) SetPIN(ctx *gin.Context) {
-	idStr := ctx.Param("user_id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	var req dto.SetPINRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Invalid request body", zap.Error(err))
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := h.service.SetPIN(ctx.Request.Context(), uint(id), &req); err != nil {
-		h.logger.Error("Failed to set PIN", zap.Error(err), zap.Uint("user_id", uint(id)))
-		if err.Error() == "invalid current PIN" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-		if err.Error() == "wallet not found" {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set PIN"})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "PIN updated successfully"})
-}
-
-// VerifyPIN godoc
-// @Summary Verify wallet PIN
-// @Description Verify the PIN for a wallet
-// @Tags wallets
-// @Accept json
-// @Produce json
-// @Param user_id path int true "User ID"
-// @Param req body dto.VerifyPINRequest true "Verify PIN request"
-// @Success 200 {object} map[string]interface{} "PIN verified successfully"
-// @Failure 400 {object} map[string]interface{} "Invalid request"
-// @Failure 401 {object} map[string]interface{} "Invalid PIN"
-// @Failure 404 {object} map[string]interface{} "Wallet not found"
-// @Router /wallets/by-user/{user_id}/verify-pin [post]
-func (h *WalletHandler) VerifyPIN(ctx *gin.Context) {
-	idStr := ctx.Param("user_id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	var req dto.VerifyPINRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("Invalid request body", zap.Error(err))
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := h.service.VerifyPIN(ctx.Request.Context(), uint(id), req.PIN); err != nil {
-		h.logger.Error("Failed to verify PIN", zap.Error(err), zap.Uint("user_id", uint(id)))
-		if err.Error() == "wallet not found" {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid PIN"})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "PIN verified successfully"})
-}
-
 // AddBalance godoc
 // @Summary Add balance to wallet
 // @Description Add funds to a wallet
@@ -326,8 +239,6 @@ func (h *WalletHandler) RegisterRoutes(api *gin.RouterGroup) {
 		wallets.POST("", h.CreateWallet)
 		wallets.GET("/by-user/:user_id", h.GetWalletByUserID)
 		wallets.GET("/wallet/:id", h.GetWalletByID)
-		wallets.POST("/by-user/:user_id/set-pin", h.SetPIN)
-		wallets.POST("/by-user/:user_id/verify-pin", h.VerifyPIN)
 		wallets.POST("/by-user/:user_id/add-balance", h.AddBalance)
 		wallets.POST("/by-user/:user_id/deduct-balance", h.DeductBalance)
 		wallets.DELETE("/by-user/:user_id", h.DeleteWallet)

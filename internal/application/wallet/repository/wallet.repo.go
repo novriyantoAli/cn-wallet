@@ -20,7 +20,6 @@ type WalletRepository interface {
 	GetForUpdate(ctx context.Context, userID uint) (*entity.Wallet, error)
 	UpdateWallet(ctx context.Context, wallet *entity.Wallet) error
 	UpdateBalance(ctx context.Context, userID uint, newBalance float64) error
-	UpdatePIN(ctx context.Context, userID uint, pinHash string) error
 	DeleteWallet(ctx context.Context, userID uint) error
 }
 
@@ -102,12 +101,6 @@ func (r *walletRepository) UpdateWallet(ctx context.Context, wallet *entity.Wall
 func (r *walletRepository) UpdateBalance(ctx context.Context, userID uint, newBalance float64) error {
 	db := database.GetDB(ctx, r.db)
 	return db.Model(&entity.Wallet{}).Where("user_id = ?", userID).Update("balance", newBalance).Error
-}
-
-// UpdatePIN updates the wallet PIN hash
-func (r *walletRepository) UpdatePIN(ctx context.Context, userID uint, pinHash string) error {
-	db := database.GetDB(ctx, r.db)
-	return db.Model(&entity.Wallet{}).Where("user_id = ?", userID).Update("pin_hash", pinHash).Error
 }
 
 // DeleteWallet deletes a wallet

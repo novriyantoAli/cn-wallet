@@ -3,6 +3,7 @@ package testutil
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
@@ -14,6 +15,8 @@ import (
 	purchaseDto "github.com/novriyantoAli/cn-wallet/internal/application/purchase/dto"
 	transactionDto "github.com/novriyantoAli/cn-wallet/internal/application/transaction/dto"
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
+	userSecurityDto "github.com/novriyantoAli/cn-wallet/internal/application/user-security/dto"
+	userSecurityEntity "github.com/novriyantoAli/cn-wallet/internal/application/user-security/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletDto "github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
@@ -590,4 +593,80 @@ func (m *MockPurchaseService) GetPurchaseHistory(ctx context.Context, filter *pu
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*purchaseDto.PurchaseHistoryList), args.Error(1)
+}
+
+// MockUserSecurityRepository is a mock implementation of UserSecurityRepository
+type MockUserSecurityRepository struct {
+	mock.Mock
+}
+
+func (m *MockUserSecurityRepository) GetByUserID(ctx context.Context, userID uint) (*userSecurityEntity.UserSecurity, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userSecurityEntity.UserSecurity), args.Error(1)
+}
+
+func (m *MockUserSecurityRepository) Create(ctx context.Context, security *userSecurityEntity.UserSecurity) error {
+	args := m.Called(ctx, security)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityRepository) UpdatePIN(ctx context.Context, userID uint, pinHash string) error {
+	args := m.Called(ctx, userID, pinHash)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityRepository) IncrementFailedAttempt(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityRepository) ResetFailedAttempt(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityRepository) LockAccount(ctx context.Context, userID uint, duration time.Duration) error {
+	args := m.Called(ctx, userID, duration)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityRepository) Unlock(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityRepository) Delete(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+// MockUserSecurityService is a mock implementation of UserSecurityService
+type MockUserSecurityService struct {
+	mock.Mock
+}
+
+func (m *MockUserSecurityService) SetPIN(ctx context.Context, req *userSecurityDto.SetPINRequest) error {
+	args := m.Called(ctx, req)
+	return args.Error(0)
+}
+
+func (m *MockUserSecurityService) VerifyPIN(ctx context.Context, req *userSecurityDto.VerifyPINRequest) (bool, error) {
+	args := m.Called(ctx, req)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockUserSecurityService) GetSecurity(ctx context.Context, userID uint) (*userSecurityDto.UserSecurityResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userSecurityDto.UserSecurityResponse), args.Error(1)
+}
+
+func (m *MockUserSecurityService) IsAccountLocked(ctx context.Context, userID uint) (bool, error) {
+	args := m.Called(ctx, userID)
+	return args.Bool(0), args.Error(1)
 }

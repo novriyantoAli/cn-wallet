@@ -591,7 +591,6 @@ func (s *oauthService) createOrUpdateUser(ctx context.Context, provider dto.OAut
 		IsActive: true,
 		Wallet: &walletEntity.Wallet{
 			Balance:   0,
-			PINHash:   "000000", // Default PIN (not hashed for now)
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},

@@ -48,7 +48,6 @@ func (s *userService) CreateUser(ctx context.Context, req *dto.CreateUserRequest
 	// Create wallet entity for the new user
 	wallet := &walletEntity.Wallet{
 		Balance:   0,
-		PINHash:   "000000", // Default PIN (not hashed for now)
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

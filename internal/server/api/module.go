@@ -11,6 +11,7 @@ import (
 	productHandler "github.com/novriyantoAli/cn-wallet/internal/application/product/handler"
 	providerHandler "github.com/novriyantoAli/cn-wallet/internal/application/provider/handler"
 	transactionHandler "github.com/novriyantoAli/cn-wallet/internal/application/transaction/handler"
+	userSecurityHandler "github.com/novriyantoAli/cn-wallet/internal/application/user-security/handler"
 	userHandler "github.com/novriyantoAli/cn-wallet/internal/application/user/handler"
 	walletHandler "github.com/novriyantoAli/cn-wallet/internal/application/wallet/handler"
 	wifiVoucherHandler "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/handler"
@@ -20,20 +21,22 @@ import (
 )
 
 type Server struct {
-	oauthHandler       *oauthHandler.OAuthHandler
-	userHandler        *userHandler.UserHandler
-	paymentHandler     *paymentHandler.PaymentHandler
-	productHandler     *productHandler.ProductHandler
-	providerHandler    *providerHandler.ProviderHandler
-	walletHandler      *walletHandler.WalletHandler
-	wifiVoucherHandler *wifiVoucherHandler.WifiVoucherHandler
-	transactionHandler *transactionHandler.TransactionHandler
-	logger             *zap.Logger
+	oauthHandler        *oauthHandler.OAuthHandler
+	userHandler         *userHandler.UserHandler
+	userSecurityHandler *userSecurityHandler.UserSecurityHandler
+	paymentHandler      *paymentHandler.PaymentHandler
+	productHandler      *productHandler.ProductHandler
+	providerHandler     *providerHandler.ProviderHandler
+	walletHandler       *walletHandler.WalletHandler
+	wifiVoucherHandler  *wifiVoucherHandler.WifiVoucherHandler
+	transactionHandler  *transactionHandler.TransactionHandler
+	logger              *zap.Logger
 }
 
 func NewServer(
 	oauthHandler *oauthHandler.OAuthHandler,
 	userHandler *userHandler.UserHandler,
+	userSecurityHandler *userSecurityHandler.UserSecurityHandler,
 	paymentHandler *paymentHandler.PaymentHandler,
 	productHandler *productHandler.ProductHandler,
 	providerHandler *providerHandler.ProviderHandler,
@@ -43,15 +46,16 @@ func NewServer(
 	logger *zap.Logger,
 ) *Server {
 	return &Server{
-		oauthHandler:       oauthHandler,
-		userHandler:        userHandler,
-		paymentHandler:     paymentHandler,
-		productHandler:     productHandler,
-		providerHandler:    providerHandler,
-		walletHandler:      walletHandler,
-		wifiVoucherHandler: wifiVoucherHandler,
-		transactionHandler: transactionHandler,
-		logger:             logger,
+		oauthHandler:        oauthHandler,
+		userHandler:         userHandler,
+		userSecurityHandler: userSecurityHandler,
+		paymentHandler:      paymentHandler,
+		productHandler:      productHandler,
+		providerHandler:     providerHandler,
+		walletHandler:       walletHandler,
+		wifiVoucherHandler:  wifiVoucherHandler,
+		transactionHandler:  transactionHandler,
+		logger:              logger,
 	}
 }
 
@@ -73,6 +77,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.registerHealthRoutes(api)
 		s.oauthHandler.RegisterRoutes(router)
 		s.userHandler.RegisterRoutes(api)
+		s.userSecurityHandler.RegisterRoutes(api)
 		s.paymentHandler.RegisterRoutes(api)
 		s.productHandler.RegisterRoutes(api)
 		s.providerHandler.RegisterRoutes(api)

@@ -42,7 +42,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		// Mock expectations
 		mockRepo.On("EmailExists", ctx, req.Email).Return(false, nil)
 		mockRepo.On("Create", ctx, mock.MatchedBy(func(u *entity.User) bool {
-			return u.Email == req.Email && u.Wallet != nil && u.Wallet.Balance == 0 && u.Wallet.PINHash == "000000"
+			return u.Email == req.Email && u.Wallet != nil && u.Wallet.Balance == 0
 		})).Return(nil).Run(func(args mock.Arguments) {
 			user := args.Get(1).(*entity.User)
 			user.ID = 1

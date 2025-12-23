@@ -2,10 +2,7 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
-	"fmt"
-	"regexp"
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/wallet/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
@@ -19,8 +16,6 @@ type WalletService interface {
 	CreateWallet(ctx context.Context, req *dto.CreateWalletRequest) (*entity.Wallet, error)
 	GetWalletByUserID(ctx context.Context, userID uint) (*dto.GetWalletResponse, error)
 	GetWalletByID(ctx context.Context, id uint) (*dto.GetWalletResponse, error)
-	SetPIN(ctx context.Context, userID uint, req *dto.SetPINRequest) error
-	VerifyPIN(ctx context.Context, userID uint, pin string) error
 	AddBalance(ctx context.Context, userID uint, amount float64, description string) (*dto.GetWalletResponse, error)
 	DeductBalance(ctx context.Context, userID uint, amount float64, description string) (*dto.GetWalletResponse, error)
 	DeleteWallet(ctx context.Context, userID uint) error
@@ -41,20 +36,10 @@ func NewWalletService(repo repository.WalletRepository, logger *zap.Logger) Wall
 
 // CreateWallet creates a new wallet for a user
 func (s *walletService) CreateWallet(ctx context.Context, req *dto.CreateWalletRequest) (*entity.Wallet, error) {
-	// Validate PIN format
-	if err := validatePIN(req.PIN); err != nil {
-		s.logger.Error("Invalid PIN format", zap.Error(err), zap.Uint("user_id", req.UserID))
-		return nil, err
-	}
-
-	// Hash the PIN
-	pinHash := hashPIN(req.PIN)
-
 	// Create wallet entity
 	wallet := &entity.Wallet{
 		UserID:  req.UserID,
 		Balance: 0.00,
-		PINHash: pinHash,
 	}
 
 	// Save to repository
@@ -87,54 +72,6 @@ func (s *walletService) GetWalletByID(ctx context.Context, id uint) (*dto.GetWal
 	}
 
 	return s.entityToResponse(wallet), nil
-}
-
-// SetPIN sets or updates the wallet PIN
-func (s *walletService) SetPIN(ctx context.Context, userID uint, req *dto.SetPINRequest) error {
-	// Get wallet to verify current PIN
-	wallet, err := s.repo.GetWalletByUserID(ctx, userID)
-	if err != nil {
-		s.logger.Error("Failed to get wallet", zap.Error(err), zap.Uint("user_id", userID))
-		return err
-	}
-
-	// Verify current PIN
-	if !verifyPIN(req.CurrentPIN, wallet.PINHash) {
-		s.logger.Warn("Invalid current PIN", zap.Uint("user_id", userID))
-		return errors.New("invalid current PIN")
-	}
-
-	// Validate new PIN format
-	if err := validatePIN(req.NewPIN); err != nil {
-		s.logger.Error("Invalid new PIN format", zap.Error(err), zap.Uint("user_id", userID))
-		return err
-	}
-
-	// Hash and update PIN
-	newPINHash := hashPIN(req.NewPIN)
-	if err := s.repo.UpdatePIN(ctx, userID, newPINHash); err != nil {
-		s.logger.Error("Failed to update PIN", zap.Error(err), zap.Uint("user_id", userID))
-		return err
-	}
-
-	s.logger.Info("PIN updated successfully", zap.Uint("user_id", userID))
-	return nil
-}
-
-// VerifyPIN verifies the wallet PIN
-func (s *walletService) VerifyPIN(ctx context.Context, userID uint, pin string) error {
-	wallet, err := s.repo.GetWalletByUserID(ctx, userID)
-	if err != nil {
-		s.logger.Error("Failed to get wallet", zap.Error(err), zap.Uint("user_id", userID))
-		return err
-	}
-
-	if !verifyPIN(pin, wallet.PINHash) {
-		s.logger.Warn("Invalid PIN", zap.Uint("user_id", userID))
-		return errors.New("invalid PIN")
-	}
-
-	return nil
 }
 
 // AddBalance adds funds to the wallet
@@ -225,31 +162,4 @@ func (s *walletService) entityToResponse(wallet *entity.Wallet) *dto.GetWalletRe
 		CreatedAt: wallet.CreatedAt,
 		UpdatedAt: wallet.UpdatedAt,
 	}
-}
-
-// Helper functions
-
-// validatePIN validates that PIN is exactly 6 numeric digits
-func validatePIN(pin string) error {
-	if len(pin) != 6 {
-		return errors.New("PIN must be exactly 6 digits")
-	}
-
-	matched, _ := regexp.MatchString(`^\d{6}$`, pin)
-	if !matched {
-		return errors.New("PIN must contain only numeric digits")
-	}
-
-	return nil
-}
-
-// hashPIN creates a SHA256 hash of the PIN
-func hashPIN(pin string) string {
-	hash := sha256.Sum256([]byte(pin))
-	return fmt.Sprintf("%x", hash)
-}
-
-// verifyPIN verifies a PIN against its hash
-func verifyPIN(pin string, hash string) bool {
-	return hashPIN(pin) == hash
 }
