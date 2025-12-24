@@ -166,7 +166,7 @@ func (s *productService) UpdateProduct(ctx context.Context, id uint, req *dto.Up
 	if req.IconURL != "" {
 		product.IconURL = req.IconURL
 	}
-	if req.DurationHours >= 0 {
+	if req.DurationHours != nil && *req.DurationHours >= 0 {
 		product.DurationHours = req.DurationHours
 	}
 	product.UpdatedAt = time.Now()

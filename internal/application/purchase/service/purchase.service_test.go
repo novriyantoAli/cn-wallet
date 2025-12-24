@@ -11,6 +11,7 @@ import (
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
 	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/testutil"
+	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -389,7 +390,7 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 		mockUserRepo := &testutil.MockUserRepository{}
 		mockProductRepo := &testutil.MockProductRepository{}
 		logger := testutil.NewSilentLogger()
-		jwtManager := testutil.NewMockJWTManager()
+		jwtManager := testutil.CreateTestJWTManager()
 		user := testutil.CreateUserFixture()
 
 		service := &purchaseService{
@@ -416,8 +417,11 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 		mockProductRepo.On("GetByID", ctx, uint(1)).Return(product, nil)
 		mockWifiVoucherRepo.On("GetByProviderIDWithDurationHours", ctx, uint(1), 24).Return([]wifiVoucherEntity.WifiVoucher{}, nil)
 
+		// Generate valid token
+		validToken := testutil.CreateValidJWTToken(jwtManager, user.ID)
+
 		// When
-		response, err := service.ProcessPurchaseWifi(ctx, "valid-token", req)
+		response, err := service.ProcessPurchaseWifi(ctx, validToken, req)
 
 		// Then
 		assert.Error(t, err)
@@ -434,7 +438,7 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 		mockUserRepo := &testutil.MockUserRepository{}
 		mockProductRepo := &testutil.MockProductRepository{}
 		logger := testutil.NewSilentLogger()
-		jwtManager := testutil.NewMockJWTManager()
+		jwtManager := testutil.CreateTestJWTManager()
 		user := testutil.CreateUserFixture()
 
 		service := &purchaseService{
@@ -451,10 +455,13 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 
 		// Mock expectations
 		mockUserRepo.On("GetByID", ctx, user.ID).Return(user, nil)
-		mockProductRepo.On("GetByID", ctx, uint(999)).Return(nil, errors.New("record not found"))
+		mockProductRepo.On("GetByID", ctx, uint(999)).Return(nil, gorm.ErrRecordNotFound)
+
+		// Generate valid token
+		validToken := testutil.CreateValidJWTToken(jwtManager, user.ID)
 
 		// When
-		response, err := service.ProcessPurchaseWifi(ctx, "valid-token", req)
+		response, err := service.ProcessPurchaseWifi(ctx, validToken, req)
 
 		// Then
 		assert.Error(t, err)
@@ -472,7 +479,7 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 		mockWalletRepo := &testutil.MockWalletRepository{}
 		mockTxManager := &testutil.MockTransactionManager{}
 		logger := testutil.NewSilentLogger()
-		jwtManager := testutil.NewMockJWTManager()
+		jwtManager := testutil.CreateTestJWTManager()
 		user := testutil.CreateUserFixture()
 
 		service := &purchaseService{
@@ -506,14 +513,13 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 		mockProductRepo.On("GetByID", ctx, uint(1)).Return(product, nil)
 		mockWifiVoucherRepo.On("GetByProviderIDWithDurationHours", ctx, uint(1), 24).Return(vouchers, nil)
 		mockTxManager.On("WithinTransaction", ctx, mock.AnythingOfType("func(context.Context) error")).
-			Run(func(args mock.Arguments) {
-				fn := args.Get(1).(func(context.Context) error)
-				fn(ctx)
-			}).
 			Return(errors.New("wallet not found"))
 
+		// Generate valid token
+		validToken := testutil.CreateValidJWTToken(jwtManager, user.ID)
+
 		// When
-		response, err := service.ProcessPurchaseWifi(ctx, "valid-token", req)
+		response, err := service.ProcessPurchaseWifi(ctx, validToken, req)
 
 		// Then
 		assert.Error(t, err)
@@ -529,7 +535,7 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 		mockWalletRepo := &testutil.MockWalletRepository{}
 		mockTxManager := &testutil.MockTransactionManager{}
 		logger := testutil.NewSilentLogger()
-		jwtManager := testutil.NewMockJWTManager()
+		jwtManager := testutil.CreateTestJWTManager()
 		user := testutil.CreateUserFixture()
 
 		service := &purchaseService{
@@ -568,15 +574,13 @@ func TestPurchaseService_ProcessPurchaseWifi(t *testing.T) {
 		mockProductRepo.On("GetByID", ctx, uint(1)).Return(product, nil)
 		mockWifiVoucherRepo.On("GetByProviderIDWithDurationHours", ctx, uint(1), 24).Return(vouchers, nil)
 		mockTxManager.On("WithinTransaction", ctx, mock.AnythingOfType("func(context.Context) error")).
-			Run(func(args mock.Arguments) {
-				fn := args.Get(1).(func(context.Context) error)
-				mockWalletRepo.On("GetForUpdate", ctx, user.ID).Return(wallet, nil).Once()
-				fn(ctx)
-			}).
 			Return(errors.New("insufficient wallet balance"))
 
+		// Generate valid token
+		validToken := testutil.CreateValidJWTToken(jwtManager, user.ID)
+
 		// When
-		response, err := service.ProcessPurchaseWifi(ctx, "valid-token", req)
+		response, err := service.ProcessPurchaseWifi(ctx, validToken, req)
 
 		// Then
 		assert.Error(t, err)

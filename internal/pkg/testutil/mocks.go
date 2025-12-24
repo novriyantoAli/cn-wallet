@@ -744,6 +744,20 @@ func (m *MockWifiVoucherRepository) CodeExists(ctx context.Context, code string)
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockWifiVoucherRepository) GetByProviderAndDurationHours(ctx context.Context, providerID uint, durationHours int, filter *wifiVoucherDto.WifiVoucherFilter) ([]wifiVoucherEntity.WifiVoucher, int64, error) {
+	args := m.Called(ctx, providerID, durationHours, filter)
+	var vouchers []wifiVoucherEntity.WifiVoucher
+	if args.Get(0) != nil {
+		vouchers = args.Get(0).([]wifiVoucherEntity.WifiVoucher)
+	}
+
+	var count int64
+	if args.Get(1) != nil {
+		count = args.Get(1).(int64)
+	}
+	return vouchers, count, args.Error(2)
+}
+
 func (m *MockWifiVoucherRepository) GetByProviderIDWithDurationHours(ctx context.Context, providerID uint, durationHours int) ([]wifiVoucherEntity.WifiVoucher, error) {
 	args := m.Called(ctx, providerID, durationHours)
 	var vouchers []wifiVoucherEntity.WifiVoucher

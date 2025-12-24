@@ -60,6 +60,14 @@ func (m *mockWifiVoucherRepository) CodeExists(ctx context.Context, code string)
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *mockWifiVoucherRepository) GetByProviderAndDurationHours(ctx context.Context, providerID uint, durationHours int, filter *dto.WifiVoucherFilter) ([]entity.WifiVoucher, int64, error) {
+	args := m.Called(ctx, providerID, durationHours, filter)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]entity.WifiVoucher), args.Get(1).(int64), args.Error(2)
+}
+
 func (m *mockWifiVoucherRepository) GetByProviderIDWithDurationHours(ctx context.Context, providerID uint, durationHours int) ([]entity.WifiVoucher, error) {
 	args := m.Called(ctx, providerID, durationHours)
 	if args.Get(0) == nil {
