@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
@@ -31,6 +32,7 @@ func SetupTestDB() (*gorm.DB, error) {
 		&walletEntity.Wallet{},
 		&providerEntity.Provider{},
 		&productEntity.Product{},
+		&paylaterEntity.PaylaterAccount{},
 		&wifiVoucherEntity.WifiVoucher{},
 		&transactionEntity.Transaction{},
 		&securityEntity.UserSecurity{},

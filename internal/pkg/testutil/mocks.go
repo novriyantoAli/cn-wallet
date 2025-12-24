@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	paylaterDto "github.com/novriyantoAli/cn-wallet/internal/application/paylater/dto"
+	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productDto "github.com/novriyantoAli/cn-wallet/internal/application/product/dto"
@@ -773,4 +775,124 @@ func (m *MockWifiVoucherRepository) GetForUpdate(ctx context.Context, id uint) (
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*wifiVoucherEntity.WifiVoucher), args.Error(1)
+}
+
+// MockPaylaterAccountRepository is a mock implementation of PaylaterAccountRepository
+type MockPaylaterAccountRepository struct {
+	mock.Mock
+}
+
+func (m *MockPaylaterAccountRepository) CreateAccount(ctx context.Context, account *paylaterEntity.PaylaterAccount) error {
+	args := m.Called(ctx, account)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterAccountRepository) GetAccountByUserID(ctx context.Context, userID uint) (*paylaterEntity.PaylaterAccount, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterEntity.PaylaterAccount), args.Error(1)
+}
+
+func (m *MockPaylaterAccountRepository) GetAccountByID(ctx context.Context, id uint) (*paylaterEntity.PaylaterAccount, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterEntity.PaylaterAccount), args.Error(1)
+}
+
+func (m *MockPaylaterAccountRepository) GetForUpdate(ctx context.Context, userID uint) (*paylaterEntity.PaylaterAccount, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterEntity.PaylaterAccount), args.Error(1)
+}
+
+func (m *MockPaylaterAccountRepository) UpdateAccount(ctx context.Context, account *paylaterEntity.PaylaterAccount) error {
+	args := m.Called(ctx, account)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterAccountRepository) UpdateCreditLimit(ctx context.Context, userID uint, creditLimit int64) error {
+	args := m.Called(ctx, userID, creditLimit)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterAccountRepository) UpdateStatus(ctx context.Context, userID uint, status string) error {
+	args := m.Called(ctx, userID, status)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterAccountRepository) DeleteAccount(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
+
+// MockPaylaterAccountService is a mock implementation of PaylaterAccountService
+type MockPaylaterAccountService struct {
+	mock.Mock
+}
+
+func (m *MockPaylaterAccountService) CreateAccount(ctx context.Context, req *paylaterDto.CreatePaylaterAccountRequest) (*paylaterEntity.PaylaterAccount, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterEntity.PaylaterAccount), args.Error(1)
+}
+
+func (m *MockPaylaterAccountService) GetAccountByUserID(ctx context.Context, userID uint) (*paylaterDto.GetPaylaterAccountResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterAccountResponse), args.Error(1)
+}
+
+func (m *MockPaylaterAccountService) GetAccountByID(ctx context.Context, id uint) (*paylaterDto.GetPaylaterAccountResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterAccountResponse), args.Error(1)
+}
+
+func (m *MockPaylaterAccountService) UpdateCreditLimit(ctx context.Context, userID uint, req *paylaterDto.UpdateCreditLimitRequest) (*paylaterDto.GetPaylaterAccountResponse, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterAccountResponse), args.Error(1)
+}
+
+func (m *MockPaylaterAccountService) UpdateStatus(ctx context.Context, userID uint, req *paylaterDto.UpdateStatusRequest) (*paylaterDto.GetPaylaterAccountResponse, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterAccountResponse), args.Error(1)
+}
+
+func (m *MockPaylaterAccountService) UseCredit(ctx context.Context, userID uint, req *paylaterDto.UseCreditRequest) (*paylaterDto.UseCreditResponse, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.UseCreditResponse), args.Error(1)
+}
+
+func (m *MockPaylaterAccountService) Repayment(ctx context.Context, userID uint, req *paylaterDto.RepaymentRequest) (*paylaterDto.RepaymentResponse, error) {
+	args := m.Called(ctx, userID, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.RepaymentResponse), args.Error(1)
+}
+
+func (m *MockPaylaterAccountService) DeleteAccount(ctx context.Context, userID uint) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
 }
