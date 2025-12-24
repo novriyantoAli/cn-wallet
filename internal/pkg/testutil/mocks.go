@@ -241,6 +241,14 @@ func (m *MockWalletService) DeductBalance(ctx context.Context, userID uint, amou
 	return args.Get(0).(*walletDto.GetWalletResponse), args.Error(1)
 }
 
+func (m *MockWalletService) Transfer(ctx context.Context, token string, req *walletDto.TransferRequest) (*walletDto.TransferResponse, error) {
+	args := m.Called(ctx, token, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.TransferResponse), args.Error(1)
+}
+
 func (m *MockWalletService) DeleteWallet(ctx context.Context, userID uint) error {
 	args := m.Called(ctx, userID)
 	return args.Error(0)

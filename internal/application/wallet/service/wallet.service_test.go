@@ -20,7 +20,10 @@ func TestWalletService_CreateWallet(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		req := &dto.CreateWalletRequest{
 			UserID: 1,
@@ -49,7 +52,10 @@ func TestWalletService_CreateWallet(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		req := &dto.CreateWalletRequest{
 			UserID: 1,
@@ -76,7 +82,10 @@ func TestWalletService_GetWalletByUserID(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		walletFixture := testutil.CreateWalletFixture()
 
@@ -98,7 +107,10 @@ func TestWalletService_GetWalletByUserID(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// Mock expectations
 		mockRepo.On("GetWalletByUserID", ctx, uint(9999)).Return(nil, errors.New("wallet not found"))
@@ -120,7 +132,10 @@ func TestWalletService_GetWalletByID(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		walletFixture := testutil.CreateWalletFixture()
 
@@ -142,7 +157,10 @@ func TestWalletService_GetWalletByID(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// Mock expectations
 		mockRepo.On("GetWalletByID", ctx, uint(9999)).Return(nil, errors.New("wallet not found"))
@@ -164,7 +182,10 @@ func TestWalletService_AddBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		walletFixture := testutil.CreateWalletFixture()
 		amount := 100.00
@@ -188,7 +209,10 @@ func TestWalletService_AddBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// When
 		response, err := service.AddBalance(ctx, 1, -100.00, "test")
@@ -203,7 +227,10 @@ func TestWalletService_AddBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// When
 		response, err := service.AddBalance(ctx, 1, 0.00, "test")
@@ -218,7 +245,10 @@ func TestWalletService_AddBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// Mock expectations
 		mockRepo.On("GetWalletByUserID", ctx, uint(9999)).Return(nil, errors.New("wallet not found"))
@@ -240,7 +270,10 @@ func TestWalletService_DeductBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		walletFixture := testutil.CreateWalletFixture()
 		amount := 100.00
@@ -264,7 +297,10 @@ func TestWalletService_DeductBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		walletFixture := testutil.CreateWalletFixture()
 
@@ -285,7 +321,10 @@ func TestWalletService_DeductBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// When
 		response, err := service.DeductBalance(ctx, 1, -100.00, "test")
@@ -300,7 +339,10 @@ func TestWalletService_DeductBalance(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// Mock expectations
 		mockRepo.On("GetWalletByUserID", ctx, uint(9999)).Return(nil, errors.New("wallet not found"))
@@ -322,7 +364,10 @@ func TestWalletService_DeleteWallet(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// Mock expectations
 		mockRepo.On("DeleteWallet", ctx, uint(1)).Return(nil)
@@ -339,7 +384,10 @@ func TestWalletService_DeleteWallet(t *testing.T) {
 		// Setup
 		mockRepo := &testutil.MockWalletRepository{}
 		logger := testutil.NewSilentLogger()
-		service := NewWalletService(mockRepo, logger)
+		jwtManager := testutil.NewMockJWTManager()
+		mockTxRepo := &testutil.MockTransactionRepository{}
+		txManager := &testutil.MockTransactionManager{}
+		service := NewWalletService(mockRepo, mockTxRepo, jwtManager, txManager, logger)
 
 		// Mock expectations
 		mockRepo.On("DeleteWallet", ctx, uint(1)).Return(errors.New("database error"))

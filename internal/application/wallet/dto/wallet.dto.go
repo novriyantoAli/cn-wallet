@@ -25,6 +25,22 @@ type UpdateBalanceRequest struct {
 	Description string  `json:"description"`
 }
 
+// TransferRequest represents a request to transfer balance between wallets
+type TransferRequest struct {
+	ToUserID    uint    `json:"to_user_id" binding:"required,gt=0"`
+	Amount      float64 `json:"amount" binding:"required,gt=0"`
+	Description string  `json:"description"`
+}
+
+// TransferResponse represents the response after a successful transfer
+type TransferResponse struct {
+	FromUserID  uint    `json:"from_user_id"`
+	ToUserID    uint    `json:"to_user_id"`
+	Amount      float64 `json:"amount"`
+	Description string  `json:"description,omitempty"`
+	Message     string  `json:"message"`
+}
+
 // GetWalletResponse represents wallet information response
 type GetWalletResponse struct {
 	ID        uint      `json:"id"`
