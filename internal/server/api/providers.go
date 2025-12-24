@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/oauth"
+	"github.com/novriyantoAli/cn-wallet/internal/application/paylater"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment"
 	"github.com/novriyantoAli/cn-wallet/internal/application/product"
 	"github.com/novriyantoAli/cn-wallet/internal/application/provider"
@@ -21,6 +22,7 @@ var Module = fx.Options(
 	user.Module,
 	usersecurity.Module,
 	payment.Module,
+	paylater.Module,
 	product.Module,
 	provider.Module,
 	purchase.Module,

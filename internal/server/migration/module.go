@@ -1,6 +1,7 @@
 package migration
 
 import (
+	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
@@ -35,6 +36,7 @@ func (s *Server) RunMigrations() error {
 		&userSecurityEntity.UserSecurity{},
 		&entity.Payment{},
 		&walletEntity.Wallet{},
+		&paylaterEntity.PaylaterAccount{},
 		&providerEntity.Provider{},
 		&productEntity.Product{},
 		&transactionEntity.Transaction{},
@@ -127,6 +129,7 @@ func (s *Server) DropTables() error {
 		&productEntity.Product{},
 		&providerEntity.Provider{},
 		&walletEntity.Wallet{},
+		&paylaterEntity.PaylaterAccount{},
 		&entity.Payment{},
 		&userEntity.User{},
 		&userSecurityEntity.UserSecurity{},
