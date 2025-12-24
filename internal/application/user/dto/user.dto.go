@@ -9,7 +9,7 @@ type CreateUserRequest struct {
 
 type UpdateUserRequest struct {
 	FullName string `json:"full_name" binding:"omitempty"`
-	Level    string `json:"level" binding:"omitempty,oneof=user agent admin"`
+	Level    string `json:"level" binding:"omitempty,oneof=user provider reseller admin"`
 	IsActive bool   `json:"is_active"`
 }
 

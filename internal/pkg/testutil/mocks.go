@@ -241,6 +241,14 @@ func (m *MockWalletService) DeductBalance(ctx context.Context, userID uint, amou
 	return args.Get(0).(*walletDto.GetWalletResponse), args.Error(1)
 }
 
+func (m *MockWalletService) Transfer(ctx context.Context, token string, req *walletDto.TransferRequest) (*walletDto.TransferResponse, error) {
+	args := m.Called(ctx, token, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*walletDto.TransferResponse), args.Error(1)
+}
+
 func (m *MockWalletService) DeleteWallet(ctx context.Context, userID uint) error {
 	args := m.Called(ctx, userID)
 	return args.Error(0)
@@ -589,12 +597,12 @@ func (m *MockPurchaseService) ProcessPurchase(ctx context.Context, token string,
 	return args.Get(0).(*purchaseDto.PurchaseResponse), args.Error(1)
 }
 
-func (m *MockPurchaseService) ProcessWifiPurchase(ctx context.Context, token string, req *purchaseDto.PurchaseWifiRequest) (*purchaseDto.PurchaseWifiResponse, error) {
+func (m *MockPurchaseService) ProcessPurchaseWifi(ctx context.Context, token string, req *purchaseDto.PurchaseWifiRequest) (*purchaseDto.PurchaseResponse, error) {
 	args := m.Called(ctx, token, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*purchaseDto.PurchaseWifiResponse), args.Error(1)
+	return args.Get(0).(*purchaseDto.PurchaseResponse), args.Error(1)
 }
 
 func (m *MockPurchaseService) GetPurchaseHistory(ctx context.Context, filter *purchaseDto.PurchaseHistoryFilter) (*purchaseDto.PurchaseHistoryList, error) {
@@ -736,16 +744,19 @@ func (m *MockWifiVoucherRepository) CodeExists(ctx context.Context, code string)
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockWifiVoucherRepository) GetByProviderAndDurationHours(ctx context.Context, providerID uint, durationHours int, filter *wifiVoucherDto.WifiVoucherFilter) ([]wifiVoucherEntity.WifiVoucher, int64, error) {
-	args := m.Called(ctx, providerID, durationHours, filter)
+func (m *MockWifiVoucherRepository) GetByProviderIDWithDurationHours(ctx context.Context, providerID uint, durationHours int) ([]wifiVoucherEntity.WifiVoucher, error) {
+	args := m.Called(ctx, providerID, durationHours)
 	var vouchers []wifiVoucherEntity.WifiVoucher
 	if args.Get(0) != nil {
 		vouchers = args.Get(0).([]wifiVoucherEntity.WifiVoucher)
 	}
+	return vouchers, args.Error(1)
+}
 
-	var count int64
-	if args.Get(1) != nil {
-		count = args.Get(1).(int64)
+func (m *MockWifiVoucherRepository) GetForUpdate(ctx context.Context, id uint) (*wifiVoucherEntity.WifiVoucher, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
 	}
-	return vouchers, count, args.Error(2)
+	return args.Get(0).(*wifiVoucherEntity.WifiVoucher), args.Error(1)
 }

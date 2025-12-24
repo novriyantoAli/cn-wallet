@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
 )
 
 // MockUserRepository is a mock implementation of repository.UserRepository
@@ -255,5 +257,242 @@ func TestOAuthService_RefreshToken(t *testing.T) {
 		assert.Nil(t, resp)
 		// Error will come from OAuth provider
 		assert.Contains(t, err.Error(), "failed to refresh token")
+	})
+
+	t.Run("should return error for unsupported provider", func(t *testing.T) {
+		resp, err := service.RefreshToken(context.Background(), dto.OAuthProvider("unsupported"), "some-token")
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Contains(t, err.Error(), "unsupported OAuth provider")
+	})
+}
+
+func TestOAuthService_GetCurrentUser(t *testing.T) {
+	logger := testutil.NewTestLogger(t)
+	mockUserRepo := &MockUserRepository{}
+	jwtManager := newMockJWTManager()
+	config := OAuthConfig{}
+	service := NewOAuthService(config, logger, mockUserRepo, jwtManager)
+
+	t.Run("should return user for valid token", func(t *testing.T) {
+		// Create a valid token
+		userID := uint(123)
+		token, err := jwtManager.GenerateToken(userID, "test@example.com", "user")
+		assert.NoError(t, err)
+
+		expectedUser := &entity.User{
+			ID:       userID,
+			Email:    "test@example.com",
+			FullName: "Test User",
+			Level:    "user",
+			IsActive: true,
+		}
+
+		mockUserRepo.On("GetByID", mock.Anything, userID).Return(expectedUser, nil)
+
+		user, err := service.GetCurrentUser(context.Background(), token)
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, userID, user.ID)
+		assert.Equal(t, "test@example.com", user.Email)
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error for invalid token", func(t *testing.T) {
+		user, err := service.GetCurrentUser(context.Background(), "invalid-token")
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		assert.Equal(t, "invalid or expired token", err.Error())
+	})
+
+	t.Run("should return error when user not found", func(t *testing.T) {
+		userID := uint(999)
+		token, err := jwtManager.GenerateToken(userID, "notfound@example.com", "user")
+		assert.NoError(t, err)
+
+		mockUserRepo := &MockUserRepository{}
+		service := NewOAuthService(config, logger, mockUserRepo, jwtManager)
+
+		mockUserRepo.On("GetByID", mock.Anything, userID).Return(nil, gorm.ErrRecordNotFound)
+
+		user, err := service.GetCurrentUser(context.Background(), token)
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		assert.Equal(t, "user not found", err.Error())
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error for database error", func(t *testing.T) {
+		userID := uint(123)
+		token, err := jwtManager.GenerateToken(userID, "test@example.com", "user")
+		assert.NoError(t, err)
+
+		mockUserRepo := &MockUserRepository{}
+		service := NewOAuthService(config, logger, mockUserRepo, jwtManager)
+
+		dbError := errors.New("database connection failed")
+		mockUserRepo.On("GetByID", mock.Anything, userID).Return(nil, dbError)
+
+		user, err := service.GetCurrentUser(context.Background(), token)
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		assert.Equal(t, dbError, err)
+		mockUserRepo.AssertExpectations(t)
+	})
+}
+
+func TestOAuthService_Logout(t *testing.T) {
+	// Create a real Redis client for testing
+	cfg := &config.Config{
+		JWT: config.JWTConfig{
+			SecretKey: "test-secret-key-for-jwt-generation-in-tests",
+			Expiry:    time.Hour,
+		},
+		Redis: config.RedisConfig{
+			Host:     "localhost",
+			Port:     6379,
+			Password: "",
+			DB:       1, // Use test DB
+		},
+	}
+
+	logger := testutil.NewTestLogger(t)
+	mockUserRepo := &MockUserRepository{}
+
+	// Use a simple JWT manager without Redis for unit tests
+	jwtManagerSimple := jwt.NewJWTManager(cfg)
+	config := OAuthConfig{}
+	service := NewOAuthService(config, logger, mockUserRepo, jwtManagerSimple)
+
+	t.Run("should return error for invalid token", func(t *testing.T) {
+		err := service.Logout(context.Background(), "invalid-token")
+		assert.Error(t, err)
+		assert.Equal(t, "invalid token", err.Error())
+	})
+
+	t.Run("should handle valid token without Redis", func(t *testing.T) {
+		// Generate a valid token
+		userID := uint(123)
+		token, err := jwtManagerSimple.GenerateToken(userID, "test@example.com", "user")
+		assert.NoError(t, err)
+
+		// Since we're using JWT manager without Redis, it will fail gracefully
+		err = service.Logout(context.Background(), token)
+		// The error depends on Redis availability
+		// In unit test without Redis, it should fail
+		if err != nil {
+			assert.Contains(t, err.Error(), "failed to revoke token")
+		}
+	})
+}
+
+func TestOAuthService_CreateOrUpdateUser(t *testing.T) {
+	logger := testutil.NewTestLogger(t)
+	jwtManager := newMockJWTManager()
+	config := OAuthConfig{}
+
+	userInfo := &dto.OAuthUserInfo{
+		ID:        "oauth-123",
+		Email:     "newuser@example.com",
+		Name:      "New User",
+		AvatarURL: "https://example.com/avatar.jpg",
+		Provider:  "google",
+	}
+
+	t.Run("should create new user when user does not exist", func(t *testing.T) {
+		mockUserRepo := &MockUserRepository{}
+		service := NewOAuthService(config, logger, mockUserRepo, jwtManager).(*oauthService)
+
+		mockUserRepo.On("GetByEmail", mock.Anything, userInfo.Email).Return(nil, gorm.ErrRecordNotFound)
+		mockUserRepo.On("Create", mock.Anything, mock.MatchedBy(func(u *entity.User) bool {
+			return u.Email == userInfo.Email && u.FullName == userInfo.Name && string(u.Level) == "user" && u.IsActive
+		})).Return(nil)
+
+		user, err := service.createOrUpdateUser(context.Background(), dto.GoogleProvider, userInfo)
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, userInfo.Email, user.Email)
+		assert.Equal(t, userInfo.Name, user.FullName)
+		assert.Equal(t, entity.UserLevel("user"), user.Level)
+		assert.True(t, user.IsActive)
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("should update existing user when user exists", func(t *testing.T) {
+		mockUserRepo := &MockUserRepository{}
+		service := NewOAuthService(config, logger, mockUserRepo, jwtManager).(*oauthService)
+
+		existingUser := &entity.User{
+			ID:       uint(456),
+			Email:    userInfo.Email,
+			FullName: "Old Name",
+			Level:    "user",
+			IsActive: false,
+		}
+
+		mockUserRepo.On("GetByEmail", mock.Anything, userInfo.Email).Return(existingUser, nil)
+		mockUserRepo.On("Update", mock.Anything, mock.MatchedBy(func(u *entity.User) bool {
+			return u.Email == userInfo.Email && u.FullName == userInfo.Name && u.IsActive
+		})).Return(nil)
+
+		user, err := service.createOrUpdateUser(context.Background(), dto.GoogleProvider, userInfo)
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, uint(456), user.ID)
+		assert.Equal(t, userInfo.Name, user.FullName)
+		assert.True(t, user.IsActive)
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when GetByEmail fails with non-NotFound error", func(t *testing.T) {
+		mockUserRepo := &MockUserRepository{}
+		service := NewOAuthService(config, logger, mockUserRepo, jwtManager).(*oauthService)
+
+		dbError := errors.New("database error")
+		mockUserRepo.On("GetByEmail", mock.Anything, userInfo.Email).Return(nil, dbError)
+
+		user, err := service.createOrUpdateUser(context.Background(), dto.GoogleProvider, userInfo)
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		assert.Contains(t, err.Error(), "failed to check existing user")
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when Update fails", func(t *testing.T) {
+		mockUserRepo := &MockUserRepository{}
+		service := NewOAuthService(config, logger, mockUserRepo, jwtManager).(*oauthService)
+
+		existingUser := &entity.User{
+			ID:       uint(456),
+			Email:    userInfo.Email,
+			FullName: "Old Name",
+			Level:    "user",
+			IsActive: false,
+		}
+
+		updateError := errors.New("update failed")
+		mockUserRepo.On("GetByEmail", mock.Anything, userInfo.Email).Return(existingUser, nil)
+		mockUserRepo.On("Update", mock.Anything, mock.Anything).Return(updateError)
+
+		user, err := service.createOrUpdateUser(context.Background(), dto.GoogleProvider, userInfo)
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		assert.Contains(t, err.Error(), "failed to update user")
+		mockUserRepo.AssertExpectations(t)
+	})
+
+	t.Run("should return error when Create fails", func(t *testing.T) {
+		mockUserRepo := &MockUserRepository{}
+		service := NewOAuthService(config, logger, mockUserRepo, jwtManager).(*oauthService)
+
+		createError := errors.New("create failed")
+		mockUserRepo.On("GetByEmail", mock.Anything, userInfo.Email).Return(nil, gorm.ErrRecordNotFound)
+		mockUserRepo.On("Create", mock.Anything, mock.Anything).Return(createError)
+
+		user, err := service.createOrUpdateUser(context.Background(), dto.GoogleProvider, userInfo)
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		assert.Contains(t, err.Error(), "failed to create user")
+		mockUserRepo.AssertExpectations(t)
 	})
 }

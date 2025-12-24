@@ -70,6 +70,11 @@ func (m *MockOAuthService) GetCurrentUser(ctx context.Context, token string) (*e
 	return args.Get(0).(*entity.User), args.Error(1)
 }
 
+func (m *MockOAuthService) Logout(ctx context.Context, token string) error {
+	args := m.Called(ctx, token)
+	return args.Error(0)
+}
+
 func TestOAuthHandler_GetAuthorizationURL(t *testing.T) {
 	logger := testutil.NewTestLogger(t)
 	mockService := new(MockOAuthService)
@@ -534,6 +539,136 @@ func TestOAuthHandler_GetCurrentUser(t *testing.T) {
 		handler.GetCurrentUser(ginCtx)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+		mockService.AssertExpectations(t)
+	})
+}
+
+func TestOAuthHandler_Logout(t *testing.T) {
+	logger := testutil.NewTestLogger(t)
+	mockService := new(MockOAuthService)
+
+	t.Run("should logout successfully with valid token", func(t *testing.T) {
+		ctx := context.Background()
+		token := "valid_jwt_token"
+
+		mockService.On("Logout", ctx, token).
+			Return(nil).
+			Once()
+
+		handler := NewOAuthHandler(mockService, logger)
+		w := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(w)
+		ginCtx.Request = httptest.NewRequest("DELETE", "/oauth/deauthenticate", nil)
+		ginCtx.Request.Header.Set("Authorization", "Bearer "+token)
+
+		handler.Logout(ginCtx)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Logout successful", response["message"])
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should return 400 when authorization header is missing", func(t *testing.T) {
+		handler := NewOAuthHandler(mockService, logger)
+		w := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(w)
+		ginCtx.Request = httptest.NewRequest("DELETE", "/oauth/deauthenticate", nil)
+
+		handler.Logout(ginCtx)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Authorization header is required", response["error"])
+	})
+
+	t.Run("should return 400 when authorization header format is invalid", func(t *testing.T) {
+		handler := NewOAuthHandler(mockService, logger)
+		w := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(w)
+		ginCtx.Request = httptest.NewRequest("DELETE", "/oauth/deauthenticate", nil)
+		ginCtx.Request.Header.Set("Authorization", "InvalidFormat token123")
+
+		handler.Logout(ginCtx)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Invalid authorization header format", response["error"])
+	})
+
+	t.Run("should return 400 when token is empty", func(t *testing.T) {
+		handler := NewOAuthHandler(mockService, logger)
+		w := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(w)
+		ginCtx.Request = httptest.NewRequest("DELETE", "/oauth/deauthenticate", nil)
+		ginCtx.Request.Header.Set("Authorization", "Bearer ")
+
+		handler.Logout(ginCtx)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Invalid authorization header format", response["error"])
+	})
+
+	t.Run("should return 401 when token is invalid", func(t *testing.T) {
+		ctx := context.Background()
+		token := "invalid_token"
+
+		mockService.On("Logout", ctx, token).
+			Return(errors.New("invalid token")).
+			Once()
+
+		handler := NewOAuthHandler(mockService, logger)
+		w := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(w)
+		ginCtx.Request = httptest.NewRequest("DELETE", "/oauth/deauthenticate", nil)
+		ginCtx.Request.Header.Set("Authorization", "Bearer "+token)
+
+		handler.Logout(ginCtx)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "invalid token", response["error"])
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should return 500 when logout service fails", func(t *testing.T) {
+		ctx := context.Background()
+		token := "valid_token"
+
+		mockService.On("Logout", ctx, token).
+			Return(errors.New("failed to revoke token")).
+			Once()
+
+		handler := NewOAuthHandler(mockService, logger)
+		w := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(w)
+		ginCtx.Request = httptest.NewRequest("DELETE", "/oauth/deauthenticate", nil)
+		ginCtx.Request.Header.Set("Authorization", "Bearer "+token)
+
+		handler.Logout(ginCtx)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Failed to logout", response["error"])
 		mockService.AssertExpectations(t)
 	})
 }

@@ -134,7 +134,7 @@ func (s *userService) UpdateUser(ctx context.Context, id uint, req *dto.UpdateUs
 		user.FullName = req.FullName
 	}
 	if req.Level != "" {
-		user.Level = req.Level
+		user.Level = entity.UserLevel(req.Level)
 	}
 	user.IsActive = req.IsActive
 	user.UpdatedAt = time.Now()
@@ -175,7 +175,7 @@ func (s *userService) entityToResponse(user *entity.User) *dto.UserResponse {
 		ID:        user.ID,
 		Email:     user.Email,
 		FullName:  user.FullName,
-		Level:     user.Level,
+		Level:     user.Level.String(),
 		IsActive:  user.IsActive,
 		Wallet:    walletInfo,
 		CreatedAt: user.CreatedAt,

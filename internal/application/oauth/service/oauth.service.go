@@ -82,6 +82,9 @@ type OAuthService interface {
 
 	// RefreshToken refreshes the access token using refresh token
 	RefreshToken(ctx context.Context, provider dto.OAuthProvider, refreshToken string) (*dto.OAuthTokenResponse, error)
+
+	// Logout revokes the provided token
+	Logout(ctx context.Context, token string) error
 }
 
 type oauthService struct {
@@ -348,6 +351,25 @@ func (s *oauthService) RefreshToken(ctx context.Context, provider dto.OAuthProvi
 		ExpiresIn:    expiresIn,
 		RefreshToken: newToken.RefreshToken,
 	}, nil
+}
+
+func (s *oauthService) Logout(ctx context.Context, token string) error {
+	// Verify token to get expiration time
+	claims, err := s.jwtManager.VerifyToken(token)
+	if err != nil {
+		s.logger.Warn("Failed to verify token for logout", zap.Error(err))
+		return errors.New("invalid token")
+	}
+
+	// Revoke the token using Redis
+	expirationTime := claims.ExpiresAt.Time
+	if err := s.jwtManager.RevokeToken(ctx, token, expirationTime); err != nil {
+		s.logger.Error("Failed to revoke token", zap.Error(err))
+		return errors.New("failed to revoke token")
+	}
+
+	s.logger.Info("Token revoked successfully", zap.Uint("user_id", claims.UserID))
+	return nil
 }
 
 // getGoogleUserInfo fetches user info from Google

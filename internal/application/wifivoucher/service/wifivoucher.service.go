@@ -55,7 +55,6 @@ func (s *wifiVoucherService) CreateWifiVoucher(ctx context.Context, req *dto.Cre
 		Password:      req.Password,
 		DurationHours: req.DurationHours,
 		BatchID:       req.BatchID,
-		ProviderID:    req.ProviderID,
 		Status:        entity.StatusAvailable,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
@@ -160,9 +159,6 @@ func (s *wifiVoucherService) UpdateWifiVoucher(ctx context.Context, id uint, req
 	}
 	if req.BatchID != "" {
 		wifiVoucher.BatchID = req.BatchID
-	}
-	if req.ProviderID > 0 {
-		wifiVoucher.ProviderID = req.ProviderID
 	}
 	if req.Status != "" {
 		wifiVoucher.Status = req.Status
@@ -286,7 +282,6 @@ func (s *wifiVoucherService) entityToResponse(wv *entity.WifiVoucher) *dto.WifiV
 		Password:      wv.Password,
 		DurationHours: wv.DurationHours,
 		BatchID:       wv.BatchID,
-		ProviderID:    wv.ProviderID,
 		Status:        wv.Status,
 		SoldToUserID:  wv.SoldToUserID,
 		SoldAt:        wv.SoldAt,

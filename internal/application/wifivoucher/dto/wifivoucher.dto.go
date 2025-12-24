@@ -10,7 +10,6 @@ type CreateWifiVoucherRequest struct {
 	Password      string `json:"password" binding:"max=50"`
 	DurationHours int    `json:"duration_hours" binding:"required,gt=0"`
 	BatchID       string `json:"batch_id" binding:"max=50"`
-	ProviderID    uint   `json:"provider_id" binding:"required"`
 }
 
 // UpdateWifiVoucherRequest represents the request body for updating a wifi voucher.
@@ -19,7 +18,6 @@ type UpdateWifiVoucherRequest struct {
 	Password      string     `json:"password" binding:"max=50"`
 	DurationHours int        `json:"duration_hours" binding:"gt=0"`
 	BatchID       string     `json:"batch_id" binding:"max=50"`
-	ProviderID    uint       `json:"provider_id"`
 	Status        string     `json:"status" binding:"omitempty,oneof=available sold used"`
 	SoldToUserID  *uint      `json:"sold_to_user_id"`
 	SoldAt        *time.Time `json:"sold_at"`
@@ -33,7 +31,6 @@ type WifiVoucherResponse struct {
 	Password      string     `json:"password"`
 	DurationHours int        `json:"duration_hours"`
 	BatchID       string     `json:"batch_id"`
-	ProviderID    uint       `json:"provider_id"`
 	Status        string     `json:"status"`
 	SoldToUserID  *uint      `json:"sold_to_user_id"`
 	SoldAt        *time.Time `json:"sold_at"`

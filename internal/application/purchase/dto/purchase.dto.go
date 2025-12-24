@@ -10,6 +10,11 @@ type PurchaseRequest struct {
 	Phone     string `json:"phone" binding:"required"`
 }
 
+// PurchaseWifiRequest represents a request to purchase a wifi voucher
+type PurchaseWifiRequest struct {
+	ProductID uint `json:"product_id" binding:"required,gt=0"`
+}
+
 // PurchaseResponse represents the response after a purchase attempt
 type PurchaseResponse struct {
 	TransactionID uuid.UUID `json:"transaction_id"`

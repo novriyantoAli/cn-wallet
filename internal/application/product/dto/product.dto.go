@@ -13,9 +13,9 @@ type CreateProductRequest struct {
 	Category      entity.ProductCategory `json:"category" binding:"required"`
 	PriceBasic    float64                `json:"price_basic" binding:"required,gt=0"`
 	PriceSell     float64                `json:"price_sell" binding:"required,gt=0"`
+	DurationHours *int                   `json:"duration_hours" binding:"omitempty"`
 	IsActive      bool                   `json:"is_active" binding:"omitempty"`
 	IconURL       string                 `json:"icon_url" binding:"omitempty"`
-	DurationHours int                    `json:"duration_hours" binding:"omitempty,gte=0"`
 }
 
 type UpdateProductRequest struct {
@@ -23,9 +23,9 @@ type UpdateProductRequest struct {
 	Category      entity.ProductCategory `json:"category" binding:"omitempty"`
 	PriceBasic    float64                `json:"price_basic" binding:"omitempty,gt=0"`
 	PriceSell     float64                `json:"price_sell" binding:"omitempty,gt=0"`
+	DurationHours *int                   `json:"duration_hours" binding:"omitempty"`
 	IsActive      bool                   `json:"is_active" binding:"omitempty"`
 	IconURL       string                 `json:"icon_url" binding:"omitempty"`
-	DurationHours int                    `json:"duration_hours" binding:"omitempty,gte=0"`
 }
 
 type ProviderInfo struct {
@@ -43,9 +43,9 @@ type ProductResponse struct {
 	Category      entity.ProductCategory `json:"category"`
 	PriceBasic    float64                `json:"price_basic"`
 	PriceSell     float64                `json:"price_sell"`
+	DurationHours *int                   `json:"duration_hours"`
 	IsActive      bool                   `json:"is_active"`
 	IconURL       string                 `json:"icon_url"`
-	DurationHours int                    `json:"duration_hours"`
 	CreatedAt     time.Time              `json:"created_at"`
 	UpdatedAt     time.Time              `json:"updated_at"`
 }

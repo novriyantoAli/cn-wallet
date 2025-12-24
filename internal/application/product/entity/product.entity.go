@@ -18,9 +18,9 @@ type Product struct {
 	Category      ProductCategory          `json:"category" gorm:"type:varchar(50);not null"`
 	PriceBasic    float64                  `json:"price_basic" gorm:"type:decimal(12,2);not null"`
 	PriceSell     float64                  `json:"price_sell" gorm:"type:decimal(12,2);not null"`
+	DurationHours *int                     `json:"duration_hours" gorm:"type:int"`
 	IsActive      bool                     `json:"is_active" gorm:"default:true"`
 	IconURL       string                   `json:"icon_url" gorm:"type:text"`
-	DurationHours int                      `json:"duration_hours"`
 	CreatedAt     time.Time                `json:"created_at" gorm:"autoCreateTime:milli"`
 	UpdatedAt     time.Time                `json:"updated_at" gorm:"autoUpdateTime:milli"`
 	DeletedAt     gorm.DeletedAt           `json:"deleted_at,omitempty" gorm:"index"`

@@ -21,8 +21,9 @@ import (
 func setupWalletHandler() (*WalletHandler, *testutil.MockWalletService) {
 	gin.SetMode(gin.TestMode)
 	mockService := &testutil.MockWalletService{}
+	jwtManager := testutil.NewMockJWTManager()
 	logger := testutil.NewSilentLogger()
-	handler := NewWalletHandler(mockService, logger)
+	handler := NewWalletHandler(mockService, jwtManager, logger)
 	return handler, mockService
 }
 

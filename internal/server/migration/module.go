@@ -1,6 +1,7 @@
 package migration
 
 import (
+	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
@@ -35,6 +36,7 @@ func (s *Server) RunMigrations() error {
 		&userSecurityEntity.UserSecurity{},
 		&entity.Payment{},
 		&walletEntity.Wallet{},
+		&paylaterEntity.PaylaterAccount{},
 		&providerEntity.Provider{},
 		&productEntity.Product{},
 		&transactionEntity.Transaction{},
@@ -69,15 +71,16 @@ func (s *Server) SeedData() error {
 	}
 
 	// Seed data for products table
+	p1 := 24
 	products := []productEntity.Product{
 		{
 			ProviderID:    1,
-			Name:          "CN Hotspot 1D",
-			Code:          "CNHOTSPOT1D",
-			DurationHours: 24,
+			Name:          "CN Hotspot 1GB",
+			Code:          "CNHOTSPOT1GB",
 			Category:      "wifi",
-			PriceBasic:    2000.00,
-			PriceSell:     3000.00,
+			DurationHours: &p1,
+			PriceBasic:    9000.00,
+			PriceSell:     10000.00,
 		},
 	}
 	err = s.db.Create(&products).Error
@@ -86,28 +89,31 @@ func (s *Server) SeedData() error {
 		return err
 	}
 
-	// Seed data for wifi vouchers table
+	// Seed data for wifi_voucher table
+	prov := uint(1)
 	wifiVouchers := []wifiVoucherEntity.WifiVoucher{
 		{
-			ProviderID:    1,
-			Code:          "CNHOTSPOT1DTEST",
+			ProviderID:    &prov,
+			Code:          "WIFI-VOUCHER-001",
+			Status:        "available",
 			DurationHours: 24,
-			Password:      "random1",
-			BatchID:       "ex1",
-			Status:        wifiVoucherEntity.StatusAvailable,
 		},
 		{
-			ProviderID:    1,
-			Code:          "CNHOTSPOT1DMONTH",
-			DurationHours: 744,
-			Password:      "random2",
-			BatchID:       "ex1",
-			Status:        wifiVoucherEntity.StatusAvailable,
+			ProviderID:    &prov,
+			Code:          "WIFI-VOUCHER-002",
+			Status:        "available",
+			DurationHours: 24,
+		},
+		{
+			ProviderID:    &prov,
+			Code:          "WIFI-VOUCHER-003",
+			Status:        "available",
+			DurationHours: 24,
 		},
 	}
 	err = s.db.Create(&wifiVouchers).Error
 	if err != nil {
-		s.logger.Error("Failed to seed data for wifi vouchers table", zap.Error(err))
+		s.logger.Error("Failed to seed data for wifi_voucher table", zap.Error(err))
 		return err
 	}
 
@@ -123,6 +129,7 @@ func (s *Server) DropTables() error {
 		&productEntity.Product{},
 		&providerEntity.Provider{},
 		&walletEntity.Wallet{},
+		&paylaterEntity.PaylaterAccount{},
 		&entity.Payment{},
 		&userEntity.User{},
 		&userSecurityEntity.UserSecurity{},

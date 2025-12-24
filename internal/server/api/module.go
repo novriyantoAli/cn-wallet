@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	oauthHandler "github.com/novriyantoAli/cn-wallet/internal/application/oauth/handler"
+	paylaterHandler "github.com/novriyantoAli/cn-wallet/internal/application/paylater/handler"
 	paymentHandler "github.com/novriyantoAli/cn-wallet/internal/application/payment/handler"
 	productHandler "github.com/novriyantoAli/cn-wallet/internal/application/product/handler"
 	providerHandler "github.com/novriyantoAli/cn-wallet/internal/application/provider/handler"
@@ -26,6 +27,7 @@ type Server struct {
 	userHandler         *userHandler.UserHandler
 	userSecurityHandler *userSecurityHandler.UserSecurityHandler
 	paymentHandler      *paymentHandler.PaymentHandler
+	paylaterHandler     *paylaterHandler.PaylaterAccountHandler
 	productHandler      *productHandler.ProductHandler
 	providerHandler     *providerHandler.ProviderHandler
 	purchaseHandler     *purchaseHandler.PurchaseHandler
@@ -40,6 +42,7 @@ func NewServer(
 	userHandler *userHandler.UserHandler,
 	userSecurityHandler *userSecurityHandler.UserSecurityHandler,
 	paymentHandler *paymentHandler.PaymentHandler,
+	paylaterHandler *paylaterHandler.PaylaterAccountHandler,
 	productHandler *productHandler.ProductHandler,
 	providerHandler *providerHandler.ProviderHandler,
 	purchaseHandler *purchaseHandler.PurchaseHandler,
@@ -53,6 +56,7 @@ func NewServer(
 		userHandler:         userHandler,
 		userSecurityHandler: userSecurityHandler,
 		paymentHandler:      paymentHandler,
+		paylaterHandler:     paylaterHandler,
 		productHandler:      productHandler,
 		providerHandler:     providerHandler,
 		purchaseHandler:     purchaseHandler,
@@ -83,6 +87,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.userHandler.RegisterRoutes(api)
 		s.userSecurityHandler.RegisterRoutes(api)
 		s.paymentHandler.RegisterRoutes(api)
+		s.paylaterHandler.RegisterRoutes(api)
 		s.productHandler.RegisterRoutes(api)
 		s.providerHandler.RegisterRoutes(api)
 		s.purchaseHandler.RegisterRoutes(api)
