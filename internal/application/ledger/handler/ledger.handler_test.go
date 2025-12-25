@@ -42,7 +42,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         50000,
 			Credit:        0,
@@ -51,7 +51,7 @@ func TestCreateEntry(t *testing.T) {
 		expectedResponse := &dto.GetLedgerEntryResponse{
 			ID:            1,
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         50000,
 			Credit:        0,
@@ -85,7 +85,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "payment",
 			Debit:         0,
 			Credit:        50000,
@@ -94,7 +94,7 @@ func TestCreateEntry(t *testing.T) {
 		expectedResponse := &dto.GetLedgerEntryResponse{
 			ID:            2,
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "payment",
 			Debit:         0,
 			Credit:        50000,
@@ -137,7 +137,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         50000,
 			Credit:        0,
@@ -167,7 +167,7 @@ func TestGetEntryByID(t *testing.T) {
 		expectedResponse := &dto.GetLedgerEntryResponse{
 			ID:            1,
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         50000,
 			Credit:        0,
@@ -231,7 +231,7 @@ func TestGetEntriesByUserID(t *testing.T) {
 			{
 				ID:            1,
 				UserID:        1,
-				ReferenceID:   100,
+				ReferenceID:   "100",
 				ReferenceType: "transfer",
 				Debit:         50000,
 				Credit:        0,
@@ -241,7 +241,7 @@ func TestGetEntriesByUserID(t *testing.T) {
 			{
 				ID:            2,
 				UserID:        1,
-				ReferenceID:   101,
+				ReferenceID:   "101",
 				ReferenceType: "payment",
 				Debit:         0,
 				Credit:        30000,
@@ -305,7 +305,7 @@ func TestGetEntriesByReference(t *testing.T) {
 			{
 				ID:            1,
 				UserID:        1,
-				ReferenceID:   100,
+				ReferenceID:   "100",
 				ReferenceType: "transfer",
 				Debit:         50000,
 				Credit:        0,
@@ -314,7 +314,7 @@ func TestGetEntriesByReference(t *testing.T) {
 			},
 		}
 
-		mockService.On("GetEntriesByReference", mock.Anything, "transfer", uint64(100)).Return(expectedEntries, nil)
+		mockService.On("GetEntriesByReference", mock.Anything, "transfer", "100").Return(expectedEntries, nil)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -332,7 +332,9 @@ func TestGetEntriesByReference(t *testing.T) {
 	})
 
 	t.Run("InvalidReferenceID", func(t *testing.T) {
-		handler, _ := setupHandlerTest()
+		handler, mockService := setupHandlerTest()
+
+		mockService.On("GetEntriesByReference", mock.Anything, "transfer", "invalid").Return([]dto.GetLedgerEntryResponse{}, nil)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -341,7 +343,8 @@ func TestGetEntriesByReference(t *testing.T) {
 
 		handler.GetEntriesByReference(c)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
 	})
 }
 
@@ -351,8 +354,8 @@ func TestListEntries(t *testing.T) {
 
 		expectedResponse := &dto.ListLedgerEntriesResponse{
 			Data: []dto.GetLedgerEntryResponse{
-				{ID: 1, UserID: 1, ReferenceID: 100, ReferenceType: "transfer", Debit: 50000, Credit: 0, AccountType: "wallet", Amount: 50000},
-				{ID: 2, UserID: 1, ReferenceID: 101, ReferenceType: "payment", Debit: 0, Credit: 30000, AccountType: "wallet", Amount: 30000},
+				{ID: 1, UserID: 1, ReferenceID: "100", ReferenceType: "transfer", Debit: 50000, Credit: 0, AccountType: "wallet", Amount: 50000},
+				{ID: 2, UserID: 1, ReferenceID: "101", ReferenceType: "payment", Debit: 0, Credit: 30000, AccountType: "wallet", Amount: 30000},
 			},
 			TotalCount: 2,
 			Page:       1,
@@ -381,7 +384,7 @@ func TestListEntries(t *testing.T) {
 
 		expectedResponse := &dto.ListLedgerEntriesResponse{
 			Data: []dto.GetLedgerEntryResponse{
-				{ID: 1, UserID: 1, ReferenceID: 100, ReferenceType: "transfer", Debit: 50000, Credit: 0, AccountType: "wallet", Amount: 50000},
+				{ID: 1, UserID: 1, ReferenceID: "100", ReferenceType: "transfer", Debit: 50000, Credit: 0, AccountType: "wallet", Amount: 50000},
 			},
 			TotalCount: 1,
 			Page:       1,

@@ -44,7 +44,7 @@ func (r *ledgerRepository) GetEntriesByUserID(ctx context.Context, userID uint64
 	return entries, err
 }
 
-func (r *ledgerRepository) GetEntriesByReference(ctx context.Context, referenceType string, referenceID uint64) ([]entity.LedgerEntry, error) {
+func (r *ledgerRepository) GetEntriesByReference(ctx context.Context, referenceType string, referenceID string) ([]entity.LedgerEntry, error) {
 	var entries []entity.LedgerEntry
 	db := database.GetDB(ctx, r.db)
 	err := db.

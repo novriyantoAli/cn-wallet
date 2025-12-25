@@ -41,7 +41,7 @@ func (m *MockLedgerRepository) GetEntriesByUserID(ctx context.Context, userID ui
 	return entries, args.Error(1)
 }
 
-func (m *MockLedgerRepository) GetEntriesByReference(ctx context.Context, referenceType string, referenceID uint64) ([]entity.LedgerEntry, error) {
+func (m *MockLedgerRepository) GetEntriesByReference(ctx context.Context, referenceType string, referenceID string) ([]entity.LedgerEntry, error) {
 	args := m.Called(ctx, referenceType, referenceID)
 	var entries []entity.LedgerEntry
 	if args.Get(0) != nil {
@@ -81,7 +81,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := &dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         50000,
 			Credit:        0,
@@ -112,7 +112,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := &dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "payment",
 			Debit:         0,
 			Credit:        50000,
@@ -142,7 +142,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := &dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         50000,
 			Credit:        50000,
@@ -162,7 +162,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := &dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         0,
 			Credit:        0,
@@ -181,7 +181,7 @@ func TestCreateEntry(t *testing.T) {
 
 		request := &dto.CreateLedgerEntryRequest{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: "transfer",
 			Debit:         50000,
 			Credit:        0,
@@ -206,7 +206,7 @@ func TestGetEntryByID(t *testing.T) {
 		expectedEntry := &entity.LedgerEntry{
 			ID:            1,
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: entity.ReferenceTypeTransfer,
 			Debit:         50000,
 			Credit:        0,
@@ -248,7 +248,7 @@ func TestGetEntriesByUserID(t *testing.T) {
 			{
 				ID:            1,
 				UserID:        1,
-				ReferenceID:   100,
+				ReferenceID:   "100",
 				ReferenceType: entity.ReferenceTypeTransfer,
 				Debit:         50000,
 				Credit:        0,
@@ -258,7 +258,7 @@ func TestGetEntriesByUserID(t *testing.T) {
 			{
 				ID:            2,
 				UserID:        1,
-				ReferenceID:   101,
+				ReferenceID:   "101",
 				ReferenceType: entity.ReferenceTypePayment,
 				Debit:         0,
 				Credit:        30000,
@@ -301,7 +301,7 @@ func TestGetEntriesByReference(t *testing.T) {
 			{
 				ID:            1,
 				UserID:        1,
-				ReferenceID:   100,
+				ReferenceID:   "100",
 				ReferenceType: entity.ReferenceTypeTransfer,
 				Debit:         50000,
 				Credit:        0,
@@ -310,9 +310,9 @@ func TestGetEntriesByReference(t *testing.T) {
 			},
 		}
 
-		repo.On("GetEntriesByReference", ctx, "transfer", uint64(100)).Return(expectedEntries, nil)
+		repo.On("GetEntriesByReference", ctx, "transfer", "100").Return(expectedEntries, nil)
 
-		responses, err := service.GetEntriesByReference(ctx, "transfer", 100)
+		responses, err := service.GetEntriesByReference(ctx, "transfer", "100")
 
 		assert.NoError(t, err)
 		assert.Len(t, responses, 1)
@@ -335,7 +335,7 @@ func TestListEntries(t *testing.T) {
 			{
 				ID:            1,
 				UserID:        1,
-				ReferenceID:   100,
+				ReferenceID:   "100",
 				ReferenceType: entity.ReferenceTypeTransfer,
 				Debit:         50000,
 				Credit:        0,

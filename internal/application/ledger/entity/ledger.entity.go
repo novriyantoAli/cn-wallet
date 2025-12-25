@@ -11,22 +11,24 @@ const (
 	ReferenceTypePayment    ReferenceType = "payment"
 	ReferenceTypeRepayment  ReferenceType = "repayment"
 	ReferenceTypeAdjustment ReferenceType = "adjustment"
+	ReferenceTypePurchase   ReferenceType = "purchase"
 )
 
 // AccountType represents the type of account for a ledger entry
 type AccountType string
 
 const (
-	AccountTypeWallet   AccountType = "wallet"
-	AccountTypePaylater AccountType = "paylater"
-	AccountTypeVoucher  AccountType = "voucher"
+	AccountTypeWallet         AccountType = "wallet"
+	AccountTypePaylater       AccountType = "paylater"
+	AccountTypeVoucher        AccountType = "voucher"
+	AccountTypeMerchantIncome AccountType = "merchant_income"
 )
 
 // LedgerEntry represents a single ledger entry (append-only)
 type LedgerEntry struct {
 	ID            uint64        `gorm:"primaryKey" json:"id"`
 	UserID        uint64        `gorm:"index" json:"user_id"`
-	ReferenceID   uint64        `json:"reference_id"`
+	ReferenceID   string        `json:"reference_id"`
 	ReferenceType ReferenceType `json:"reference_type"`
 	Debit         int64         `json:"debit"`
 	Credit        int64         `json:"credit"`

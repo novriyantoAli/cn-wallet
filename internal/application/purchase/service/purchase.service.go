@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	ledgerEntity "github.com/novriyantoAli/cn-wallet/internal/application/ledger/entity"
+	ledgerRepo "github.com/novriyantoAli/cn-wallet/internal/application/ledger/repository"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	productRepo "github.com/novriyantoAli/cn-wallet/internal/application/product/repository"
 	"github.com/novriyantoAli/cn-wallet/internal/application/purchase/dto"
@@ -62,6 +64,7 @@ type purchaseService struct {
 	transactionRepo transactionRepo.TransactionRepository
 	userRepo        userRepo.UserRepository
 	wifiVoucherRepo wifiVoucherRepo.WifiVoucherRepository
+	ledgerRepo      ledgerRepo.LedgerRepository
 	providerClient  ProviderClient
 	txManager       database.TransactionManagerI
 	jwtManager      *jwt.JWTManager
@@ -75,6 +78,7 @@ func NewPurchaseService(
 	transactionRepo transactionRepo.TransactionRepository,
 	userRepo userRepo.UserRepository,
 	wifiVoucherRepo wifiVoucherRepo.WifiVoucherRepository,
+	ledgerRepo ledgerRepo.LedgerRepository,
 	providerClient ProviderClient,
 	txManager database.TransactionManagerI,
 	jwtManager *jwt.JWTManager,
@@ -86,6 +90,7 @@ func NewPurchaseService(
 		transactionRepo: transactionRepo,
 		userRepo:        userRepo,
 		wifiVoucherRepo: wifiVoucherRepo,
+		ledgerRepo:      ledgerRepo,
 		providerClient:  providerClient,
 		txManager:       txManager,
 		jwtManager:      jwtManager,
@@ -161,6 +166,12 @@ func (s *purchaseService) ProcessPurchaseWifi(ctx context.Context, token string,
 	user, err := s.getUserFromToken(ctx, token)
 	if err != nil {
 		return nil, err
+	}
+
+	// verify user active
+	if !user.IsActive {
+		s.logger.Warn("User is inactive", zap.Uint("user_id", user.ID))
+		return nil, errors.New("user is inactive")
 	}
 
 	// Get product
@@ -284,6 +295,37 @@ func (s *purchaseService) ProcessPurchaseWifi(ctx context.Context, token string,
 			s.logger.Error("Failed to update transaction to success", zap.String("tx_id", txID.String()), zap.Error(err))
 			return errors.New("failed to update transaction status")
 		}
+
+		ledgerEntry := &ledgerEntity.LedgerEntry{
+			UserID:        uint64(user.ID),
+			ReferenceID:   txID.String(),
+			ReferenceType: ledgerEntity.ReferenceType(transactionEntity.TypePurchase),
+			Debit:         int64(product.PriceSell * 100),
+			Credit:        0,
+			AccountType:   ledgerEntity.AccountTypeWallet,
+			CreatedAt:     time.Now(),
+		} // assuming price is in float, convert to int64 cents
+
+		if err := s.ledgerRepo.CreateEntry(txCtx, ledgerEntry); err != nil {
+			s.logger.Error("Failed to create ledger entry", zap.String("tx_id", txID.String()), zap.Error(err))
+			return errors.New("failed to create ledger entry")
+		}
+
+		ledgerEntryMerchant := &ledgerEntity.LedgerEntry{
+			UserID:        uint64(user.ID),
+			ReferenceID:   txID.String(),
+			ReferenceType: ledgerEntity.ReferenceType(transactionEntity.TypePurchase),
+			Debit:         0,
+			Credit:        int64(product.PriceSell * 100),
+			AccountType:   ledgerEntity.AccountTypeMerchantIncome,
+			CreatedAt:     time.Now(),
+		} // assuming price is in float, convert to int64 cents
+		if err := s.ledgerRepo.CreateEntry(txCtx, ledgerEntryMerchant); err != nil {
+			s.logger.Error("Failed to create merchant ledger entry", zap.String("tx_id", txID.String()), zap.Error(err))
+			return errors.New("failed to create merchant ledger entry")
+		}
+
+		s.logger.Info("Ledger entry created", zap.String("tx_id", txID.String()))
 
 		return nil
 	})

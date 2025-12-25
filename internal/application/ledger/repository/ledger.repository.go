@@ -19,7 +19,7 @@ type LedgerRepository interface {
 	GetEntriesByUserID(ctx context.Context, userID uint64) ([]entity.LedgerEntry, error)
 
 	// GetEntriesByReference retrieves ledger entries by reference
-	GetEntriesByReference(ctx context.Context, referenceType string, referenceID uint64) ([]entity.LedgerEntry, error)
+	GetEntriesByReference(ctx context.Context, referenceType string, referenceID string) ([]entity.LedgerEntry, error)
 
 	// ListEntries retrieves paginated ledger entries with filters
 	ListEntries(ctx context.Context, req *dto.ListLedgerEntriesRequest) ([]entity.LedgerEntry, int64, error)

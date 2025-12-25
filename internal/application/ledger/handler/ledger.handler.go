@@ -126,15 +126,10 @@ func (h *LedgerHandler) GetEntriesByUserID(ctx *gin.Context) {
 func (h *LedgerHandler) GetEntriesByReference(ctx *gin.Context) {
 	refType := ctx.Param("reference_type")
 	idStr := ctx.Param("reference_id")
-	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid reference ID"})
-		return
-	}
 
-	entries, err := h.service.GetEntriesByReference(ctx.Request.Context(), refType, id)
+	entries, err := h.service.GetEntriesByReference(ctx.Request.Context(), refType, idStr)
 	if err != nil {
-		h.logger.Error("Failed to get ledger entries by reference", zap.Error(err), zap.String("reference_type", refType), zap.Uint64("reference_id", id))
+		h.logger.Error("Failed to get ledger entries by reference", zap.Error(err), zap.String("reference_type", refType), zap.String("reference_id", idStr))
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

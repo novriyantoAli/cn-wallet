@@ -5,7 +5,7 @@ import "time"
 // CreateLedgerEntryRequest represents a request to create a ledger entry
 type CreateLedgerEntryRequest struct {
 	UserID        uint64 `json:"user_id" binding:"required"`
-	ReferenceID   uint64 `json:"reference_id" binding:"required"`
+	ReferenceID   string `json:"reference_id" binding:"required"`
 	ReferenceType string `json:"reference_type" binding:"required,oneof=transfer paylater payment repayment adjustment"`
 	Debit         int64  `json:"debit" binding:"gte=0"`
 	Credit        int64  `json:"credit" binding:"gte=0"`
@@ -16,7 +16,7 @@ type CreateLedgerEntryRequest struct {
 type GetLedgerEntryResponse struct {
 	ID            uint64    `json:"id"`
 	UserID        uint64    `json:"user_id"`
-	ReferenceID   uint64    `json:"reference_id"`
+	ReferenceID   string    `json:"reference_id"`
 	ReferenceType string    `json:"reference_type"`
 	Debit         int64     `json:"debit"`
 	Credit        int64     `json:"credit"`

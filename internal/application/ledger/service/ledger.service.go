@@ -23,7 +23,7 @@ type LedgerService interface {
 	GetEntriesByUserID(ctx context.Context, userID uint64) ([]dto.GetLedgerEntryResponse, error)
 
 	// GetEntriesByReference retrieves ledger entries by reference
-	GetEntriesByReference(ctx context.Context, referenceType string, referenceID uint64) ([]dto.GetLedgerEntryResponse, error)
+	GetEntriesByReference(ctx context.Context, referenceType string, referenceID string) ([]dto.GetLedgerEntryResponse, error)
 
 	// ListEntries retrieves paginated ledger entries with filters
 	ListEntries(ctx context.Context, req *dto.ListLedgerEntriesRequest) (*dto.ListLedgerEntriesResponse, error)
@@ -120,7 +120,7 @@ func (s *ledgerService) GetEntriesByUserID(ctx context.Context, userID uint64) (
 	return responses, nil
 }
 
-func (s *ledgerService) GetEntriesByReference(ctx context.Context, referenceType string, referenceID uint64) ([]dto.GetLedgerEntryResponse, error) {
+func (s *ledgerService) GetEntriesByReference(ctx context.Context, referenceType string, referenceID string) ([]dto.GetLedgerEntryResponse, error) {
 	entries, err := s.repo.GetEntriesByReference(ctx, referenceType, referenceID)
 	if err != nil {
 		return nil, err

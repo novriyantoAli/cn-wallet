@@ -1134,7 +1134,7 @@ func (m *MockLedgerService) GetEntriesByUserID(ctx context.Context, userID uint6
 	return entries, args.Error(1)
 }
 
-func (m *MockLedgerService) GetEntriesByReference(ctx context.Context, referenceType string, referenceID uint64) ([]ledgerDto.GetLedgerEntryResponse, error) {
+func (m *MockLedgerService) GetEntriesByReference(ctx context.Context, referenceType string, referenceID string) ([]ledgerDto.GetLedgerEntryResponse, error) {
 	args := m.Called(ctx, referenceType, referenceID)
 	var entries []ledgerDto.GetLedgerEntryResponse
 	if args.Get(0) != nil {

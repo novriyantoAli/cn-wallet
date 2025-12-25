@@ -34,7 +34,7 @@ func TestCreateEntry(t *testing.T) {
 
 		entry := &entity.LedgerEntry{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: entity.ReferenceTypeTransfer,
 			Debit:         50000,
 			Credit:        0,
@@ -65,7 +65,7 @@ func TestCreateEntry(t *testing.T) {
 
 		entry := &entity.LedgerEntry{
 			UserID:        2,
-			ReferenceID:   101,
+			ReferenceID:   "101",
 			ReferenceType: entity.ReferenceTypePayment,
 			Debit:         0,
 			Credit:        30000,
@@ -96,7 +96,7 @@ func TestGetEntryByID(t *testing.T) {
 		// Create entry
 		entry := &entity.LedgerEntry{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: entity.ReferenceTypeTransfer,
 			Debit:         50000,
 			Credit:        0,
@@ -139,7 +139,7 @@ func TestGetEntriesByUserID(t *testing.T) {
 		entries := []entity.LedgerEntry{
 			{
 				UserID:        1,
-				ReferenceID:   100,
+				ReferenceID:   "100",
 				ReferenceType: entity.ReferenceTypeTransfer,
 				Debit:         50000,
 				Credit:        0,
@@ -147,7 +147,7 @@ func TestGetEntriesByUserID(t *testing.T) {
 			},
 			{
 				UserID:        1,
-				ReferenceID:   101,
+				ReferenceID:   "101",
 				ReferenceType: entity.ReferenceTypePayment,
 				Debit:         0,
 				Credit:        30000,
@@ -191,7 +191,7 @@ func TestGetEntriesByReference(t *testing.T) {
 		// Create entries with same reference
 		entry1 := &entity.LedgerEntry{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: entity.ReferenceTypeTransfer,
 			Debit:         50000,
 			Credit:        0,
@@ -199,7 +199,7 @@ func TestGetEntriesByReference(t *testing.T) {
 		}
 		entry2 := &entity.LedgerEntry{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: entity.ReferenceTypeTransfer,
 			Debit:         0,
 			Credit:        25000,
@@ -212,11 +212,11 @@ func TestGetEntriesByReference(t *testing.T) {
 		require.NoError(t, err)
 
 		// Get entries by reference
-		retrieved, err := repo.GetEntriesByReference(ctx, "transfer", 100)
+		retrieved, err := repo.GetEntriesByReference(ctx, "transfer", "100")
 
 		assert.NoError(t, err)
 		assert.Len(t, retrieved, 2)
-		assert.Equal(t, uint64(100), retrieved[0].ReferenceID)
+		assert.Equal(t, "100", retrieved[0].ReferenceID)
 	})
 }
 
@@ -233,7 +233,7 @@ func TestListEntries(t *testing.T) {
 		for i := 0; i < 5; i++ {
 			entry := &entity.LedgerEntry{
 				UserID:        1,
-				ReferenceID:   uint64(100 + i),
+				ReferenceID:   string(rune(100 + i)),
 				ReferenceType: entity.ReferenceTypeTransfer,
 				Debit:         int64(10000 * (i + 1)),
 				Credit:        0,
@@ -267,7 +267,7 @@ func TestListEntries(t *testing.T) {
 		// Create entries with different account types
 		entry1 := &entity.LedgerEntry{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: entity.ReferenceTypeTransfer,
 			Debit:         50000,
 			Credit:        0,
@@ -275,7 +275,7 @@ func TestListEntries(t *testing.T) {
 		}
 		entry2 := &entity.LedgerEntry{
 			UserID:        1,
-			ReferenceID:   101,
+			ReferenceID:   "101",
 			ReferenceType: entity.ReferenceTypePaylater,
 			Debit:         30000,
 			Credit:        0,
@@ -315,7 +315,7 @@ func TestListEntries(t *testing.T) {
 		// Create entry
 		entry := &entity.LedgerEntry{
 			UserID:        1,
-			ReferenceID:   100,
+			ReferenceID:   "100",
 			ReferenceType: entity.ReferenceTypeTransfer,
 			Debit:         50000,
 			Credit:        0,
@@ -355,7 +355,7 @@ func TestGetUserStats(t *testing.T) {
 		entries := []entity.LedgerEntry{
 			{
 				UserID:        1,
-				ReferenceID:   100,
+				ReferenceID:   "100",
 				ReferenceType: entity.ReferenceTypeTransfer,
 				Debit:         50000,
 				Credit:        0,
@@ -363,7 +363,7 @@ func TestGetUserStats(t *testing.T) {
 			},
 			{
 				UserID:        1,
-				ReferenceID:   101,
+				ReferenceID:   "101",
 				ReferenceType: entity.ReferenceTypePayment,
 				Debit:         0,
 				Credit:        30000,
@@ -371,7 +371,7 @@ func TestGetUserStats(t *testing.T) {
 			},
 			{
 				UserID:        1,
-				ReferenceID:   102,
+				ReferenceID:   "102",
 				ReferenceType: entity.ReferenceTypePaylater,
 				Debit:         20000,
 				Credit:        0,
