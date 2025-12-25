@@ -12,8 +12,11 @@ import (
 var Module = fx.Options(
 	fx.Provide(
 		repository.NewPaylaterAccountRepository,
+		repository.NewPaylaterLoanRepository,
 		service.NewPaylaterAccountService,
+		service.NewPaylaterLoanService,
 		handler.NewPaylaterAccountHandler,
+		handler.NewPaylaterLoanHandler,
 	),
 )
 
@@ -21,6 +24,8 @@ var Module = fx.Options(
 var WorkerModule = fx.Options(
 	fx.Provide(
 		repository.NewPaylaterAccountRepository,
+		repository.NewPaylaterLoanRepository,
 		service.NewPaylaterAccountService,
+		service.NewPaylaterLoanService,
 	),
 )

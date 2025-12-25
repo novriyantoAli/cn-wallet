@@ -33,6 +33,7 @@ func SetupTestDB() (*gorm.DB, error) {
 		&providerEntity.Provider{},
 		&productEntity.Product{},
 		&paylaterEntity.PaylaterAccount{},
+		&paylaterEntity.PaylaterLoan{},
 		&wifiVoucherEntity.WifiVoucher{},
 		&transactionEntity.Transaction{},
 		&securityEntity.UserSecurity{},

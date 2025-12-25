@@ -896,3 +896,139 @@ func (m *MockPaylaterAccountService) DeleteAccount(ctx context.Context, userID u
 	args := m.Called(ctx, userID)
 	return args.Error(0)
 }
+
+// MockPaylaterLoanRepository is a mock implementation of PaylaterLoanRepository
+type MockPaylaterLoanRepository struct {
+	mock.Mock
+}
+
+func (m *MockPaylaterLoanRepository) CreateLoan(ctx context.Context, loan *paylaterEntity.PaylaterLoan) error {
+	args := m.Called(ctx, loan)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterLoanRepository) GetLoanByID(ctx context.Context, id uint) (*paylaterEntity.PaylaterLoan, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterEntity.PaylaterLoan), args.Error(1)
+}
+
+func (m *MockPaylaterLoanRepository) GetLoansByUserID(ctx context.Context, userID uint) ([]paylaterEntity.PaylaterLoan, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]paylaterEntity.PaylaterLoan), args.Error(1)
+}
+
+func (m *MockPaylaterLoanRepository) ListLoans(ctx context.Context, filters map[string]interface{}, page, pageSize int) ([]paylaterEntity.PaylaterLoan, int64, error) {
+	args := m.Called(ctx, filters, page, pageSize)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]paylaterEntity.PaylaterLoan), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockPaylaterLoanRepository) UpdateLoanStatus(ctx context.Context, id uint, status string) error {
+	args := m.Called(ctx, id, status)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterLoanRepository) UpdateLoan(ctx context.Context, loan *paylaterEntity.PaylaterLoan) error {
+	args := m.Called(ctx, loan)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterLoanRepository) GetOverdueLoans(ctx context.Context, asOf time.Time) ([]paylaterEntity.PaylaterLoan, error) {
+	args := m.Called(ctx, asOf)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]paylaterEntity.PaylaterLoan), args.Error(1)
+}
+
+func (m *MockPaylaterLoanRepository) GetLoanStats(ctx context.Context, userID uint) (map[string]interface{}, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}
+
+func (m *MockPaylaterLoanRepository) DeleteLoan(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+// MockPaylaterLoanService is a mock implementation of PaylaterLoanService
+type MockPaylaterLoanService struct {
+	mock.Mock
+}
+
+func (m *MockPaylaterLoanService) CreateLoan(ctx context.Context, req *paylaterDto.CreatePaylaterLoanRequest) (*paylaterEntity.PaylaterLoan, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterEntity.PaylaterLoan), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) GetLoanByID(ctx context.Context, id uint) (*paylaterDto.GetPaylaterLoanResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterLoanResponse), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) GetLoansByUserID(ctx context.Context, userID uint) ([]paylaterDto.GetPaylaterLoanResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]paylaterDto.GetPaylaterLoanResponse), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) ListLoans(ctx context.Context, req *paylaterDto.ListPaylaterLoansRequest) (*paylaterDto.ListPaylaterLoansResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.ListPaylaterLoansResponse), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) UpdateLoanStatus(ctx context.Context, id uint, req *paylaterDto.UpdateLoanStatusRequest) (*paylaterDto.GetPaylaterLoanResponse, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterLoanResponse), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) MarkLoanAsPaid(ctx context.Context, id uint) (*paylaterDto.GetPaylaterLoanResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterLoanResponse), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) ProcessOverdueLoans(ctx context.Context) (int, error) {
+	args := m.Called(ctx)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) GetUserLoanStats(ctx context.Context, userID uint) (*paylaterDto.PaylaterLoanStatsResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.PaylaterLoanStatsResponse), args.Error(1)
+}
+
+func (m *MockPaylaterLoanService) DeleteLoan(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}

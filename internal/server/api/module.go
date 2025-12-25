@@ -28,6 +28,7 @@ type Server struct {
 	userSecurityHandler *userSecurityHandler.UserSecurityHandler
 	paymentHandler      *paymentHandler.PaymentHandler
 	paylaterHandler     *paylaterHandler.PaylaterAccountHandler
+	paylaterLoanHandler *paylaterHandler.PaylaterLoanHandler
 	productHandler      *productHandler.ProductHandler
 	providerHandler     *providerHandler.ProviderHandler
 	purchaseHandler     *purchaseHandler.PurchaseHandler
@@ -43,6 +44,7 @@ func NewServer(
 	userSecurityHandler *userSecurityHandler.UserSecurityHandler,
 	paymentHandler *paymentHandler.PaymentHandler,
 	paylaterHandler *paylaterHandler.PaylaterAccountHandler,
+	paylaterLoanHandler *paylaterHandler.PaylaterLoanHandler,
 	productHandler *productHandler.ProductHandler,
 	providerHandler *providerHandler.ProviderHandler,
 	purchaseHandler *purchaseHandler.PurchaseHandler,
@@ -57,6 +59,7 @@ func NewServer(
 		userSecurityHandler: userSecurityHandler,
 		paymentHandler:      paymentHandler,
 		paylaterHandler:     paylaterHandler,
+		paylaterLoanHandler: paylaterLoanHandler,
 		productHandler:      productHandler,
 		providerHandler:     providerHandler,
 		purchaseHandler:     purchaseHandler,
@@ -88,6 +91,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.userSecurityHandler.RegisterRoutes(api)
 		s.paymentHandler.RegisterRoutes(api)
 		s.paylaterHandler.RegisterRoutes(api)
+		s.paylaterLoanHandler.RegisterRoutes(api)
 		s.productHandler.RegisterRoutes(api)
 		s.providerHandler.RegisterRoutes(api)
 		s.purchaseHandler.RegisterRoutes(api)
