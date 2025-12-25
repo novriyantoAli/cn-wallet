@@ -3,14 +3,12 @@ package service
 import (
 	"context"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/novriyantoAli/cn-wallet/internal/application/user-security/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user-security/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user-security/repository"
-	"gorm.io/gorm"
 
 	"go.uber.org/zap"
 )
@@ -106,11 +104,7 @@ func (s *userSecurityService) GetSecurity(ctx context.Context, userID uint) (*dt
 
 	security, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		s.logger.Error("Failed to get user security", zap.Error(err))
-
 		return nil, err
 	}
 
