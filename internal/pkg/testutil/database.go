@@ -1,19 +1,21 @@
 package testutil
 
 import (
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
+	ledgerEntity "github.com/novriyantoAli/cn-wallet/internal/application/ledger/entity"
 	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
+	transferEntity "github.com/novriyantoAli/cn-wallet/internal/application/transfer/entity"
 	securityEntity "github.com/novriyantoAli/cn-wallet/internal/application/user-security/entity"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
 	wifiVoucherEntity "github.com/novriyantoAli/cn-wallet/internal/application/wifivoucher/entity"
-
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // SetupTestDB creates an in-memory SQLite database for testing
@@ -37,6 +39,8 @@ func SetupTestDB() (*gorm.DB, error) {
 		&wifiVoucherEntity.WifiVoucher{},
 		&transactionEntity.Transaction{},
 		&securityEntity.UserSecurity{},
+		&transferEntity.Transfer{},
+		&ledgerEntity.LedgerEntry{},
 	)
 	if err != nil {
 		return nil, err
@@ -47,7 +51,13 @@ func SetupTestDB() (*gorm.DB, error) {
 
 // CleanDB cleans all data from test database
 func CleanDB(db *gorm.DB) error {
-	// Delete in reverse order of dependencies (Product before Provider)
+	// Delete in reverse order of dependencies
+	if err := db.Exec("DELETE FROM ledger_entries").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("DELETE FROM transfers").Error; err != nil {
+		return err
+	}
 	if err := db.Exec("DELETE FROM wifi_vouchers").Error; err != nil {
 		return err
 	}

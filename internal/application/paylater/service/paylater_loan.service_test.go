@@ -27,7 +27,7 @@ func TestPaylaterLoanService_CreateLoan(t *testing.T) {
 			Amount:   100000,
 			Interest: 5000,
 			DueDate:  time.Now().Add(30 * 24 * time.Hour),
-			Source:   entity.PaylaterLoanSourceCheckout,
+			Source:   string(entity.PaylaterLoanSourceCheckout),
 		}
 
 		account := &entity.PaylaterAccount{
@@ -82,7 +82,7 @@ func TestPaylaterLoanService_CreateLoan(t *testing.T) {
 			Amount:   100000,
 			Interest: 5000,
 			DueDate:  time.Now().Add(30 * 24 * time.Hour),
-			Source:   entity.PaylaterLoanSourceCheckout,
+			Source:   string(entity.PaylaterLoanSourceCheckout),
 		}
 
 		mockTxManager.On("WithinTransaction", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -114,7 +114,7 @@ func TestPaylaterLoanService_CreateLoan(t *testing.T) {
 			Amount:   100000,
 			Interest: 5000,
 			DueDate:  time.Now().Add(30 * 24 * time.Hour),
-			Source:   entity.PaylaterLoanSourceCheckout,
+			Source:   string(entity.PaylaterLoanSourceCheckout),
 		}
 
 		account := &entity.PaylaterAccount{
@@ -155,7 +155,7 @@ func TestPaylaterLoanService_CreateLoan(t *testing.T) {
 			Amount:   100000,
 			Interest: 5000,
 			DueDate:  time.Now().Add(30 * 24 * time.Hour),
-			Source:   entity.PaylaterLoanSourceCheckout,
+			Source:   string(entity.PaylaterLoanSourceCheckout),
 		}
 
 		account := &entity.PaylaterAccount{
@@ -321,7 +321,7 @@ func TestPaylaterLoanService_ListLoans(t *testing.T) {
 			{ID: 2, UserID: 1, Amount: 50000, Total: 52500, Status: entity.PaylaterLoanStatusActive},
 		}
 
-		mockLoanRepo.On("ListLoans", ctx, mock.AnythingOfType("map[string]interface {}"), 1, 10).Return(loans, int64(2), nil)
+		mockLoanRepo.On("ListLoans", ctx, mock.AnythingOfType("*dto.ListPaylaterLoansRequest")).Return(loans, int64(2), nil)
 
 		service := NewPaylaterLoanService(mockLoanRepo, mockAccountRepo, mockTxManager, logger)
 		result, err := service.ListLoans(ctx, req)
@@ -344,10 +344,10 @@ func TestPaylaterLoanService_ListLoans(t *testing.T) {
 
 		ctx := context.Background()
 		userID := uint(1)
-		status := entity.PaylaterLoanStatusActive
+		statusStr := string(entity.PaylaterLoanStatusActive)
 		req := &dto.ListPaylaterLoansRequest{
 			UserID:   &userID,
-			Status:   &status,
+			Status:   &statusStr,
 			Page:     1,
 			PageSize: 10,
 		}
@@ -356,9 +356,7 @@ func TestPaylaterLoanService_ListLoans(t *testing.T) {
 			{ID: 1, UserID: 1, Amount: 100000, Total: 105000, Status: entity.PaylaterLoanStatusActive},
 		}
 
-		mockLoanRepo.On("ListLoans", ctx, mock.MatchedBy(func(filters map[string]interface{}) bool {
-			return filters["user_id"] == uint(1) && filters["status"] == entity.PaylaterLoanStatusActive
-		}), 1, 10).Return(loans, int64(1), nil)
+		mockLoanRepo.On("ListLoans", ctx, mock.AnythingOfType("*dto.ListPaylaterLoansRequest")).Return(loans, int64(1), nil)
 
 		service := NewPaylaterLoanService(mockLoanRepo, mockAccountRepo, mockTxManager, logger)
 		result, err := service.ListLoans(ctx, req)
@@ -383,7 +381,7 @@ func TestPaylaterLoanService_ListLoans(t *testing.T) {
 
 		loans := []entity.PaylaterLoan{}
 
-		mockLoanRepo.On("ListLoans", ctx, mock.AnythingOfType("map[string]interface {}"), 1, 10).Return(loans, int64(0), nil)
+		mockLoanRepo.On("ListLoans", ctx, mock.AnythingOfType("*dto.ListPaylaterLoansRequest")).Return(loans, int64(0), nil)
 
 		service := NewPaylaterLoanService(mockLoanRepo, mockAccountRepo, mockTxManager, logger)
 		result, err := service.ListLoans(ctx, req)
@@ -417,18 +415,18 @@ func TestPaylaterLoanService_UpdateLoanStatus(t *testing.T) {
 		}
 
 		req := &dto.UpdateLoanStatusRequest{
-			Status: entity.PaylaterLoanStatusOverdue,
+			Status: string(entity.PaylaterLoanStatusOverdue),
 		}
 
 		mockLoanRepo.On("GetLoanByID", ctx, uint(1)).Return(loan, nil)
-		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(1), entity.PaylaterLoanStatusOverdue).Return(nil)
+		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(1), string(entity.PaylaterLoanStatusOverdue)).Return(nil)
 
 		service := NewPaylaterLoanService(mockLoanRepo, mockAccountRepo, mockTxManager, logger)
 		result, err := service.UpdateLoanStatus(ctx, 1, req)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, entity.PaylaterLoanStatusOverdue, result.Status)
+		assert.Equal(t, string(entity.PaylaterLoanStatusOverdue), result.Status)
 		mockLoanRepo.AssertExpectations(t)
 	})
 
@@ -440,7 +438,7 @@ func TestPaylaterLoanService_UpdateLoanStatus(t *testing.T) {
 
 		ctx := context.Background()
 		req := &dto.UpdateLoanStatusRequest{
-			Status: entity.PaylaterLoanStatusPaid,
+			Status: string(entity.PaylaterLoanStatusPaid),
 		}
 
 		mockLoanRepo.On("GetLoanByID", ctx, uint(999)).Return(nil, errors.New("loan not found"))
@@ -502,7 +500,7 @@ func TestPaylaterLoanService_MarkLoanAsPaid(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, entity.PaylaterLoanStatusPaid, result.Status)
+		assert.Equal(t, string(entity.PaylaterLoanStatusPaid), result.Status)
 		mockLoanRepo.AssertExpectations(t)
 		mockAccountRepo.AssertExpectations(t)
 		mockTxManager.AssertExpectations(t)
@@ -560,9 +558,9 @@ func TestPaylaterLoanService_ProcessOverdueLoans(t *testing.T) {
 		}
 
 		mockLoanRepo.On("GetOverdueLoans", ctx, mock.AnythingOfType("time.Time")).Return(overdueLoans, nil)
-		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(1), entity.PaylaterLoanStatusOverdue).Return(nil)
-		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(2), entity.PaylaterLoanStatusOverdue).Return(nil)
-		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(3), entity.PaylaterLoanStatusOverdue).Return(nil)
+		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(1), string(entity.PaylaterLoanStatusOverdue)).Return(nil)
+		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(2), string(entity.PaylaterLoanStatusOverdue)).Return(nil)
+		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(3), string(entity.PaylaterLoanStatusOverdue)).Return(nil)
 
 		service := NewPaylaterLoanService(mockLoanRepo, mockAccountRepo, mockTxManager, logger)
 		count, err := service.ProcessOverdueLoans(ctx)
@@ -605,9 +603,9 @@ func TestPaylaterLoanService_ProcessOverdueLoans(t *testing.T) {
 		}
 
 		mockLoanRepo.On("GetOverdueLoans", ctx, mock.AnythingOfType("time.Time")).Return(overdueLoans, nil)
-		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(1), entity.PaylaterLoanStatusOverdue).Return(nil)
-		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(2), entity.PaylaterLoanStatusOverdue).Return(errors.New("update failed"))
-		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(3), entity.PaylaterLoanStatusOverdue).Return(nil)
+		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(1), string(entity.PaylaterLoanStatusOverdue)).Return(nil)
+		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(2), string(entity.PaylaterLoanStatusOverdue)).Return(errors.New("update failed"))
+		mockLoanRepo.On("UpdateLoanStatus", ctx, uint(3), string(entity.PaylaterLoanStatusOverdue)).Return(nil)
 
 		service := NewPaylaterLoanService(mockLoanRepo, mockAccountRepo, mockTxManager, logger)
 		count, err := service.ProcessOverdueLoans(ctx)

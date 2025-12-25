@@ -323,7 +323,7 @@ func TestPaylaterAccountRepository_UpdateStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		// When
-		err = repo.UpdateStatus(ctx, 1, entity.PaylaterStatusSuspended)
+		err = repo.UpdateStatus(ctx, 1, string(entity.PaylaterStatusSuspended))
 
 		// Then
 		assert.NoError(t, err)
@@ -351,7 +351,7 @@ func TestPaylaterAccountRepository_UpdateStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		// When
-		err = repo.UpdateStatus(ctx, 1, entity.PaylaterStatusSuspended)
+		err = repo.UpdateStatus(ctx, 1, string(entity.PaylaterStatusSuspended))
 
 		// Then
 		assert.NoError(t, err)

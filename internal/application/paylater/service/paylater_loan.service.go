@@ -81,7 +81,7 @@ func (s *paylaterLoanService) CreateLoan(ctx context.Context, req *dto.CreatePay
 			Interest: req.Interest,
 			Total:    total,
 			DueDate:  req.DueDate,
-			Source:   req.Source,
+			Source:   entity.PaylaterLoanSource(req.Source),
 			Status:   entity.PaylaterLoanStatusActive,
 		}
 
@@ -129,8 +129,8 @@ func (s *paylaterLoanService) GetLoanByID(ctx context.Context, id uint) (*dto.Ge
 		Interest:  loan.Interest,
 		Total:     loan.Total,
 		DueDate:   loan.DueDate,
-		Source:    loan.Source,
-		Status:    loan.Status,
+		Source:    string(loan.Source),
+		Status:    string(loan.Status),
 		CreatedAt: loan.CreatedAt,
 	}, nil
 }
@@ -152,8 +152,8 @@ func (s *paylaterLoanService) GetLoansByUserID(ctx context.Context, userID uint)
 			Interest:  loan.Interest,
 			Total:     loan.Total,
 			DueDate:   loan.DueDate,
-			Source:    loan.Source,
-			Status:    loan.Status,
+			Source:    string(loan.Source),
+			Status:    string(loan.Status),
 			CreatedAt: loan.CreatedAt,
 		})
 	}
@@ -174,31 +174,7 @@ func (s *paylaterLoanService) ListLoans(ctx context.Context, req *dto.ListPaylat
 		req.PageSize = 100
 	}
 
-	// Build filters
-	filters := make(map[string]interface{})
-	if req.UserID != nil {
-		filters["user_id"] = *req.UserID
-	}
-	if req.Status != nil {
-		filters["status"] = *req.Status
-	}
-	if req.Source != nil {
-		filters["source"] = *req.Source
-	}
-	if req.FromDate != nil {
-		fromDate, err := time.Parse("2006-01-02", *req.FromDate)
-		if err == nil {
-			filters["from_date"] = fromDate
-		}
-	}
-	if req.ToDate != nil {
-		toDate, err := time.Parse("2006-01-02", *req.ToDate)
-		if err == nil {
-			filters["to_date"] = toDate
-		}
-	}
-
-	loans, totalCount, err := s.loanRepo.ListLoans(ctx, filters, req.Page, req.PageSize)
+	loans, totalCount, err := s.loanRepo.ListLoans(ctx, req)
 	if err != nil {
 		s.logger.Error("Failed to list loans", zap.Error(err))
 		return nil, err
@@ -214,8 +190,8 @@ func (s *paylaterLoanService) ListLoans(ctx context.Context, req *dto.ListPaylat
 			Interest:  loan.Interest,
 			Total:     loan.Total,
 			DueDate:   loan.DueDate,
-			Source:    loan.Source,
-			Status:    loan.Status,
+			Source:    string(loan.Source),
+			Status:    string(loan.Status),
 			CreatedAt: loan.CreatedAt,
 		})
 	}
@@ -245,7 +221,7 @@ func (s *paylaterLoanService) UpdateLoanStatus(ctx context.Context, id uint, req
 		return nil, err
 	}
 
-	loan.Status = req.Status
+	loan.Status = entity.PaylaterLoanStatus(req.Status)
 
 	s.logger.Info("Loan status updated", zap.Uint("id", id), zap.String("status", req.Status))
 
@@ -256,8 +232,8 @@ func (s *paylaterLoanService) UpdateLoanStatus(ctx context.Context, id uint, req
 		Interest:  loan.Interest,
 		Total:     loan.Total,
 		DueDate:   loan.DueDate,
-		Source:    loan.Source,
-		Status:    loan.Status,
+		Source:    string(loan.Source),
+		Status:    string(loan.Status),
 		CreatedAt: loan.CreatedAt,
 	}, nil
 }
@@ -323,8 +299,8 @@ func (s *paylaterLoanService) MarkLoanAsPaid(ctx context.Context, id uint) (*dto
 		Interest:  loan.Interest,
 		Total:     loan.Total,
 		DueDate:   loan.DueDate,
-		Source:    loan.Source,
-		Status:    loan.Status,
+		Source:    string(loan.Source),
+		Status:    string(loan.Status),
 		CreatedAt: loan.CreatedAt,
 	}, nil
 }
@@ -339,7 +315,7 @@ func (s *paylaterLoanService) ProcessOverdueLoans(ctx context.Context) (int, err
 
 	count := 0
 	for _, loan := range loans {
-		if err := s.loanRepo.UpdateLoanStatus(ctx, loan.ID, entity.PaylaterLoanStatusOverdue); err != nil {
+		if err := s.loanRepo.UpdateLoanStatus(ctx, loan.ID, string(entity.PaylaterLoanStatusOverdue)); err != nil {
 			s.logger.Error("Failed to mark loan as overdue",
 				zap.Error(err),
 				zap.Uint("loan_id", loan.ID))

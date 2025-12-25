@@ -8,6 +8,7 @@ import (
 	"github.com/novriyantoAli/cn-wallet/internal/application/provider"
 	"github.com/novriyantoAli/cn-wallet/internal/application/purchase"
 	"github.com/novriyantoAli/cn-wallet/internal/application/transaction"
+	"github.com/novriyantoAli/cn-wallet/internal/application/transfer"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user"
 	usersecurity "github.com/novriyantoAli/cn-wallet/internal/application/user-security"
 	"github.com/novriyantoAli/cn-wallet/internal/application/wallet"
@@ -29,6 +30,7 @@ var Module = fx.Options(
 	wallet.Module,
 	wifivoucher.Module,
 	transaction.Module,
+	transfer.Module,
 
 	// API api
 	fx.Provide(NewServer),

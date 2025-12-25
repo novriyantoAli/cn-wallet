@@ -255,7 +255,7 @@ func TestPaylaterAccountService_UpdateStatus(t *testing.T) {
 		mockRepo := new(testutil.MockPaylaterAccountRepository)
 
 		req := &dto.UpdateStatusRequest{
-			Status: entity.PaylaterStatusSuspended,
+			Status: string(entity.PaylaterStatusSuspended),
 		}
 
 		account := &entity.PaylaterAccount{
@@ -280,7 +280,7 @@ func TestPaylaterAccountService_UpdateStatus(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, entity.PaylaterStatusSuspended, result.Status)
+		assert.Equal(t, string(entity.PaylaterStatusSuspended), result.Status)
 		mockRepo.AssertExpectations(t)
 	})
 
@@ -290,7 +290,7 @@ func TestPaylaterAccountService_UpdateStatus(t *testing.T) {
 		mockRepo := new(testutil.MockPaylaterAccountRepository)
 
 		req := &dto.UpdateStatusRequest{
-			Status: entity.PaylaterStatusSuspended,
+			Status: string(entity.PaylaterStatusSuspended),
 		}
 
 		mockRepo.On("GetAccountByUserID", mock.Anything, uint(999)).Return(nil, errors.New("record not found"))

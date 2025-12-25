@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/novriyantoAli/cn-wallet/internal/application/paylater/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/database"
 
@@ -17,7 +18,7 @@ type PaylaterLoanRepository interface {
 	CreateLoan(ctx context.Context, loan *entity.PaylaterLoan) error
 	GetLoanByID(ctx context.Context, id uint) (*entity.PaylaterLoan, error)
 	GetLoansByUserID(ctx context.Context, userID uint) ([]entity.PaylaterLoan, error)
-	ListLoans(ctx context.Context, filters map[string]interface{}, page, pageSize int) ([]entity.PaylaterLoan, int64, error)
+	ListLoans(ctx context.Context, filters *dto.ListPaylaterLoansRequest) ([]entity.PaylaterLoan, int64, error)
 	UpdateLoanStatus(ctx context.Context, id uint, status string) error
 	UpdateLoan(ctx context.Context, loan *entity.PaylaterLoan) error
 	GetOverdueLoans(ctx context.Context, asOf time.Time) ([]entity.PaylaterLoan, error)
@@ -74,7 +75,7 @@ func (r *paylaterLoanRepository) GetLoansByUserID(ctx context.Context, userID ui
 }
 
 // ListLoans retrieves loans with filters and pagination
-func (r *paylaterLoanRepository) ListLoans(ctx context.Context, filters map[string]interface{}, page, pageSize int) ([]entity.PaylaterLoan, int64, error) {
+func (r *paylaterLoanRepository) ListLoans(ctx context.Context, req *dto.ListPaylaterLoansRequest) ([]entity.PaylaterLoan, int64, error) {
 	var loans []entity.PaylaterLoan
 	var totalCount int64
 
@@ -82,20 +83,26 @@ func (r *paylaterLoanRepository) ListLoans(ctx context.Context, filters map[stri
 	query := db.Model(&entity.PaylaterLoan{})
 
 	// Apply filters
-	if userID, ok := filters["user_id"]; ok && userID != nil {
-		query = query.Where("user_id = ?", userID)
+	if req.UserID != nil {
+		query = query.Where("user_id = ?", *req.UserID)
 	}
-	if status, ok := filters["status"]; ok && status != nil {
-		query = query.Where("status = ?", status)
+	if req.Status != nil {
+		query = query.Where("status = ?", *req.Status)
 	}
-	if source, ok := filters["source"]; ok && source != nil {
-		query = query.Where("source = ?", source)
+	if req.Source != nil {
+		query = query.Where("source = ?", *req.Source)
 	}
-	if fromDate, ok := filters["from_date"]; ok && fromDate != nil {
-		query = query.Where("created_at >= ?", fromDate)
+	if req.FromDate != nil {
+		fromDate, err := time.Parse("2006-01-02", *req.FromDate)
+		if err == nil {
+			query = query.Where("created_at >= ?", fromDate)
+		}
 	}
-	if toDate, ok := filters["to_date"]; ok && toDate != nil {
-		query = query.Where("created_at <= ?", toDate)
+	if req.ToDate != nil {
+		toDate, err := time.Parse("2006-01-02", *req.ToDate)
+		if err == nil {
+			query = query.Where("created_at <= ?", toDate)
+		}
 	}
 
 	// Get total count
@@ -105,6 +112,14 @@ func (r *paylaterLoanRepository) ListLoans(ctx context.Context, filters map[stri
 	}
 
 	// Apply pagination
+	page := req.Page
+	pageSize := req.PageSize
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
 	offset := (page - 1) * pageSize
 	result := query.Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&loans)
 	if result.Error != nil {
@@ -140,8 +155,8 @@ func (r *paylaterLoanRepository) GetOverdueLoans(ctx context.Context, asOf time.
 	var loans []entity.PaylaterLoan
 	db := database.GetDB(ctx, r.db)
 	result := db.Where("due_date < ? AND status IN (?)", asOf, []string{
-		entity.PaylaterLoanStatusActive,
-		entity.PaylaterLoanStatusPending,
+		string(entity.PaylaterLoanStatusActive),
+		string(entity.PaylaterLoanStatusPending),
 	}).Find(&loans)
 	if result.Error != nil {
 		r.logger.Error("Failed to get overdue loans", zap.Error(result.Error))
@@ -183,9 +198,9 @@ func (r *paylaterLoanRepository) GetLoanStats(ctx context.Context, userID uint) 
 	// Total outstanding (sum of active and overdue loan totals)
 	var totalOutstanding int64
 	db.Model(&entity.PaylaterLoan{}).Where("user_id = ? AND status IN (?)", userID, []string{
-		entity.PaylaterLoanStatusActive,
-		entity.PaylaterLoanStatusOverdue,
-		entity.PaylaterLoanStatusPending,
+		string(entity.PaylaterLoanStatusActive),
+		string(entity.PaylaterLoanStatusOverdue),
+		string(entity.PaylaterLoanStatusPending),
 	}).Select("COALESCE(SUM(total), 0)").Scan(&totalOutstanding)
 	stats["total_outstanding"] = totalOutstanding
 

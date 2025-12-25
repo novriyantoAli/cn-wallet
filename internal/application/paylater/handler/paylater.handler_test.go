@@ -37,7 +37,7 @@ func TestPaylaterAccountHandler_CreateAccount(t *testing.T) {
 			CreditLimit:    1000000,
 			Outstanding:    0,
 			AvailableLimit: 1000000,
-			Status:         entity.PaylaterStatusActive,
+			Status:         "active",
 			CreatedAt:      time.Now(),
 		}
 
@@ -118,7 +118,7 @@ func TestPaylaterAccountHandler_GetAccountByUserID(t *testing.T) {
 			CreditLimit:    1000000,
 			Outstanding:    500000,
 			AvailableLimit: 500000,
-			Status:         entity.PaylaterStatusActive,
+			Status:         "active",
 			CreatedAt:      time.Now(),
 		}
 
@@ -192,7 +192,7 @@ func TestPaylaterAccountHandler_GetAccountByID(t *testing.T) {
 			CreditLimit:    1000000,
 			Outstanding:    300000,
 			AvailableLimit: 700000,
-			Status:         entity.PaylaterStatusActive,
+			Status:         "active",
 			CreatedAt:      time.Now(),
 		}
 
@@ -270,7 +270,7 @@ func TestPaylaterAccountHandler_UpdateCreditLimit(t *testing.T) {
 			CreditLimit:    2000000,
 			Outstanding:    500000,
 			AvailableLimit: 1500000,
-			Status:         entity.PaylaterStatusActive,
+			Status:         "active",
 			CreatedAt:      time.Now(),
 		}
 
@@ -339,7 +339,7 @@ func TestPaylaterAccountHandler_UpdateStatus(t *testing.T) {
 		logger := zap.NewNop()
 
 		req := &dto.UpdateStatusRequest{
-			Status: entity.PaylaterStatusSuspended,
+			Status: string(entity.PaylaterStatusSuspended),
 		}
 
 		response := &dto.GetPaylaterAccountResponse{
@@ -348,7 +348,7 @@ func TestPaylaterAccountHandler_UpdateStatus(t *testing.T) {
 			CreditLimit:    1000000,
 			Outstanding:    500000,
 			AvailableLimit: 500000,
-			Status:         entity.PaylaterStatusSuspended,
+			Status:         string(entity.PaylaterStatusSuspended),
 			CreatedAt:      time.Now(),
 		}
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	ledgerDto "github.com/novriyantoAli/cn-wallet/internal/application/ledger/dto"
 	paylaterDto "github.com/novriyantoAli/cn-wallet/internal/application/paylater/dto"
 	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
@@ -17,6 +18,8 @@ import (
 	purchaseDto "github.com/novriyantoAli/cn-wallet/internal/application/purchase/dto"
 	transactionDto "github.com/novriyantoAli/cn-wallet/internal/application/transaction/dto"
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
+	transferDto "github.com/novriyantoAli/cn-wallet/internal/application/transfer/dto"
+	transferEntity "github.com/novriyantoAli/cn-wallet/internal/application/transfer/entity"
 	userSecurityDto "github.com/novriyantoAli/cn-wallet/internal/application/user-security/dto"
 	userSecurityEntity "github.com/novriyantoAli/cn-wallet/internal/application/user-security/entity"
 	userDto "github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
@@ -923,8 +926,8 @@ func (m *MockPaylaterLoanRepository) GetLoansByUserID(ctx context.Context, userI
 	return args.Get(0).([]paylaterEntity.PaylaterLoan), args.Error(1)
 }
 
-func (m *MockPaylaterLoanRepository) ListLoans(ctx context.Context, filters map[string]interface{}, page, pageSize int) ([]paylaterEntity.PaylaterLoan, int64, error) {
-	args := m.Called(ctx, filters, page, pageSize)
+func (m *MockPaylaterLoanRepository) ListLoans(ctx context.Context, req *paylaterDto.ListPaylaterLoansRequest) ([]paylaterEntity.PaylaterLoan, int64, error) {
+	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Get(1).(int64), args.Error(2)
 	}
@@ -1031,4 +1034,127 @@ func (m *MockPaylaterLoanService) GetUserLoanStats(ctx context.Context, userID u
 func (m *MockPaylaterLoanService) DeleteLoan(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
+}
+
+// MockTransferService is a mock implementation of TransferService
+type MockTransferService struct {
+	mock.Mock
+}
+
+func (m *MockTransferService) CreateTransfer(ctx context.Context, req *transferDto.CreateTransferRequest) (*transferEntity.Transfer, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transferEntity.Transfer), args.Error(1)
+}
+
+func (m *MockTransferService) GetTransferByID(ctx context.Context, id uint) (*transferDto.GetTransferResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transferDto.GetTransferResponse), args.Error(1)
+}
+
+func (m *MockTransferService) GetTransfersByUserID(ctx context.Context, userID uint) ([]transferDto.GetTransferResponse, error) {
+	args := m.Called(ctx, userID)
+	var transfers []transferDto.GetTransferResponse
+	if args.Get(0) != nil {
+		transfers = args.Get(0).([]transferDto.GetTransferResponse)
+	}
+	return transfers, args.Error(1)
+}
+
+func (m *MockTransferService) GetTransfersByTargetUserID(ctx context.Context, targetUserID uint) ([]transferDto.GetTransferResponse, error) {
+	args := m.Called(ctx, targetUserID)
+	var transfers []transferDto.GetTransferResponse
+	if args.Get(0) != nil {
+		transfers = args.Get(0).([]transferDto.GetTransferResponse)
+	}
+	return transfers, args.Error(1)
+}
+
+func (m *MockTransferService) ListTransfers(ctx context.Context, req *transferDto.ListTransfersRequest) (*transferDto.ListTransfersResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transferDto.ListTransfersResponse), args.Error(1)
+}
+
+func (m *MockTransferService) UpdateTransferStatus(ctx context.Context, id uint, req *transferDto.UpdateTransferStatusRequest) (*transferDto.GetTransferResponse, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transferDto.GetTransferResponse), args.Error(1)
+}
+
+func (m *MockTransferService) GetUserTransferStats(ctx context.Context, userID uint) (*transferDto.TransferStatsResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*transferDto.TransferStatsResponse), args.Error(1)
+}
+
+func (m *MockTransferService) CancelTransfer(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+// MockLedgerService is a mock implementation of LedgerService
+type MockLedgerService struct {
+	mock.Mock
+}
+
+func (m *MockLedgerService) CreateEntry(ctx context.Context, req *ledgerDto.CreateLedgerEntryRequest) (*ledgerDto.GetLedgerEntryResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ledgerDto.GetLedgerEntryResponse), args.Error(1)
+}
+
+func (m *MockLedgerService) GetEntryByID(ctx context.Context, id uint64) (*ledgerDto.GetLedgerEntryResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ledgerDto.GetLedgerEntryResponse), args.Error(1)
+}
+
+func (m *MockLedgerService) GetEntriesByUserID(ctx context.Context, userID uint64) ([]ledgerDto.GetLedgerEntryResponse, error) {
+	args := m.Called(ctx, userID)
+	var entries []ledgerDto.GetLedgerEntryResponse
+	if args.Get(0) != nil {
+		entries = args.Get(0).([]ledgerDto.GetLedgerEntryResponse)
+	}
+	return entries, args.Error(1)
+}
+
+func (m *MockLedgerService) GetEntriesByReference(ctx context.Context, referenceType string, referenceID uint64) ([]ledgerDto.GetLedgerEntryResponse, error) {
+	args := m.Called(ctx, referenceType, referenceID)
+	var entries []ledgerDto.GetLedgerEntryResponse
+	if args.Get(0) != nil {
+		entries = args.Get(0).([]ledgerDto.GetLedgerEntryResponse)
+	}
+	return entries, args.Error(1)
+}
+
+func (m *MockLedgerService) ListEntries(ctx context.Context, req *ledgerDto.ListLedgerEntriesRequest) (*ledgerDto.ListLedgerEntriesResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ledgerDto.ListLedgerEntriesResponse), args.Error(1)
+}
+
+func (m *MockLedgerService) GetUserStats(ctx context.Context, userID uint64) (*ledgerDto.LedgerStatsResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ledgerDto.LedgerStatsResponse), args.Error(1)
 }

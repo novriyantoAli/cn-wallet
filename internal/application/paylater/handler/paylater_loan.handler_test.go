@@ -48,7 +48,7 @@ func TestCreateLoan(t *testing.T) {
 			Amount:   500000,
 			Interest: 50000,
 			DueDate:  dueDate,
-			Source:   entity.PaylaterLoanSourceTransfer,
+			Source:   "transfer",
 		}
 		expectedLoan := &entity.PaylaterLoan{
 			UserID:   1,
@@ -103,7 +103,7 @@ func TestCreateLoan(t *testing.T) {
 			Amount:   500000,
 			Interest: 50000,
 			DueDate:  dueDate,
-			Source:   entity.PaylaterLoanSourceTransfer,
+			Source:   "transfer",
 		}
 
 		mockService.On("CreateLoan", mock.Anything, mock.AnythingOfType("*dto.CreatePaylaterLoanRequest")).Return(nil, errors.New("insufficient credit limit"))
@@ -132,9 +132,9 @@ func TestGetLoanByID(t *testing.T) {
 			Amount:   500000,
 			Interest: 50000,
 			Total:    550000,
-			Status:   entity.PaylaterLoanStatusActive,
+			Status:   "active",
 			DueDate:  time.Now().Add(30 * 24 * time.Hour),
-			Source:   entity.PaylaterLoanSourceTransfer,
+			Source:   "transfer",
 		}
 
 		mockService.On("GetLoanByID", mock.Anything, uint(1)).Return(expectedResponse, nil)
@@ -194,14 +194,14 @@ func TestGetLoansByUserID(t *testing.T) {
 				UserID:   1,
 				Amount:   500000,
 				Interest: 50000,
-				Status:   entity.PaylaterLoanStatusActive,
+				Status:   "active",
 			},
 			{
 				ID:       2,
 				UserID:   1,
 				Amount:   300000,
 				Interest: 30000,
-				Status:   entity.PaylaterLoanStatusPaid,
+				Status:   "paid",
 			},
 		}
 
@@ -258,8 +258,8 @@ func TestListLoans(t *testing.T) {
 
 		expectedResponse := &dto.ListPaylaterLoansResponse{
 			Data: []dto.GetPaylaterLoanResponse{
-				{ID: 1, UserID: 1, Amount: 500000, Status: entity.PaylaterLoanStatusActive},
-				{ID: 2, UserID: 2, Amount: 300000, Status: entity.PaylaterLoanStatusPaid},
+				{ID: 1, UserID: 1, Amount: 500000, Status: "active"},
+				{ID: 2, UserID: 2, Amount: 300000, Status: "paid"},
 			},
 			TotalCount: 2,
 			Page:       1,
@@ -288,7 +288,7 @@ func TestListLoans(t *testing.T) {
 
 		expectedResponse := &dto.ListPaylaterLoansResponse{
 			Data: []dto.GetPaylaterLoanResponse{
-				{ID: 1, UserID: 1, Amount: 500000, Status: entity.PaylaterLoanStatusActive},
+				{ID: 1, UserID: 1, Amount: 500000, Status: "active"},
 			},
 			TotalCount: 1,
 			Page:       1,
@@ -341,13 +341,13 @@ func TestUpdateLoanStatus(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
 		request := dto.UpdateLoanStatusRequest{
-			Status: entity.PaylaterLoanStatusOverdue,
+			Status: "overdue",
 		}
 		expectedResponse := &dto.GetPaylaterLoanResponse{
 			ID:     1,
 			UserID: 1,
 			Amount: 500000,
-			Status: entity.PaylaterLoanStatusOverdue,
+			Status: "overdue",
 		}
 
 		mockService.On("UpdateLoanStatus", mock.Anything, uint(1), mock.AnythingOfType("*dto.UpdateLoanStatusRequest")).Return(expectedResponse, nil)
@@ -378,7 +378,7 @@ func TestUpdateLoanStatus(t *testing.T) {
 		c, _ := gin.CreateTestContext(w)
 		c.Params = gin.Params{{Key: "id", Value: "invalid"}}
 
-		request := dto.UpdateLoanStatusRequest{Status: entity.PaylaterLoanStatusOverdue}
+		request := dto.UpdateLoanStatusRequest{Status: "overdue"}
 		body, _ := json.Marshal(request)
 		c.Request = httptest.NewRequest("PUT", "/paylater/loans/invalid/status", bytes.NewBuffer(body))
 		c.Request.Header.Set("Content-Type", "application/json")
@@ -407,7 +407,7 @@ func TestUpdateLoanStatus(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
 		request := dto.UpdateLoanStatusRequest{
-			Status: entity.PaylaterLoanStatusOverdue,
+			Status: string(entity.PaylaterLoanStatusOverdue),
 		}
 
 		mockService.On("UpdateLoanStatus", mock.Anything, uint(1), mock.AnythingOfType("*dto.UpdateLoanStatusRequest")).Return(nil, errors.New("loan not found"))
@@ -435,7 +435,7 @@ func TestMarkLoanAsPaid(t *testing.T) {
 			ID:     1,
 			UserID: 1,
 			Amount: 500000,
-			Status: entity.PaylaterLoanStatusPaid,
+			Status: "paid",
 		}
 
 		mockService.On("MarkLoanAsPaid", mock.Anything, uint(1)).Return(expectedResponse, nil)

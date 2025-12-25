@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/novriyantoAli/cn-wallet/internal/application/paylater/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/testutil"
 	"github.com/stretchr/testify/assert"
@@ -236,7 +237,11 @@ func TestPaylaterLoanRepository_ListLoans(t *testing.T) {
 		}
 
 		// When - Page 1
-		loans, totalCount, err := repo.ListLoans(ctx, map[string]interface{}{}, 1, 10)
+		req := &dto.ListPaylaterLoansRequest{
+			Page:     1,
+			PageSize: 10,
+		}
+		loans, totalCount, err := repo.ListLoans(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -244,7 +249,8 @@ func TestPaylaterLoanRepository_ListLoans(t *testing.T) {
 		assert.Equal(t, int64(15), totalCount)
 
 		// When - Page 2
-		loans, totalCount, err = repo.ListLoans(ctx, map[string]interface{}{}, 2, 10)
+		req.Page = 2
+		loans, totalCount, err = repo.ListLoans(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -293,10 +299,13 @@ func TestPaylaterLoanRepository_ListLoans(t *testing.T) {
 		}
 
 		// When
-		filters := map[string]interface{}{
-			"user_id": uint(1),
+		userID := uint(1)
+		req := &dto.ListPaylaterLoansRequest{
+			UserID:   &userID,
+			Page:     1,
+			PageSize: 10,
 		}
-		loans, totalCount, err := repo.ListLoans(ctx, filters, 1, 10)
+		loans, totalCount, err := repo.ListLoans(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -348,10 +357,13 @@ func TestPaylaterLoanRepository_ListLoans(t *testing.T) {
 		}
 
 		// When
-		filters := map[string]interface{}{
-			"status": entity.PaylaterLoanStatusActive,
+		status := string(entity.PaylaterLoanStatusActive)
+		req := &dto.ListPaylaterLoansRequest{
+			Status:   &status,
+			Page:     1,
+			PageSize: 10,
 		}
-		loans, totalCount, err := repo.ListLoans(ctx, filters, 1, 10)
+		loans, totalCount, err := repo.ListLoans(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -403,10 +415,13 @@ func TestPaylaterLoanRepository_ListLoans(t *testing.T) {
 		}
 
 		// When
-		filters := map[string]interface{}{
-			"source": entity.PaylaterLoanSourceCheckout,
+		source := string(entity.PaylaterLoanSourceCheckout)
+		req := &dto.ListPaylaterLoansRequest{
+			Source:   &source,
+			Page:     1,
+			PageSize: 10,
 		}
-		loans, totalCount, err := repo.ListLoans(ctx, filters, 1, 10)
+		loans, totalCount, err := repo.ListLoans(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -457,11 +472,13 @@ func TestPaylaterLoanRepository_ListLoans(t *testing.T) {
 		require.NoError(t, err)
 
 		// When - filter from yesterday
-		fromDate := now.Add(-24 * time.Hour)
-		filters := map[string]interface{}{
-			"from_date": fromDate,
+		fromDate := now.Add(-24 * time.Hour).Format("2006-01-02")
+		req := &dto.ListPaylaterLoansRequest{
+			FromDate: &fromDate,
+			Page:     1,
+			PageSize: 10,
 		}
-		loans, totalCount, err := repo.ListLoans(ctx, filters, 1, 10)
+		loans, totalCount, err := repo.ListLoans(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -517,11 +534,15 @@ func TestPaylaterLoanRepository_ListLoans(t *testing.T) {
 		require.NoError(t, err)
 
 		// When - filter by user_id and source
-		filters := map[string]interface{}{
-			"user_id": uint(1),
-			"source":  entity.PaylaterLoanSourceCheckout,
+		userID := uint(1)
+		source := string(entity.PaylaterLoanSourceCheckout)
+		req := &dto.ListPaylaterLoansRequest{
+			UserID:   &userID,
+			Source:   &source,
+			Page:     1,
+			PageSize: 10,
 		}
-		loans, totalCount, err := repo.ListLoans(ctx, filters, 1, 10)
+		loans, totalCount, err := repo.ListLoans(ctx, req)
 
 		// Then
 		assert.NoError(t, err)
@@ -555,7 +576,7 @@ func TestPaylaterLoanRepository_UpdateLoanStatus(t *testing.T) {
 		require.NoError(t, err)
 
 		// When
-		err = repo.UpdateLoanStatus(ctx, loan.ID, entity.PaylaterLoanStatusPaid)
+		err = repo.UpdateLoanStatus(ctx, loan.ID, string(entity.PaylaterLoanStatusPaid))
 
 		// Then
 		assert.NoError(t, err)
@@ -575,7 +596,7 @@ func TestPaylaterLoanRepository_UpdateLoanStatus(t *testing.T) {
 		ctx := context.Background()
 
 		// When
-		err = repo.UpdateLoanStatus(ctx, 9999, entity.PaylaterLoanStatusPaid)
+		err = repo.UpdateLoanStatus(ctx, 9999, string(entity.PaylaterLoanStatusPaid))
 
 		// Then
 		assert.Error(t, err)

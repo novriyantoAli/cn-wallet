@@ -85,7 +85,7 @@ func (s *paylaterAccountService) GetAccountByUserID(ctx context.Context, userID 
 		CreditLimit:    account.CreditLimit,
 		Outstanding:    account.Outstanding,
 		AvailableLimit: account.AvailableLimit,
-		Status:         account.Status,
+		Status:         string(account.Status),
 		CreatedAt:      account.CreatedAt,
 	}, nil
 }
@@ -104,7 +104,7 @@ func (s *paylaterAccountService) GetAccountByID(ctx context.Context, id uint) (*
 		CreditLimit:    account.CreditLimit,
 		Outstanding:    account.Outstanding,
 		AvailableLimit: account.AvailableLimit,
-		Status:         account.Status,
+		Status:         string(account.Status),
 		CreatedAt:      account.CreatedAt,
 	}, nil
 }
@@ -152,7 +152,7 @@ func (s *paylaterAccountService) UpdateCreditLimit(ctx context.Context, userID u
 		CreditLimit:    account.CreditLimit,
 		Outstanding:    account.Outstanding,
 		AvailableLimit: account.AvailableLimit,
-		Status:         account.Status,
+		Status:         string(account.Status),
 		CreatedAt:      account.CreatedAt,
 	}, nil
 }
@@ -166,7 +166,7 @@ func (s *paylaterAccountService) UpdateStatus(ctx context.Context, userID uint, 
 	}
 
 	// Update status
-	account.Status = req.Status
+	account.Status = entity.PaylaterStatus(req.Status)
 	if err := s.repo.UpdateAccount(ctx, account); err != nil {
 		s.logger.Error("Failed to update status", zap.Error(err), zap.Uint("user_id", userID))
 		return nil, err
@@ -180,7 +180,7 @@ func (s *paylaterAccountService) UpdateStatus(ctx context.Context, userID uint, 
 		CreditLimit:    account.CreditLimit,
 		Outstanding:    account.Outstanding,
 		AvailableLimit: account.AvailableLimit,
-		Status:         account.Status,
+		Status:         string(account.Status),
 		CreatedAt:      account.CreatedAt,
 	}, nil
 }

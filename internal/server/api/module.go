@@ -13,6 +13,7 @@ import (
 	providerHandler "github.com/novriyantoAli/cn-wallet/internal/application/provider/handler"
 	purchaseHandler "github.com/novriyantoAli/cn-wallet/internal/application/purchase/handler"
 	transactionHandler "github.com/novriyantoAli/cn-wallet/internal/application/transaction/handler"
+	transferHandler "github.com/novriyantoAli/cn-wallet/internal/application/transfer/handler"
 	userSecurityHandler "github.com/novriyantoAli/cn-wallet/internal/application/user-security/handler"
 	userHandler "github.com/novriyantoAli/cn-wallet/internal/application/user/handler"
 	walletHandler "github.com/novriyantoAli/cn-wallet/internal/application/wallet/handler"
@@ -35,6 +36,7 @@ type Server struct {
 	walletHandler       *walletHandler.WalletHandler
 	wifiVoucherHandler  *wifiVoucherHandler.WifiVoucherHandler
 	transactionHandler  *transactionHandler.TransactionHandler
+	transferHandler     *transferHandler.TransferHandler
 	logger              *zap.Logger
 }
 
@@ -51,6 +53,7 @@ func NewServer(
 	walletHandler *walletHandler.WalletHandler,
 	wifiVoucherHandler *wifiVoucherHandler.WifiVoucherHandler,
 	transactionHandler *transactionHandler.TransactionHandler,
+	transferHandler *transferHandler.TransferHandler,
 	logger *zap.Logger,
 ) *Server {
 	return &Server{
@@ -66,6 +69,7 @@ func NewServer(
 		walletHandler:       walletHandler,
 		wifiVoucherHandler:  wifiVoucherHandler,
 		transactionHandler:  transactionHandler,
+		transferHandler:     transferHandler,
 		logger:              logger,
 	}
 }
@@ -98,6 +102,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.walletHandler.RegisterRoutes(api)
 		s.wifiVoucherHandler.RegisterRoutes(api)
 		s.transactionHandler.RegisterRoutes(api)
+		s.transferHandler.RegisterRoutes(api)
 	}
 }
 
