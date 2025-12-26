@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"github.com/novriyantoAli/cn-wallet/internal/application/ledger"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment"
 	paymentHandler "github.com/novriyantoAli/cn-wallet/internal/application/payment/handler"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user"
@@ -11,6 +12,7 @@ import (
 
 var Module = fx.Options(
 	// Include domain modules
+	ledger.Module,
 	user.Module,
 	payment.Module,
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/novriyantoAli/cn-wallet/internal/application/ledger"
 	"github.com/novriyantoAli/cn-wallet/internal/application/oauth"
 	"github.com/novriyantoAli/cn-wallet/internal/application/paylater"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment"
@@ -19,6 +20,7 @@ import (
 
 var Module = fx.Options(
 	// Include all domain modules
+	ledger.Module,
 	oauth.Module,
 	user.Module,
 	usersecurity.Module,

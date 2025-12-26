@@ -1,11 +1,13 @@
 package migration
 
 import (
+	ledgerEntity "github.com/novriyantoAli/cn-wallet/internal/application/ledger/entity"
 	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/entity"
 	productEntity "github.com/novriyantoAli/cn-wallet/internal/application/product/entity"
 	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
 	transactionEntity "github.com/novriyantoAli/cn-wallet/internal/application/transaction/entity"
+	transferEntity "github.com/novriyantoAli/cn-wallet/internal/application/transfer/entity"
 	userSecurityEntity "github.com/novriyantoAli/cn-wallet/internal/application/user-security/entity"
 	userEntity "github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	walletEntity "github.com/novriyantoAli/cn-wallet/internal/application/wallet/entity"
@@ -37,10 +39,13 @@ func (s *Server) RunMigrations() error {
 		&entity.Payment{},
 		&walletEntity.Wallet{},
 		&paylaterEntity.PaylaterAccount{},
+		&paylaterEntity.PaylaterLoan{},
 		&providerEntity.Provider{},
 		&productEntity.Product{},
 		&transactionEntity.Transaction{},
+		&transferEntity.Transfer{},
 		&wifiVoucherEntity.WifiVoucher{},
+		&ledgerEntity.LedgerEntry{},
 	)
 	if err != nil {
 		s.logger.Error("Failed to run database migrations", zap.Error(err))
@@ -126,14 +131,17 @@ func (s *Server) DropTables() error {
 
 	// Drop in reverse order of creation to handle foreign key constraints
 	err := s.db.Migrator().DropTable(
+		&ledgerEntity.LedgerEntry{},
 		&productEntity.Product{},
 		&providerEntity.Provider{},
 		&walletEntity.Wallet{},
+		&paylaterEntity.PaylaterLoan{},
 		&paylaterEntity.PaylaterAccount{},
 		&entity.Payment{},
 		&userEntity.User{},
 		&userSecurityEntity.UserSecurity{},
 		&transactionEntity.Transaction{},
+		&transferEntity.Transfer{},
 		&wifiVoucherEntity.WifiVoucher{},
 	)
 	if err != nil {
