@@ -186,6 +186,22 @@ func (m *MockUserService) UpdateUser(ctx context.Context, id uint, req *userDto.
 	return args.Get(0).(*userDto.UserResponse), args.Error(1)
 }
 
+func (m *MockUserService) UpdateUserProvider(ctx context.Context, id uint, req *userDto.UpdateUserProviderRequest) (*userDto.UserResponse, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userDto.UserResponse), args.Error(1)
+}
+
+func (m *MockUserService) UpdateLevel(ctx context.Context, id uint, req *userDto.UpdateUserLevelRequest) (*userDto.UserResponse, error) {
+	args := m.Called(ctx, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userDto.UserResponse), args.Error(1)
+}
+
 func (m *MockUserService) DeleteUser(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)

@@ -194,17 +194,18 @@ func (s *productService) DeleteProduct(ctx context.Context, id uint) error {
 
 func (s *productService) entityToResponse(product *entity.Product) *dto.ProductResponse {
 	response := &dto.ProductResponse{
-		ID:         product.ID,
-		ProviderID: product.ProviderID,
-		Name:       product.Name,
-		Code:       product.Code,
-		Category:   product.Category,
-		PriceBasic: product.PriceBasic,
-		PriceSell:  product.PriceSell,
-		IsActive:   product.IsActive,
-		IconURL:    product.IconURL,
-		CreatedAt:  product.CreatedAt,
-		UpdatedAt:  product.UpdatedAt,
+		ID:            product.ID,
+		ProviderID:    product.ProviderID,
+		Name:          product.Name,
+		Code:          product.Code,
+		Category:      product.Category,
+		DurationHours: product.DurationHours,
+		PriceBasic:    product.PriceBasic,
+		PriceSell:     product.PriceSell,
+		IsActive:      product.IsActive,
+		IconURL:       product.IconURL,
+		CreatedAt:     product.CreatedAt,
+		UpdatedAt:     product.UpdatedAt,
 	}
 
 	if product.Provider != nil {

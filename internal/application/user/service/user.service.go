@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	providerEntity "github.com/novriyantoAli/cn-wallet/internal/application/provider/entity"
+	providerRepo "github.com/novriyantoAli/cn-wallet/internal/application/provider/repository"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/user/repository"
@@ -20,18 +22,22 @@ type UserService interface {
 	GetUserByEmail(ctx context.Context, email string) (*dto.UserResponse, error)
 	GetUsers(ctx context.Context, filter *dto.UserFilter) (*dto.UserListResponse, error)
 	UpdateUser(ctx context.Context, id uint, req *dto.UpdateUserRequest) (*dto.UserResponse, error)
+	UpdateUserProvider(ctx context.Context, id uint, req *dto.UpdateUserProviderRequest) (*dto.UserResponse, error)
+	UpdateLevel(ctx context.Context, id uint, req *dto.UpdateUserLevelRequest) (*dto.UserResponse, error)
 	DeleteUser(ctx context.Context, id uint) error
 }
 
 type userService struct {
-	repo   repository.UserRepository
-	logger *zap.Logger
+	repo         repository.UserRepository
+	providerRepo providerRepo.ProviderRepository
+	logger       *zap.Logger
 }
 
-func NewUserService(repo repository.UserRepository, logger *zap.Logger) UserService {
+func NewUserService(repo repository.UserRepository, providerRepo providerRepo.ProviderRepository, logger *zap.Logger) UserService {
 	return &userService{
-		repo:   repo,
-		logger: logger,
+		repo:         repo,
+		providerRepo: providerRepo,
+		logger:       logger,
 	}
 }
 
@@ -121,6 +127,60 @@ func (s *userService) GetUsers(ctx context.Context, filter *dto.UserFilter) (*dt
 	}, nil
 }
 
+func (s *userService) UpdateUserProvider(ctx context.Context, id uint, req *dto.UpdateUserProviderRequest) (*dto.UserResponse, error) {
+	user, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	if user.ProviderID != nil {
+		return s.entityToResponse(user), nil
+	}
+
+	// get provider from providerRepo
+	provider, err := s.providerRepo.GetByID(ctx, req.ProviderID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("provider not found")
+		}
+		return nil, errors.New("internal server error")
+	}
+
+	user.ProviderID = &provider.ID
+
+	err = s.repo.Update(ctx, user)
+	if err != nil {
+		s.logger.Error("Failed to update user provider info", zap.Error(err))
+		return nil, err
+	}
+
+	return s.entityToResponse(user), nil
+}
+
+func (s *userService) UpdateLevel(ctx context.Context, id uint, req *dto.UpdateUserLevelRequest) (*dto.UserResponse, error) {
+	user, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	user.Level = entity.UserLevel(req.Level)
+	user.UpdatedAt = time.Now()
+
+	err = s.repo.Update(ctx, user)
+	if err != nil {
+		s.logger.Error("Failed to update user level", zap.Error(err))
+		return nil, err
+	}
+
+	return s.entityToResponse(user), nil
+}
+
 func (s *userService) UpdateUser(ctx context.Context, id uint, req *dto.UpdateUserRequest) (*dto.UserResponse, error) {
 	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -138,6 +198,17 @@ func (s *userService) UpdateUser(ctx context.Context, id uint, req *dto.UpdateUs
 	}
 	user.IsActive = req.IsActive
 	user.UpdatedAt = time.Now()
+
+	// Handle provider information update if any provider fields are provided
+	if req.ProviderName != "" && req.ProviderCode != "" {
+		user.Provider = &providerEntity.Provider{
+			Name:      req.ProviderName,
+			Code:      req.ProviderCode,
+			Logo:      req.ProviderLogo,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+	}
 
 	err = s.repo.Update(ctx, user)
 	if err != nil {

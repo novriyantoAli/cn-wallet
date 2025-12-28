@@ -165,6 +165,90 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": user})
 }
 
+// UpdateUserProvider godoc
+// @Summary Update user provider information
+// @Description Update a user's provider-specific information by ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Param provider body dto.UpdateUserProviderRequest true "User provider update request"
+// @Success 200 {object} map[string]interface{} "Updated user provider information"
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 404 {object} map[string]interface{} "User not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /users/{id}/provider [put]
+func (h *UserHandler) UpdateUserProvider(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	var req dto.UpdateUserProviderRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Invalid request body", zap.Error(err))
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.service.UpdateUserProvider(ctx.Request.Context(), uint(id), &req)
+	if err != nil {
+		h.logger.Error("Failed to update user provider", zap.Error(err))
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user provider"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": user})
+}
+
+// UpdateUserLevel godoc
+// @Summary Update user level
+// @Description Update a user's level by ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Param level body dto.UpdateUserLevelRequest true "User level update request"
+// @Success 200 {object} map[string]interface{} "Updated user level"
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 404 {object} map[string]interface{} "User not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /users/{id}/level [put]
+func (h *UserHandler) UpdateUserLevel(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	var req dto.UpdateUserLevelRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Invalid request body", zap.Error(err))
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.service.UpdateLevel(ctx.Request.Context(), uint(id), &req)
+	if err != nil {
+		h.logger.Error("Failed to update user level", zap.Error(err))
+		if err.Error() == "user not found" {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user level"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": user})
+}
+
 // DeleteUser godoc
 // @Summary Delete a user
 // @Description Delete a user by ID
@@ -206,6 +290,8 @@ func (h *UserHandler) RegisterRoutes(api *gin.RouterGroup) {
 		users.GET("", h.GetUsers)
 		users.GET("/:id", h.GetUser)
 		users.PUT("/:id", h.UpdateUser)
+		users.PUT("/:id/provider", h.UpdateUserProvider)
+		users.PUT("/:id/level", h.UpdateUserLevel)
 		users.DELETE("/:id", h.DeleteUser)
 	}
 }

@@ -497,6 +497,374 @@ func TestUserHandler_DeleteUser(t *testing.T) {
 	})
 }
 
+func TestUserHandler_UpdateUserLevel(t *testing.T) {
+	t.Run("should update user level successfully", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserLevelRequest{
+			Level: "provider",
+		}
+
+		expectedResponse := &dto.UserResponse{
+			ID:        1,
+			Email:     "test@example.com",
+			FullName:  "Test User",
+			Level:     "provider",
+			IsActive:  true,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		mockService.On("UpdateLevel", mock.Anything, uint(1), updateReq).Return(expectedResponse, nil)
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/1/level", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserLevel(c)
+
+		// Assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
+
+		var response map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NotNil(t, response["data"])
+	})
+
+	t.Run("should return 404 when user not found", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserLevelRequest{
+			Level: "provider",
+		}
+
+		mockService.On("UpdateLevel", mock.Anything, uint(999), updateReq).Return(nil, errors.New("user not found"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/999/level", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "999"}}
+		c.Request = req
+
+		handler.UpdateUserLevel(c)
+
+		// Assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should return 400 for invalid user ID", func(t *testing.T) {
+		// Setup
+		handler, _ := setupUserHandler()
+
+		updateReq := &dto.UpdateUserLevelRequest{
+			Level: "provider",
+		}
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/invalid/level", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "invalid"}}
+		c.Request = req
+
+		handler.UpdateUserLevel(c)
+
+		// Assert
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("should return 400 for invalid request body", func(t *testing.T) {
+		// Setup
+		handler, _ := setupUserHandler()
+
+		// Prepare request with invalid JSON
+		req := httptest.NewRequest("PUT", "/users/1/level", bytes.NewBuffer([]byte("invalid json")))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserLevel(c)
+
+		// Assert
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("should return 500 when service fails", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserLevelRequest{
+			Level: "provider",
+		}
+
+		mockService.On("UpdateLevel", mock.Anything, uint(1), updateReq).Return(nil, errors.New("database error"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/1/level", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserLevel(c)
+
+		// Assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should update user to admin level", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserLevelRequest{
+			Level: "admin",
+		}
+
+		expectedResponse := &dto.UserResponse{
+			ID:        1,
+			Email:     "test@example.com",
+			FullName:  "Test User",
+			Level:     "admin",
+			IsActive:  true,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		mockService.On("UpdateLevel", mock.Anything, uint(1), updateReq).Return(expectedResponse, nil)
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/1/level", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserLevel(c)
+
+		// Assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
+	})
+}
+
+func TestUserHandler_UpdateUserProvider(t *testing.T) {
+	t.Run("should update user provider info successfully", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserProviderRequest{
+			ProviderID: 10,
+		}
+
+		expectedResponse := &dto.UserResponse{
+			ID:        1,
+			Email:     "test@example.com",
+			FullName:  "Test User",
+			IsActive:  true,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		mockService.On("UpdateUserProvider", mock.Anything, uint(1), updateReq).Return(expectedResponse, nil)
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/1/provider", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserProvider(c)
+
+		// Assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
+
+		var response map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NotNil(t, response["data"])
+	})
+
+	t.Run("should return 404 when user not found", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserProviderRequest{
+			ProviderID: 10,
+		}
+
+		mockService.On("UpdateUserProvider", mock.Anything, uint(999), updateReq).Return(nil, errors.New("user not found"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/999/provider", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "999"}}
+		c.Request = req
+
+		handler.UpdateUserProvider(c)
+
+		// Assert
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should return 400 for invalid user ID", func(t *testing.T) {
+		// Setup
+		handler, _ := setupUserHandler()
+
+		updateReq := &dto.UpdateUserProviderRequest{
+			ProviderID: 10,
+		}
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/invalid/provider", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "invalid"}}
+		c.Request = req
+
+		handler.UpdateUserProvider(c)
+
+		// Assert
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("should return 400 for invalid request body", func(t *testing.T) {
+		// Setup
+		handler, _ := setupUserHandler()
+
+		// Prepare request with invalid JSON
+		req := httptest.NewRequest("PUT", "/users/1/provider", bytes.NewBuffer([]byte("invalid json")))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserProvider(c)
+
+		// Assert
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("should return 500 when service fails", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserProviderRequest{
+			ProviderID: 10,
+		}
+
+		mockService.On("UpdateUserProvider", mock.Anything, uint(1), updateReq).Return(nil, errors.New("database error"))
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/1/provider", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserProvider(c)
+
+		// Assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		mockService.AssertExpectations(t)
+	})
+
+	t.Run("should update with partial provider info", func(t *testing.T) {
+		// Setup
+		handler, mockService := setupUserHandler()
+
+		updateReq := &dto.UpdateUserProviderRequest{
+			ProviderID: 10,
+		}
+
+		expectedResponse := &dto.UserResponse{
+			ID:        1,
+			Email:     "test@example.com",
+			FullName:  "Test User",
+			IsActive:  true,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		mockService.On("UpdateUserProvider", mock.Anything, uint(1), updateReq).Return(expectedResponse, nil)
+
+		// Prepare request
+		reqBody, _ := json.Marshal(updateReq)
+		req := httptest.NewRequest("PUT", "/users/1/provider", bytes.NewBuffer(reqBody))
+		req.Header.Set("Content-Type", "application/json")
+
+		// Execute
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Params = gin.Params{{Key: "id", Value: "1"}}
+		c.Request = req
+
+		handler.UpdateUserProvider(c)
+
+		// Assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		mockService.AssertExpectations(t)
+
+		var response map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NotNil(t, response["data"])
+	})
+}
+
 func TestUserHandler_RegisterRoutes(t *testing.T) {
 	t.Run("should register all routes correctly", func(t *testing.T) {
 		// Setup

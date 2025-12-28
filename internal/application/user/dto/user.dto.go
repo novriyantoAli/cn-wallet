@@ -7,10 +7,21 @@ type CreateUserRequest struct {
 	FullName string `json:"full_name" binding:"required"`
 }
 
+type UpdateUserProviderRequest struct {
+	ProviderID uint `json:"provider_id" binding:"required"`
+}
+
+type UpdateUserLevelRequest struct {
+	Level string `json:"level" binding:"required,oneof=user provider reseller admin"`
+}
+
 type UpdateUserRequest struct {
-	FullName string `json:"full_name" binding:"omitempty"`
-	Level    string `json:"level" binding:"omitempty,oneof=user provider reseller admin"`
-	IsActive bool   `json:"is_active"`
+	FullName     string `json:"full_name" binding:"omitempty"`
+	Level        string `json:"level" binding:"omitempty,oneof=user provider reseller admin"`
+	IsActive     bool   `json:"is_active"`
+	ProviderName string `json:"provider_name" binding:"omitempty"`
+	ProviderCode string `json:"provider_code" binding:"omitempty"`
+	ProviderLogo string `json:"provider_logo" binding:"omitempty"`
 }
 
 type WalletInfo struct {

@@ -8,7 +8,7 @@ import (
 
 type Provider struct {
 	ID        uint           `json:"id" gorm:"primaryKey"`
-	Name      string         `json:"name" gorm:"type:varchar(255);uniqueIndex;not null"`
+	Name      string         `json:"name" gorm:"type:varchar(255);not null"`
 	Code      string         `json:"code" gorm:"type:varchar(50);uniqueIndex;not null"`
 	Logo      string         `json:"logo" gorm:"type:varchar(500)"`
 	CreatedAt time.Time      `json:"created_at" gorm:"autoCreateTime:milli"`

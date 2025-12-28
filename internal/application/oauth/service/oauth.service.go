@@ -302,11 +302,13 @@ func (s *oauthService) Authenticate(ctx context.Context, provider dto.OAuthProvi
 	return &dto.OAuthLoginResponse{
 		Token: token,
 		UserInfo: dto.OAuthUserInfo{
-			ID:        fmt.Sprintf("%d", user.ID),
-			Email:     user.Email,
-			Name:      user.FullName,
-			AvatarURL: userInfo.AvatarURL,
-			Provider:  string(provider),
+			ID:         fmt.Sprintf("%d", user.ID),
+			Level:      user.Level.String(),
+			Email:      user.Email,
+			Name:       user.FullName,
+			AvatarURL:  userInfo.AvatarURL,
+			ProviderID: user.ProviderID,
+			Provider:   string(provider),
 		},
 	}, nil
 }

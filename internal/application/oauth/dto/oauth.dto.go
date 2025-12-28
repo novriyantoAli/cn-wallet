@@ -34,11 +34,13 @@ type OAuthTokenResponse struct {
 
 // OAuthUserInfo represents user information from OAuth provider
 type OAuthUserInfo struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	Name      string `json:"name"`
-	AvatarURL string `json:"avatar_url"`
-	Provider  string `json:"provider"`
+	ID         string `json:"id"`
+	Level      string `json:"level,omitempty"`
+	Email      string `json:"email"`
+	Name       string `json:"name"`
+	AvatarURL  string `json:"avatar_url"`
+	ProviderID *uint  `json:"provider_id,omitempty"`
+	Provider   string `json:"provider"`
 }
 
 type OAuthLoginResponse struct {
