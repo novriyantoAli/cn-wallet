@@ -274,7 +274,6 @@ func (s *purchaseService) ProcessPurchaseWifi(ctx context.Context, token string,
 
 		// Mark voucher as sold
 		lockedVoucher, err := s.wifiVoucherRepo.GetForUpdate(txCtx, availableVoucher.ID)
-		// Mark voucher as sold
 		lockedVoucher.Status = wifiVoucherEntity.StatusSold
 		lockedVoucher.SoldToUserID = &user.ID
 		now := time.Now()

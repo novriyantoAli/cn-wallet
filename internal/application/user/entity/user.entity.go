@@ -15,7 +15,7 @@ type User struct {
 	Level      UserLevel                `json:"level" gorm:"type:varchar(20);default:'user';check:level IN ('user','provider','reseller','admin')"`
 	IsActive   bool                     `json:"is_active" gorm:"default:true"`
 	Wallet     *walletEntity.Wallet     `json:"wallet,omitempty" gorm:"foreignKey:UserID;references:ID"`
-	ProviderID *uint                    `json:"provider_id" gorm:"uniqueIndex"`
+	ProviderID *uint                    `json:"provider_id"`
 	Provider   *providerEntity.Provider `json:"provider,omitempty" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	CreatedAt  time.Time                `json:"created_at" gorm:"autoCreateTime:milli"`
 	UpdatedAt  time.Time                `json:"updated_at" gorm:"autoUpdateTime:milli"`

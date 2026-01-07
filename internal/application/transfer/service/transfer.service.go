@@ -6,10 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+	ledgerEntity "github.com/novriyantoAli/cn-wallet/internal/application/ledger/entity"
+	ledgerRepo "github.com/novriyantoAli/cn-wallet/internal/application/ledger/repository"
+	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	paylaterRepo "github.com/novriyantoAli/cn-wallet/internal/application/paylater/repository"
 	"github.com/novriyantoAli/cn-wallet/internal/application/transfer/dto"
 	"github.com/novriyantoAli/cn-wallet/internal/application/transfer/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/transfer/repository"
+	userRepo "github.com/novriyantoAli/cn-wallet/internal/application/user/repository"
 	walletRepo "github.com/novriyantoAli/cn-wallet/internal/application/wallet/repository"
 	"github.com/novriyantoAli/cn-wallet/internal/pkg/database"
 	"go.uber.org/zap"
@@ -17,34 +22,43 @@ import (
 
 type TransferService interface {
 	CreateTransfer(ctx context.Context, req *dto.CreateTransferRequest) (*entity.Transfer, error)
-	GetTransferByID(ctx context.Context, id uint) (*dto.GetTransferResponse, error)
-	GetTransfersByUserID(ctx context.Context, userID uint) ([]dto.GetTransferResponse, error)
-	GetTransfersByTargetUserID(ctx context.Context, targetUserID uint) ([]dto.GetTransferResponse, error)
-	ListTransfers(ctx context.Context, req *dto.ListTransfersRequest) (*dto.ListTransfersResponse, error)
-	UpdateTransferStatus(ctx context.Context, id uint, req *dto.UpdateTransferStatusRequest) (*dto.GetTransferResponse, error)
+	GetTransferByID(ctx context.Context, id uint) (*dto.TransferResponse, error)
+	GetTransfersByUserID(ctx context.Context, userID uint) ([]dto.TransferResponse, error)
+	GetTransfersByTargetUserID(ctx context.Context, targetUserID uint) ([]dto.TransferResponse, error)
+	ListTransfers(ctx context.Context, req *dto.TransferFilter) (*dto.TransferListResponse, error)
+	UpdateTransferStatus(ctx context.Context, id uint, req *dto.UpdateTransferStatusRequest) (*dto.TransferResponse, error)
 	GetUserTransferStats(ctx context.Context, userID uint) (*dto.TransferStatsResponse, error)
 	CancelTransfer(ctx context.Context, id uint) error
 }
 
 type transferService struct {
 	transferRepo        repository.TransferRepository
+	userRepo            userRepo.UserRepository
 	walletRepo          walletRepo.WalletRepository
 	paylaterAccountRepo paylaterRepo.PaylaterAccountRepository
+	paylaterLoanRepo    paylaterRepo.PaylaterLoanRepository
+	ledgerRepo          ledgerRepo.LedgerRepository
 	txManager           database.TransactionManagerI
 	logger              *zap.Logger
 }
 
 func NewTransferService(
 	transferRepo repository.TransferRepository,
+	userRepo userRepo.UserRepository,
 	walletRepo walletRepo.WalletRepository,
 	paylaterAccountRepo paylaterRepo.PaylaterAccountRepository,
+	paylaterLoanRepo paylaterRepo.PaylaterLoanRepository,
+	ledgerRepo ledgerRepo.LedgerRepository,
 	txManager database.TransactionManagerI,
 	logger *zap.Logger,
 ) TransferService {
 	return &transferService{
 		transferRepo:        transferRepo,
+		userRepo:            userRepo,
 		walletRepo:          walletRepo,
 		paylaterAccountRepo: paylaterAccountRepo,
+		paylaterLoanRepo:    paylaterLoanRepo,
+		ledgerRepo:          ledgerRepo,
 		txManager:           txManager,
 		logger:              logger,
 	}
@@ -62,7 +76,35 @@ func (s *transferService) CreateTransfer(ctx context.Context, req *dto.CreateTra
 		return nil, errors.New("transfer amount must be greater than 0")
 	}
 
+	// check if user active or not
+	user, err := s.userRepo.GetByID(ctx, req.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	if !user.IsActive {
+		return nil, errors.New("user is not active")
+	}
+
+	// check too if user target active or not
+	targetUser, err := s.userRepo.GetByID(ctx, req.TargetUserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get target user: %w", err)
+	}
+	if !targetUser.IsActive {
+		return nil, errors.New("target user is not active")
+	}
+
+	// check too if wallet target exist
+	targetWallet, err := s.walletRepo.GetWalletByUserID(ctx, req.TargetUserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get target user wallet: %w", err)
+	}
+	if targetWallet == nil {
+		return nil, errors.New("target user wallet not found")
+	}
+
 	transfer := &entity.Transfer{
+		UUID:         uuid.New().String(),
 		UserID:       req.UserID,
 		TargetUserID: req.TargetUserID,
 		Amount:       req.Amount,
@@ -71,11 +113,11 @@ func (s *transferService) CreateTransfer(ctx context.Context, req *dto.CreateTra
 	}
 
 	// Execute transfer in transaction
-	err := s.txManager.WithinTransaction(ctx, func(txCtx context.Context) error {
+	err = s.txManager.WithinTransaction(ctx, func(txCtx context.Context) error {
 		// Verify and deduct from source
 		if entity.TransferSource(req.Source) == entity.TransferSourceWallet {
 			// Check wallet balance
-			senderWallet, err := s.walletRepo.GetWalletByUserID(txCtx, req.UserID)
+			senderWallet, err := s.walletRepo.GetForUpdate(txCtx, req.UserID)
 			if err != nil {
 				return fmt.Errorf("failed to get sender wallet: %w", err)
 			}
@@ -90,7 +132,7 @@ func (s *transferService) CreateTransfer(ctx context.Context, req *dto.CreateTra
 			}
 
 			// Add to receiver wallet
-			receiverWallet, err := s.walletRepo.GetWalletByUserID(txCtx, req.TargetUserID)
+			receiverWallet, err := s.walletRepo.GetForUpdate(txCtx, req.TargetUserID)
 			if err != nil {
 				return fmt.Errorf("failed to get receiver wallet: %w", err)
 			}
@@ -102,14 +144,60 @@ func (s *transferService) CreateTransfer(ctx context.Context, req *dto.CreateTra
 			if err := s.walletRepo.UpdateBalance(txCtx, req.TargetUserID, newReceiverBalance); err != nil {
 				return fmt.Errorf("failed to add to receiver wallet: %w", err)
 			}
+
+			// insert ledger entry for paylater loan
+			ledgerEntry := &ledgerEntity.LedgerEntry{
+				UserID:        uint64(req.UserID),
+				ReferenceID:   fmt.Sprintf("tf_w2w_%s", transfer.UUID),
+				ReferenceType: ledgerEntity.ReferenceTypeWalletTransfer,
+				Debit:         int64(req.Amount),
+				Credit:        0,
+				AccountType:   ledgerEntity.AccountTypeWallet,
+				CreatedAt:     time.Now(),
+			}
+			if err := s.ledgerRepo.CreateEntry(txCtx, ledgerEntry); err != nil {
+				return fmt.Errorf("failed to create ledger entry for paylater loan: %w", err)
+			}
+
+			// insert ledger entry for receiver wallet credit
+			ledgerEntryWallet := &ledgerEntity.LedgerEntry{
+				UserID:        uint64(req.TargetUserID),
+				ReferenceID:   fmt.Sprintf("tf_w2w_%s", transfer.UUID),
+				ReferenceType: ledgerEntity.ReferenceTypeWalletTransfer,
+				Debit:         0,
+				Credit:        int64(req.Amount),
+				AccountType:   ledgerEntity.AccountTypeWallet,
+				CreatedAt:     time.Now(),
+			}
+			if err := s.ledgerRepo.CreateEntry(txCtx, ledgerEntryWallet); err != nil {
+				return fmt.Errorf("failed to create ledger entry for receiver wallet: %w", err)
+			}
 		} else if entity.TransferSource(req.Source) == entity.TransferSourcePaylater {
+
 			// Check paylater credit
 			senderAccount, err := s.paylaterAccountRepo.GetForUpdate(txCtx, req.UserID)
 			if err != nil {
 				return fmt.Errorf("failed to get sender paylater account: %w", err)
 			}
+			// make sender account is active
+
 			if senderAccount.AvailableLimit < req.Amount {
 				return errors.New("insufficient paylater credit")
+			}
+
+			// create paylater loan for the transfer amount
+			paylaterLoan := &paylaterEntity.PaylaterLoan{
+				UserID:    req.UserID,
+				Amount:    int64(req.Amount),
+				Interest:  0, // Assuming no interest for transfer loans
+				Total:     int64(req.Amount),
+				DueDate:   time.Now().AddDate(0, 1, 0), // Due in 1 month
+				Source:    paylaterEntity.PaylaterLoanSourceTransfer,
+				Status:    paylaterEntity.PaylaterLoanStatusActive,
+				CreatedAt: time.Now(),
+			}
+			if err := s.paylaterLoanRepo.CreateLoan(txCtx, paylaterLoan); err != nil {
+				return fmt.Errorf("failed to create paylater loan: %w", err)
 			}
 
 			// Increase outstanding balance and update available limit
@@ -120,7 +208,7 @@ func (s *transferService) CreateTransfer(ctx context.Context, req *dto.CreateTra
 			}
 
 			// Add to receiver wallet
-			receiverWallet, err := s.walletRepo.GetWalletByUserID(txCtx, req.TargetUserID)
+			receiverWallet, err := s.walletRepo.GetForUpdate(txCtx, req.TargetUserID)
 			if err != nil {
 				return fmt.Errorf("failed to get receiver wallet: %w", err)
 			}
@@ -132,6 +220,35 @@ func (s *transferService) CreateTransfer(ctx context.Context, req *dto.CreateTra
 			if err := s.walletRepo.UpdateBalance(txCtx, req.TargetUserID, newReceiverBalance); err != nil {
 				return fmt.Errorf("failed to add to receiver wallet: %w", err)
 			}
+
+			// insert ledger entry for paylater loan
+			ledgerEntry := &ledgerEntity.LedgerEntry{
+				UserID:        uint64(req.UserID),
+				ReferenceID:   fmt.Sprintf("pyl_%d", paylaterLoan.ID),
+				ReferenceType: ledgerEntity.ReferenceTypePaylaterLoan,
+				Debit:         int64(req.Amount),
+				Credit:        0,
+				AccountType:   ledgerEntity.AccountTypePaylaterReceivable,
+				CreatedAt:     time.Now(),
+			}
+			if err := s.ledgerRepo.CreateEntry(txCtx, ledgerEntry); err != nil {
+				return fmt.Errorf("failed to create ledger entry for paylater loan: %w", err)
+			}
+
+			// insert ledger entry for receiver wallet credit
+			ledgerEntryWallet := &ledgerEntity.LedgerEntry{
+				UserID:        uint64(req.TargetUserID),
+				ReferenceID:   fmt.Sprintf("trf_%d", transfer.ID),
+				ReferenceType: ledgerEntity.ReferenceTypeResellerTopUp,
+				Debit:         0,
+				Credit:        int64(req.Amount),
+				AccountType:   ledgerEntity.AccountTypeWallet,
+				CreatedAt:     time.Now(),
+			}
+			if err := s.ledgerRepo.CreateEntry(txCtx, ledgerEntryWallet); err != nil {
+				return fmt.Errorf("failed to create ledger entry for receiver wallet: %w", err)
+			}
+
 		}
 
 		// Mark transfer as completed
@@ -157,7 +274,7 @@ func (s *transferService) CreateTransfer(ctx context.Context, req *dto.CreateTra
 }
 
 // GetTransferByID retrieves a transfer by ID
-func (s *transferService) GetTransferByID(ctx context.Context, id uint) (*dto.GetTransferResponse, error) {
+func (s *transferService) GetTransferByID(ctx context.Context, id uint) (*dto.TransferResponse, error) {
 	transfer, err := s.transferRepo.GetTransferByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -167,7 +284,7 @@ func (s *transferService) GetTransferByID(ctx context.Context, id uint) (*dto.Ge
 }
 
 // GetTransfersByUserID retrieves all transfers sent by a user
-func (s *transferService) GetTransfersByUserID(ctx context.Context, userID uint) ([]dto.GetTransferResponse, error) {
+func (s *transferService) GetTransfersByUserID(ctx context.Context, userID uint) ([]dto.TransferResponse, error) {
 	transfers, err := s.transferRepo.GetTransfersByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -177,7 +294,7 @@ func (s *transferService) GetTransfersByUserID(ctx context.Context, userID uint)
 }
 
 // GetTransfersByTargetUserID retrieves all transfers received by a user
-func (s *transferService) GetTransfersByTargetUserID(ctx context.Context, targetUserID uint) ([]dto.GetTransferResponse, error) {
+func (s *transferService) GetTransfersByTargetUserID(ctx context.Context, targetUserID uint) ([]dto.TransferResponse, error) {
 	transfers, err := s.transferRepo.GetTransfersByTargetUserID(ctx, targetUserID)
 	if err != nil {
 		return nil, err
@@ -187,7 +304,7 @@ func (s *transferService) GetTransfersByTargetUserID(ctx context.Context, target
 }
 
 // ListTransfers retrieves transfers with filters and pagination
-func (s *transferService) ListTransfers(ctx context.Context, req *dto.ListTransfersRequest) (*dto.ListTransfersResponse, error) {
+func (s *transferService) ListTransfers(ctx context.Context, req *dto.TransferFilter) (*dto.TransferListResponse, error) {
 	// Set default pagination
 	if req.Page < 1 {
 		req.Page = 1
@@ -231,7 +348,7 @@ func (s *transferService) ListTransfers(ctx context.Context, req *dto.ListTransf
 		totalPages++
 	}
 
-	return &dto.ListTransfersResponse{
+	return &dto.TransferListResponse{
 		Data:       s.mapToTransferResponses(transfers),
 		TotalCount: totalCount,
 		Page:       req.Page,
@@ -241,7 +358,7 @@ func (s *transferService) ListTransfers(ctx context.Context, req *dto.ListTransf
 }
 
 // UpdateTransferStatus updates the status of a transfer
-func (s *transferService) UpdateTransferStatus(ctx context.Context, id uint, req *dto.UpdateTransferStatusRequest) (*dto.GetTransferResponse, error) {
+func (s *transferService) UpdateTransferStatus(ctx context.Context, id uint, req *dto.UpdateTransferStatusRequest) (*dto.TransferResponse, error) {
 	// Verify transfer exists
 	transfer, err := s.transferRepo.GetTransferByID(ctx, id)
 	if err != nil {
@@ -295,8 +412,8 @@ func (s *transferService) CancelTransfer(ctx context.Context, id uint) error {
 }
 
 // Helper methods
-func (s *transferService) mapToTransferResponse(transfer *entity.Transfer) *dto.GetTransferResponse {
-	return &dto.GetTransferResponse{
+func (s *transferService) mapToTransferResponse(transfer *entity.Transfer) *dto.TransferResponse {
+	return &dto.TransferResponse{
 		ID:           transfer.ID,
 		UserID:       transfer.UserID,
 		TargetUserID: transfer.TargetUserID,
@@ -308,8 +425,8 @@ func (s *transferService) mapToTransferResponse(transfer *entity.Transfer) *dto.
 	}
 }
 
-func (s *transferService) mapToTransferResponses(transfers []entity.Transfer) []dto.GetTransferResponse {
-	responses := make([]dto.GetTransferResponse, len(transfers))
+func (s *transferService) mapToTransferResponses(transfers []entity.Transfer) []dto.TransferResponse {
+	responses := make([]dto.TransferResponse, len(transfers))
 	for i, transfer := range transfers {
 		responses[i] = *s.mapToTransferResponse(&transfer)
 	}

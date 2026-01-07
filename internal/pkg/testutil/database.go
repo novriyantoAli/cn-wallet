@@ -36,6 +36,7 @@ func SetupTestDB() (*gorm.DB, error) {
 		&productEntity.Product{},
 		&paylaterEntity.PaylaterAccount{},
 		&paylaterEntity.PaylaterLoan{},
+		&paylaterEntity.PaylaterRepayment{},
 		&wifiVoucherEntity.WifiVoucher{},
 		&transactionEntity.Transaction{},
 		&securityEntity.UserSecurity{},
@@ -56,6 +57,15 @@ func CleanDB(db *gorm.DB) error {
 		return err
 	}
 	if err := db.Exec("DELETE FROM transfers").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("DELETE FROM paylater_repayments").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("DELETE FROM paylater_loans").Error; err != nil {
+		return err
+	}
+	if err := db.Exec("DELETE FROM paylater_accounts").Error; err != nil {
 		return err
 	}
 	if err := db.Exec("DELETE FROM wifi_vouchers").Error; err != nil {

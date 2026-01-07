@@ -40,6 +40,7 @@ func (s *Server) RunMigrations() error {
 		&walletEntity.Wallet{},
 		&paylaterEntity.PaylaterAccount{},
 		&paylaterEntity.PaylaterLoan{},
+		&paylaterEntity.PaylaterRepayment{},
 		&providerEntity.Provider{},
 		&productEntity.Product{},
 		&transactionEntity.Transaction{},

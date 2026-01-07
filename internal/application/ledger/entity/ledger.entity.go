@@ -6,22 +6,26 @@ import "time"
 type ReferenceType string
 
 const (
-	ReferenceTypeTransfer   ReferenceType = "transfer"
-	ReferenceTypePaylater   ReferenceType = "paylater"
-	ReferenceTypePayment    ReferenceType = "payment"
-	ReferenceTypeRepayment  ReferenceType = "repayment"
-	ReferenceTypeAdjustment ReferenceType = "adjustment"
-	ReferenceTypePurchase   ReferenceType = "purchase"
+	ReferenceTypeTransfer       ReferenceType = "transfer"
+	ReferenceTypePaylater       ReferenceType = "paylater"
+	ReferenceTypePaylaterLoan   ReferenceType = "paylater_loan"
+	ReferenceTypePayment        ReferenceType = "payment"
+	ReferenceTypeRepayment      ReferenceType = "repayment"
+	ReferenceTypeAdjustment     ReferenceType = "adjustment"
+	ReferenceTypePurchase       ReferenceType = "purchase"
+	ReferenceTypeResellerTopUp  ReferenceType = "reseller_topup"
+	ReferenceTypeWalletTransfer ReferenceType = "wallet_transfer"
 )
 
 // AccountType represents the type of account for a ledger entry
 type AccountType string
 
 const (
-	AccountTypeWallet         AccountType = "wallet"
-	AccountTypePaylater       AccountType = "paylater"
-	AccountTypeVoucher        AccountType = "voucher"
-	AccountTypeMerchantIncome AccountType = "merchant_income"
+	AccountTypeWallet             AccountType = "wallet"
+	AccountTypePaylater           AccountType = "paylater"
+	AccountTypeVoucher            AccountType = "voucher"
+	AccountTypeMerchantIncome     AccountType = "merchant_income"
+	AccountTypePaylaterReceivable AccountType = "paylater_receivable"
 )
 
 // LedgerEntry represents a single ledger entry (append-only)

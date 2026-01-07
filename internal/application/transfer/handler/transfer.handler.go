@@ -158,7 +158,7 @@ func (h *TransferHandler) GetTransfersByTargetUserID(ctx *gin.Context) {
 // @Failure 400 {object} map[string]interface{} "Invalid request"
 // @Router /transfers [get]
 func (h *TransferHandler) ListTransfers(ctx *gin.Context) {
-	var req dto.ListTransfersRequest
+	var req dto.TransferFilter
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		h.logger.Error("Invalid query parameters", zap.Error(err))
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

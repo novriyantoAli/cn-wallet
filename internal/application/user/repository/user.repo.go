@@ -71,6 +71,15 @@ func (r *userRepository) GetAll(ctx context.Context, filter *dto.UserFilter) ([]
 	if filter.Email != "" {
 		query = query.Where("email LIKE ?", "%"+filter.Email+"%")
 	}
+	if filter.Name != "" {
+		query = query.Where("full_name LIKE ?", "%"+filter.Name+"%")
+	}
+	if filter.ProviderID != 0 {
+		query = query.Where("provider_id = ?", filter.ProviderID)
+	}
+	if filter.Level != "" {
+		query = query.Where("level = ?", filter.Level)
+	}
 
 	query.Count(&totalCount)
 

@@ -243,13 +243,14 @@ func (s *userService) entityToResponse(user *entity.User) *dto.UserResponse {
 	}
 
 	return &dto.UserResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		FullName:  user.FullName,
-		Level:     user.Level.String(),
-		IsActive:  user.IsActive,
-		Wallet:    walletInfo,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:         user.ID,
+		ProviderID: user.ProviderID,
+		Email:      user.Email,
+		FullName:   user.FullName,
+		Level:      user.Level.String(),
+		IsActive:   user.IsActive,
+		Wallet:     walletInfo,
+		CreatedAt:  user.CreatedAt,
+		UpdatedAt:  user.UpdatedAt,
 	}
 }

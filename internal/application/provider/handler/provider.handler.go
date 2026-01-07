@@ -53,7 +53,7 @@ func (h *ProviderHandler) CreateProvider(c *gin.Context) {
 
 	response, err := h.service.CreateProvider(c.Request.Context(), &req)
 	if err != nil {
-		if err.Error() == "provider with code already exists" {
+		if err.Error() == "code already exists" {
 			h.logger.Warn("provider creation failed", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

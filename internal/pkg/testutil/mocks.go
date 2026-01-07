@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	ledgerDto "github.com/novriyantoAli/cn-wallet/internal/application/ledger/dto"
+	ledgerEntity "github.com/novriyantoAli/cn-wallet/internal/application/ledger/entity"
 	paylaterDto "github.com/novriyantoAli/cn-wallet/internal/application/paylater/dto"
 	paylaterEntity "github.com/novriyantoAli/cn-wallet/internal/application/paylater/entity"
 	"github.com/novriyantoAli/cn-wallet/internal/application/payment/dto"
@@ -1065,46 +1066,46 @@ func (m *MockTransferService) CreateTransfer(ctx context.Context, req *transferD
 	return args.Get(0).(*transferEntity.Transfer), args.Error(1)
 }
 
-func (m *MockTransferService) GetTransferByID(ctx context.Context, id uint) (*transferDto.GetTransferResponse, error) {
+func (m *MockTransferService) GetTransferByID(ctx context.Context, id uint) (*transferDto.TransferResponse, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*transferDto.GetTransferResponse), args.Error(1)
+	return args.Get(0).(*transferDto.TransferResponse), args.Error(1)
 }
 
-func (m *MockTransferService) GetTransfersByUserID(ctx context.Context, userID uint) ([]transferDto.GetTransferResponse, error) {
+func (m *MockTransferService) GetTransfersByUserID(ctx context.Context, userID uint) ([]transferDto.TransferResponse, error) {
 	args := m.Called(ctx, userID)
-	var transfers []transferDto.GetTransferResponse
+	var transfers []transferDto.TransferResponse
 	if args.Get(0) != nil {
-		transfers = args.Get(0).([]transferDto.GetTransferResponse)
+		transfers = args.Get(0).([]transferDto.TransferResponse)
 	}
 	return transfers, args.Error(1)
 }
 
-func (m *MockTransferService) GetTransfersByTargetUserID(ctx context.Context, targetUserID uint) ([]transferDto.GetTransferResponse, error) {
+func (m *MockTransferService) GetTransfersByTargetUserID(ctx context.Context, targetUserID uint) ([]transferDto.TransferResponse, error) {
 	args := m.Called(ctx, targetUserID)
-	var transfers []transferDto.GetTransferResponse
+	var transfers []transferDto.TransferResponse
 	if args.Get(0) != nil {
-		transfers = args.Get(0).([]transferDto.GetTransferResponse)
+		transfers = args.Get(0).([]transferDto.TransferResponse)
 	}
 	return transfers, args.Error(1)
 }
 
-func (m *MockTransferService) ListTransfers(ctx context.Context, req *transferDto.ListTransfersRequest) (*transferDto.ListTransfersResponse, error) {
+func (m *MockTransferService) ListTransfers(ctx context.Context, req *transferDto.TransferFilter) (*transferDto.TransferListResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*transferDto.ListTransfersResponse), args.Error(1)
+	return args.Get(0).(*transferDto.TransferListResponse), args.Error(1)
 }
 
-func (m *MockTransferService) UpdateTransferStatus(ctx context.Context, id uint, req *transferDto.UpdateTransferStatusRequest) (*transferDto.GetTransferResponse, error) {
+func (m *MockTransferService) UpdateTransferStatus(ctx context.Context, id uint, req *transferDto.UpdateTransferStatusRequest) (*transferDto.TransferResponse, error) {
 	args := m.Called(ctx, id, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*transferDto.GetTransferResponse), args.Error(1)
+	return args.Get(0).(*transferDto.TransferResponse), args.Error(1)
 }
 
 func (m *MockTransferService) GetUserTransferStats(ctx context.Context, userID uint) (*transferDto.TransferStatsResponse, error) {
@@ -1173,4 +1174,156 @@ func (m *MockLedgerService) GetUserStats(ctx context.Context, userID uint64) (*l
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*ledgerDto.LedgerStatsResponse), args.Error(1)
+}
+
+// MockPaylaterRepaymentRepository is a mock implementation of PaylaterRepaymentRepository
+type MockPaylaterRepaymentRepository struct {
+	mock.Mock
+}
+
+func (m *MockPaylaterRepaymentRepository) Create(ctx context.Context, repayment *paylaterEntity.PaylaterRepayment) error {
+	args := m.Called(ctx, repayment)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterRepaymentRepository) GetByID(ctx context.Context, id uint) (*paylaterEntity.PaylaterRepayment, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterEntity.PaylaterRepayment), args.Error(1)
+}
+
+func (m *MockPaylaterRepaymentRepository) Update(ctx context.Context, repayment *paylaterEntity.PaylaterRepayment) error {
+	args := m.Called(ctx, repayment)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterRepaymentRepository) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockPaylaterRepaymentRepository) GetByLoanID(ctx context.Context, loanID uint) ([]paylaterEntity.PaylaterRepayment, error) {
+	args := m.Called(ctx, loanID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]paylaterEntity.PaylaterRepayment), args.Error(1)
+}
+
+func (m *MockPaylaterRepaymentRepository) GetByUserID(ctx context.Context, userID uint) ([]paylaterEntity.PaylaterRepayment, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]paylaterEntity.PaylaterRepayment), args.Error(1)
+}
+
+// MockLedgerRepository is a mock implementation of LedgerRepository
+type MockLedgerRepository struct {
+	mock.Mock
+}
+
+func (m *MockLedgerRepository) CreateEntry(ctx context.Context, entry *ledgerEntity.LedgerEntry) error {
+	args := m.Called(ctx, entry)
+	return args.Error(0)
+}
+
+func (m *MockLedgerRepository) GetEntryByID(ctx context.Context, id uint64) (*ledgerEntity.LedgerEntry, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ledgerEntity.LedgerEntry), args.Error(1)
+}
+
+func (m *MockLedgerRepository) GetEntriesByUserID(ctx context.Context, userID uint64) ([]ledgerEntity.LedgerEntry, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]ledgerEntity.LedgerEntry), args.Error(1)
+}
+
+func (m *MockLedgerRepository) GetEntriesByReference(ctx context.Context, referenceType, referenceID string) ([]ledgerEntity.LedgerEntry, error) {
+	args := m.Called(ctx, referenceType, referenceID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]ledgerEntity.LedgerEntry), args.Error(1)
+}
+
+func (m *MockLedgerRepository) ListEntries(ctx context.Context, req *ledgerDto.ListLedgerEntriesRequest) ([]ledgerEntity.LedgerEntry, int64, error) {
+	args := m.Called(ctx, req)
+	var entries []ledgerEntity.LedgerEntry
+	if args.Get(0) != nil {
+		entries = args.Get(0).([]ledgerEntity.LedgerEntry)
+	}
+	count := int64(0)
+	if args.Get(1) != nil {
+		count = args.Get(1).(int64)
+	}
+	return entries, count, args.Error(2)
+}
+
+func (m *MockLedgerRepository) GetBalance(ctx context.Context, userID uint64, accountType string) (int64, error) {
+	args := m.Called(ctx, userID, accountType)
+	balance := int64(0)
+	if args.Get(0) != nil {
+		balance = args.Get(0).(int64)
+	}
+	return balance, args.Error(1)
+}
+
+func (m *MockLedgerRepository) DeleteEntry(ctx context.Context, id uint64) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockLedgerRepository) GetUserStats(ctx context.Context, userID uint64) (*ledgerDto.LedgerStatsResponse, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ledgerDto.LedgerStatsResponse), args.Error(1)
+}
+
+// MockPaylaterRepaymentService is a mock implementation of PaylaterRepaymentService
+type MockPaylaterRepaymentService struct {
+	mock.Mock
+}
+
+func (m *MockPaylaterRepaymentService) ProcessRepayment(ctx context.Context, req *paylaterDto.CreatePaylaterRepaymentRequest) (*paylaterDto.GetPaylaterRepaymentResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterRepaymentResponse), args.Error(1)
+}
+
+func (m *MockPaylaterRepaymentService) GetRepaymentByID(ctx context.Context, id uint) (*paylaterDto.GetPaylaterRepaymentResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*paylaterDto.GetPaylaterRepaymentResponse), args.Error(1)
+}
+
+func (m *MockPaylaterRepaymentService) ListRepaymentsByLoan(ctx context.Context, loanID uint) ([]paylaterDto.GetPaylaterRepaymentResponse, error) {
+	args := m.Called(ctx, loanID)
+	var repayments []paylaterDto.GetPaylaterRepaymentResponse
+	if args.Get(0) != nil {
+		repayments = args.Get(0).([]paylaterDto.GetPaylaterRepaymentResponse)
+	}
+	return repayments, args.Error(1)
+}
+
+func (m *MockPaylaterRepaymentService) GetRepaymentsByUser(ctx context.Context, userID uint) ([]paylaterDto.GetPaylaterRepaymentResponse, error) {
+	args := m.Called(ctx, userID)
+	var repayments []paylaterDto.GetPaylaterRepaymentResponse
+	if args.Get(0) != nil {
+		repayments = args.Get(0).([]paylaterDto.GetPaylaterRepaymentResponse)
+	}
+	return repayments, args.Error(1)
 }

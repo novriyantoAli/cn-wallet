@@ -10,8 +10,13 @@ type CreateTransferRequest struct {
 	Source       string `json:"source" binding:"required,oneof=wallet paylater"`
 }
 
-// GetTransferResponse represents transfer information response
-type GetTransferResponse struct {
+// UpdateTransferStatusRequest represents a request to update transfer status
+type UpdateTransferStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=pending completed failed cancelled"`
+}
+
+// TransferResponse represents transfer information in response
+type TransferResponse struct {
 	ID           uint      `json:"id"`
 	UserID       uint      `json:"user_id"`
 	TargetUserID uint      `json:"target_user_id"`
@@ -22,8 +27,17 @@ type GetTransferResponse struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-// ListTransfersRequest represents a request to list transfers with filters
-type ListTransfersRequest struct {
+// TransferListResponse represents paginated transfer list response
+type TransferListResponse struct {
+	Data       []TransferResponse `json:"data"`
+	TotalCount int64              `json:"total_count"`
+	Page       int                `json:"page"`
+	PageSize   int                `json:"page_size"`
+	TotalPages int                `json:"total_pages"`
+}
+
+// TransferFilter represents filter criteria for listing transfers
+type TransferFilter struct {
 	UserID       *uint   `form:"user_id"`
 	TargetUserID *uint   `form:"target_user_id"`
 	Source       *string `form:"source"`
@@ -34,21 +48,7 @@ type ListTransfersRequest struct {
 	PageSize     int     `form:"page_size" binding:"min=1,max=100"`
 }
 
-// ListTransfersResponse represents paginated transfer list response
-type ListTransfersResponse struct {
-	Data       []GetTransferResponse `json:"data"`
-	TotalCount int64                 `json:"total_count"`
-	Page       int                   `json:"page"`
-	PageSize   int                   `json:"page_size"`
-	TotalPages int                   `json:"total_pages"`
-}
-
-// UpdateTransferStatusRequest represents a request to update transfer status
-type UpdateTransferStatusRequest struct {
-	Status string `json:"status" binding:"required,oneof=pending completed failed cancelled"`
-}
-
-// TransferStatsResponse represents transfer statistics
+// TransferStatsResponse represents transfer statistics for a user
 type TransferStatsResponse struct {
 	UserID        uint  `json:"user_id"`
 	TotalSent     int64 `json:"total_sent"`

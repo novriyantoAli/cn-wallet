@@ -24,20 +24,21 @@ import (
 )
 
 type Server struct {
-	oauthHandler        *oauthHandler.OAuthHandler
-	userHandler         *userHandler.UserHandler
-	userSecurityHandler *userSecurityHandler.UserSecurityHandler
-	paymentHandler      *paymentHandler.PaymentHandler
-	paylaterHandler     *paylaterHandler.PaylaterAccountHandler
-	paylaterLoanHandler *paylaterHandler.PaylaterLoanHandler
-	productHandler      *productHandler.ProductHandler
-	providerHandler     *providerHandler.ProviderHandler
-	purchaseHandler     *purchaseHandler.PurchaseHandler
-	walletHandler       *walletHandler.WalletHandler
-	wifiVoucherHandler  *wifiVoucherHandler.WifiVoucherHandler
-	transactionHandler  *transactionHandler.TransactionHandler
-	transferHandler     *transferHandler.TransferHandler
-	logger              *zap.Logger
+	oauthHandler             *oauthHandler.OAuthHandler
+	userHandler              *userHandler.UserHandler
+	userSecurityHandler      *userSecurityHandler.UserSecurityHandler
+	paymentHandler           *paymentHandler.PaymentHandler
+	paylaterHandler          *paylaterHandler.PaylaterAccountHandler
+	paylaterLoanHandler      *paylaterHandler.PaylaterLoanHandler
+	paylaterRepaymentHandler *paylaterHandler.PaylaterRepaymentHandler
+	productHandler           *productHandler.ProductHandler
+	providerHandler          *providerHandler.ProviderHandler
+	purchaseHandler          *purchaseHandler.PurchaseHandler
+	walletHandler            *walletHandler.WalletHandler
+	wifiVoucherHandler       *wifiVoucherHandler.WifiVoucherHandler
+	transactionHandler       *transactionHandler.TransactionHandler
+	transferHandler          *transferHandler.TransferHandler
+	logger                   *zap.Logger
 }
 
 func NewServer(
@@ -47,6 +48,7 @@ func NewServer(
 	paymentHandler *paymentHandler.PaymentHandler,
 	paylaterHandler *paylaterHandler.PaylaterAccountHandler,
 	paylaterLoanHandler *paylaterHandler.PaylaterLoanHandler,
+	paylaterRepaymentHandler *paylaterHandler.PaylaterRepaymentHandler,
 	productHandler *productHandler.ProductHandler,
 	providerHandler *providerHandler.ProviderHandler,
 	purchaseHandler *purchaseHandler.PurchaseHandler,
@@ -57,20 +59,21 @@ func NewServer(
 	logger *zap.Logger,
 ) *Server {
 	return &Server{
-		oauthHandler:        oauthHandler,
-		userHandler:         userHandler,
-		userSecurityHandler: userSecurityHandler,
-		paymentHandler:      paymentHandler,
-		paylaterHandler:     paylaterHandler,
-		paylaterLoanHandler: paylaterLoanHandler,
-		productHandler:      productHandler,
-		providerHandler:     providerHandler,
-		purchaseHandler:     purchaseHandler,
-		walletHandler:       walletHandler,
-		wifiVoucherHandler:  wifiVoucherHandler,
-		transactionHandler:  transactionHandler,
-		transferHandler:     transferHandler,
-		logger:              logger,
+		oauthHandler:             oauthHandler,
+		userHandler:              userHandler,
+		userSecurityHandler:      userSecurityHandler,
+		paymentHandler:           paymentHandler,
+		paylaterHandler:          paylaterHandler,
+		paylaterLoanHandler:      paylaterLoanHandler,
+		paylaterRepaymentHandler: paylaterRepaymentHandler,
+		productHandler:           productHandler,
+		providerHandler:          providerHandler,
+		purchaseHandler:          purchaseHandler,
+		walletHandler:            walletHandler,
+		wifiVoucherHandler:       wifiVoucherHandler,
+		transactionHandler:       transactionHandler,
+		transferHandler:          transferHandler,
+		logger:                   logger,
 	}
 }
 
@@ -96,6 +99,7 @@ func (s *Server) SetupRoutes(router *gin.Engine) {
 		s.paymentHandler.RegisterRoutes(api)
 		s.paylaterHandler.RegisterRoutes(api)
 		s.paylaterLoanHandler.RegisterRoutes(api)
+		s.paylaterRepaymentHandler.RegisterRoutes(api)
 		s.productHandler.RegisterRoutes(api)
 		s.providerHandler.RegisterRoutes(api)
 		s.purchaseHandler.RegisterRoutes(api)

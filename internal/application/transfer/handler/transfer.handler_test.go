@@ -120,7 +120,7 @@ func TestGetTransferByID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
-		expectedResponse := &dto.GetTransferResponse{
+		expectedResponse := &dto.TransferResponse{
 			ID:           1,
 			UserID:       1,
 			TargetUserID: 2,
@@ -182,7 +182,7 @@ func TestGetTransfersByUserID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
-		expectedTransfers := []dto.GetTransferResponse{
+		expectedTransfers := []dto.TransferResponse{
 			{
 				ID:           1,
 				UserID:       1,
@@ -252,7 +252,7 @@ func TestGetTransfersByTargetUserID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
-		expectedTransfers := []dto.GetTransferResponse{
+		expectedTransfers := []dto.TransferResponse{
 			{
 				ID:           3,
 				UserID:       1,
@@ -322,8 +322,8 @@ func TestListTransfers(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
-		expectedResponse := &dto.ListTransfersResponse{
-			Data: []dto.GetTransferResponse{
+		expectedResponse := &dto.TransferListResponse{
+			Data: []dto.TransferResponse{
 				{ID: 1, UserID: 1, TargetUserID: 2, Amount: 100000, Source: "wallet", Status: "completed"},
 				{ID: 2, UserID: 1, TargetUserID: 3, Amount: 50000, Source: "paylater", Status: "pending"},
 			},
@@ -333,7 +333,7 @@ func TestListTransfers(t *testing.T) {
 			TotalPages: 1,
 		}
 
-		mockService.On("ListTransfers", mock.Anything, mock.AnythingOfType("*dto.ListTransfersRequest")).Return(expectedResponse, nil).Once()
+		mockService.On("ListTransfers", mock.Anything, mock.AnythingOfType("*dto.TransferFilter")).Return(expectedResponse, nil).Once()
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -342,7 +342,7 @@ func TestListTransfers(t *testing.T) {
 		handler.ListTransfers(c)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		var response dto.ListTransfersResponse
+		var response dto.TransferListResponse
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 		assert.Len(t, response.Data, 2)
@@ -352,8 +352,8 @@ func TestListTransfers(t *testing.T) {
 	t.Run("WithFilters", func(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
-		expectedResponse := &dto.ListTransfersResponse{
-			Data: []dto.GetTransferResponse{
+		expectedResponse := &dto.TransferListResponse{
+			Data: []dto.TransferResponse{
 				{ID: 1, UserID: 1, TargetUserID: 2, Amount: 100000, Source: "wallet", Status: "completed"},
 			},
 			TotalCount: 1,
@@ -362,7 +362,7 @@ func TestListTransfers(t *testing.T) {
 			TotalPages: 1,
 		}
 
-		mockService.On("ListTransfers", mock.Anything, mock.AnythingOfType("*dto.ListTransfersRequest")).Return(expectedResponse, nil).Once()
+		mockService.On("ListTransfers", mock.Anything, mock.AnythingOfType("*dto.TransferFilter")).Return(expectedResponse, nil).Once()
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -389,7 +389,7 @@ func TestListTransfers(t *testing.T) {
 	t.Run("ServiceError", func(t *testing.T) {
 		handler, mockService := setupHandlerTest()
 
-		mockService.On("ListTransfers", mock.Anything, mock.AnythingOfType("*dto.ListTransfersRequest")).Return(nil, errors.New("database error")).Once()
+		mockService.On("ListTransfers", mock.Anything, mock.AnythingOfType("*dto.TransferFilter")).Return(nil, errors.New("database error")).Once()
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -409,7 +409,7 @@ func TestUpdateTransferStatus(t *testing.T) {
 		request := dto.UpdateTransferStatusRequest{
 			Status: "completed",
 		}
-		expectedResponse := &dto.GetTransferResponse{
+		expectedResponse := &dto.TransferResponse{
 			ID:           1,
 			UserID:       1,
 			TargetUserID: 2,
